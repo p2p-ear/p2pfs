@@ -1,0 +1,10 @@
+syntax = "proto3";
+package peer;
+
+message PingMessage {
+  bool Ok = 1;
+}
+
+service PeerService {
+  rpc Ping(PingMessage) returns (PingMessage) {}
+}
