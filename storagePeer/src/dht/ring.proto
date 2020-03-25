@@ -1,0 +1,15 @@
+syntax = "proto3";
+package dht;
+
+message GetSuccReply {
+  string IP = 1;
+  uint64 ID = 2;
+}
+
+message GetSuccRequest {
+  uint64 ID = 1;
+}
+
+service RingService {
+  rpc GetSucc(GetSuccRequest) returns (GetSuccReply) {}
+}
