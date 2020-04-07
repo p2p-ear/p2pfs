@@ -24,7 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type GetSuccReply struct {
+type NodeReply struct {
 	IP                   string   `protobuf:"bytes,1,opt,name=IP,proto3" json:"IP,omitempty"`
 	ID                   uint64   `protobuf:"varint,2,opt,name=ID,proto3" json:"ID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -32,87 +32,287 @@ type GetSuccReply struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetSuccReply) Reset()         { *m = GetSuccReply{} }
-func (m *GetSuccReply) String() string { return proto.CompactTextString(m) }
-func (*GetSuccReply) ProtoMessage()    {}
-func (*GetSuccReply) Descriptor() ([]byte, []int) {
+func (m *NodeReply) Reset()         { *m = NodeReply{} }
+func (m *NodeReply) String() string { return proto.CompactTextString(m) }
+func (*NodeReply) ProtoMessage()    {}
+func (*NodeReply) Descriptor() ([]byte, []int) {
 	return fileDescriptor_26381ed67e202a6e, []int{0}
 }
 
-func (m *GetSuccReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetSuccReply.Unmarshal(m, b)
+func (m *NodeReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NodeReply.Unmarshal(m, b)
 }
-func (m *GetSuccReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetSuccReply.Marshal(b, m, deterministic)
+func (m *NodeReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NodeReply.Marshal(b, m, deterministic)
 }
-func (m *GetSuccReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetSuccReply.Merge(m, src)
+func (m *NodeReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeReply.Merge(m, src)
 }
-func (m *GetSuccReply) XXX_Size() int {
-	return xxx_messageInfo_GetSuccReply.Size(m)
+func (m *NodeReply) XXX_Size() int {
+	return xxx_messageInfo_NodeReply.Size(m)
 }
-func (m *GetSuccReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetSuccReply.DiscardUnknown(m)
+func (m *NodeReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeReply.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetSuccReply proto.InternalMessageInfo
+var xxx_messageInfo_NodeReply proto.InternalMessageInfo
 
-func (m *GetSuccReply) GetIP() string {
+func (m *NodeReply) GetIP() string {
 	if m != nil {
 		return m.IP
 	}
 	return ""
 }
 
-func (m *GetSuccReply) GetID() uint64 {
+func (m *NodeReply) GetID() uint64 {
 	if m != nil {
 		return m.ID
 	}
 	return 0
 }
 
-type GetSuccRequest struct {
+type UpdateReply struct {
+	OK                   bool     `protobuf:"varint,1,opt,name=OK,proto3" json:"OK,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdateReply) Reset()         { *m = UpdateReply{} }
+func (m *UpdateReply) String() string { return proto.CompactTextString(m) }
+func (*UpdateReply) ProtoMessage()    {}
+func (*UpdateReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{1}
+}
+
+func (m *UpdateReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateReply.Unmarshal(m, b)
+}
+func (m *UpdateReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateReply.Marshal(b, m, deterministic)
+}
+func (m *UpdateReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateReply.Merge(m, src)
+}
+func (m *UpdateReply) XXX_Size() int {
+	return xxx_messageInfo_UpdateReply.Size(m)
+}
+func (m *UpdateReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateReply proto.InternalMessageInfo
+
+func (m *UpdateReply) GetOK() bool {
+	if m != nil {
+		return m.OK
+	}
+	return false
+}
+
+type GetNodeSuccRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetNodeSuccRequest) Reset()         { *m = GetNodeSuccRequest{} }
+func (m *GetNodeSuccRequest) String() string { return proto.CompactTextString(m) }
+func (*GetNodeSuccRequest) ProtoMessage()    {}
+func (*GetNodeSuccRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{2}
+}
+
+func (m *GetNodeSuccRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNodeSuccRequest.Unmarshal(m, b)
+}
+func (m *GetNodeSuccRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNodeSuccRequest.Marshal(b, m, deterministic)
+}
+func (m *GetNodeSuccRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNodeSuccRequest.Merge(m, src)
+}
+func (m *GetNodeSuccRequest) XXX_Size() int {
+	return xxx_messageInfo_GetNodeSuccRequest.Size(m)
+}
+func (m *GetNodeSuccRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNodeSuccRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetNodeSuccRequest proto.InternalMessageInfo
+
+type GetNodePredRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetNodePredRequest) Reset()         { *m = GetNodePredRequest{} }
+func (m *GetNodePredRequest) String() string { return proto.CompactTextString(m) }
+func (*GetNodePredRequest) ProtoMessage()    {}
+func (*GetNodePredRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{3}
+}
+
+func (m *GetNodePredRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNodePredRequest.Unmarshal(m, b)
+}
+func (m *GetNodePredRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNodePredRequest.Marshal(b, m, deterministic)
+}
+func (m *GetNodePredRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNodePredRequest.Merge(m, src)
+}
+func (m *GetNodePredRequest) XXX_Size() int {
+	return xxx_messageInfo_GetNodePredRequest.Size(m)
+}
+func (m *GetNodePredRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNodePredRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetNodePredRequest proto.InternalMessageInfo
+
+type FindPredRequest struct {
 	ID                   uint64   `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetSuccRequest) Reset()         { *m = GetSuccRequest{} }
-func (m *GetSuccRequest) String() string { return proto.CompactTextString(m) }
-func (*GetSuccRequest) ProtoMessage()    {}
-func (*GetSuccRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{1}
+func (m *FindPredRequest) Reset()         { *m = FindPredRequest{} }
+func (m *FindPredRequest) String() string { return proto.CompactTextString(m) }
+func (*FindPredRequest) ProtoMessage()    {}
+func (*FindPredRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{4}
 }
 
-func (m *GetSuccRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetSuccRequest.Unmarshal(m, b)
+func (m *FindPredRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_FindPredRequest.Unmarshal(m, b)
 }
-func (m *GetSuccRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetSuccRequest.Marshal(b, m, deterministic)
+func (m *FindPredRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_FindPredRequest.Marshal(b, m, deterministic)
 }
-func (m *GetSuccRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetSuccRequest.Merge(m, src)
+func (m *FindPredRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FindPredRequest.Merge(m, src)
 }
-func (m *GetSuccRequest) XXX_Size() int {
-	return xxx_messageInfo_GetSuccRequest.Size(m)
+func (m *FindPredRequest) XXX_Size() int {
+	return xxx_messageInfo_FindPredRequest.Size(m)
 }
-func (m *GetSuccRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetSuccRequest.DiscardUnknown(m)
+func (m *FindPredRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_FindPredRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetSuccRequest proto.InternalMessageInfo
+var xxx_messageInfo_FindPredRequest proto.InternalMessageInfo
 
-func (m *GetSuccRequest) GetID() uint64 {
+func (m *FindPredRequest) GetID() uint64 {
 	if m != nil {
 		return m.ID
 	}
 	return 0
 }
 
+type UpdatePredRequest struct {
+	IP                   string   `protobuf:"bytes,1,opt,name=IP,proto3" json:"IP,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdatePredRequest) Reset()         { *m = UpdatePredRequest{} }
+func (m *UpdatePredRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdatePredRequest) ProtoMessage()    {}
+func (*UpdatePredRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{5}
+}
+
+func (m *UpdatePredRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdatePredRequest.Unmarshal(m, b)
+}
+func (m *UpdatePredRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdatePredRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdatePredRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdatePredRequest.Merge(m, src)
+}
+func (m *UpdatePredRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdatePredRequest.Size(m)
+}
+func (m *UpdatePredRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdatePredRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdatePredRequest proto.InternalMessageInfo
+
+func (m *UpdatePredRequest) GetIP() string {
+	if m != nil {
+		return m.IP
+	}
+	return ""
+}
+
+type UpdateSpecificFingerRequest struct {
+	FingID               int64    `protobuf:"varint,1,opt,name=FingID,proto3" json:"FingID,omitempty"`
+	ID                   uint64   `protobuf:"varint,2,opt,name=ID,proto3" json:"ID,omitempty"`
+	IP                   string   `protobuf:"bytes,3,opt,name=IP,proto3" json:"IP,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdateSpecificFingerRequest) Reset()         { *m = UpdateSpecificFingerRequest{} }
+func (m *UpdateSpecificFingerRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateSpecificFingerRequest) ProtoMessage()    {}
+func (*UpdateSpecificFingerRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{6}
+}
+
+func (m *UpdateSpecificFingerRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateSpecificFingerRequest.Unmarshal(m, b)
+}
+func (m *UpdateSpecificFingerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateSpecificFingerRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateSpecificFingerRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateSpecificFingerRequest.Merge(m, src)
+}
+func (m *UpdateSpecificFingerRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateSpecificFingerRequest.Size(m)
+}
+func (m *UpdateSpecificFingerRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateSpecificFingerRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateSpecificFingerRequest proto.InternalMessageInfo
+
+func (m *UpdateSpecificFingerRequest) GetFingID() int64 {
+	if m != nil {
+		return m.FingID
+	}
+	return 0
+}
+
+func (m *UpdateSpecificFingerRequest) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *UpdateSpecificFingerRequest) GetIP() string {
+	if m != nil {
+		return m.IP
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*GetSuccReply)(nil), "dht.GetSuccReply")
-	proto.RegisterType((*GetSuccRequest)(nil), "dht.GetSuccRequest")
+	proto.RegisterType((*NodeReply)(nil), "dht.NodeReply")
+	proto.RegisterType((*UpdateReply)(nil), "dht.UpdateReply")
+	proto.RegisterType((*GetNodeSuccRequest)(nil), "dht.GetNodeSuccRequest")
+	proto.RegisterType((*GetNodePredRequest)(nil), "dht.GetNodePredRequest")
+	proto.RegisterType((*FindPredRequest)(nil), "dht.FindPredRequest")
+	proto.RegisterType((*UpdatePredRequest)(nil), "dht.UpdatePredRequest")
+	proto.RegisterType((*UpdateSpecificFingerRequest)(nil), "dht.UpdateSpecificFingerRequest")
 }
 
 func init() {
@@ -120,17 +320,26 @@ func init() {
 }
 
 var fileDescriptor_26381ed67e202a6e = []byte{
-	// 146 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0xca, 0xcc, 0x4b,
-	0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4e, 0xc9, 0x28, 0x51, 0xd2, 0xe3, 0xe2, 0x71,
-	0x4f, 0x2d, 0x09, 0x2e, 0x4d, 0x4e, 0x0e, 0x4a, 0x2d, 0xc8, 0xa9, 0x14, 0xe2, 0xe3, 0x62, 0xf2,
-	0x0c, 0x90, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x62, 0xf2, 0x0c, 0x00, 0xf3, 0x5d, 0x24, 0x98,
-	0x14, 0x18, 0x35, 0x58, 0x82, 0x98, 0x3c, 0x5d, 0x94, 0x14, 0xb8, 0xf8, 0xe0, 0xea, 0x0b, 0x4b,
-	0x53, 0x8b, 0x4b, 0xa0, 0x2a, 0x18, 0x61, 0x2a, 0x8c, 0x9c, 0xb8, 0xb8, 0x83, 0x32, 0xf3, 0xd2,
-	0x83, 0x53, 0x8b, 0xca, 0x32, 0x93, 0x53, 0x85, 0x8c, 0xb9, 0xd8, 0xa1, 0x1a, 0x84, 0x84, 0xf5,
-	0x52, 0x32, 0x4a, 0xf4, 0x50, 0xb5, 0x4b, 0x09, 0xa2, 0x0a, 0x16, 0xe4, 0x54, 0x2a, 0x31, 0x24,
-	0xb1, 0x81, 0x5d, 0x68, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x23, 0xa8, 0x4c, 0x97, 0xaf, 0x00,
-	0x00, 0x00,
+	// 297 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x52, 0xd1, 0x4a, 0xc3, 0x30,
+	0x14, 0xb5, 0x99, 0x8c, 0xed, 0x16, 0xa6, 0x86, 0x32, 0xc7, 0x44, 0xa8, 0xf5, 0x65, 0x20, 0xf4,
+	0x61, 0xbe, 0xf8, 0xe6, 0xcb, 0x98, 0x94, 0x89, 0x2b, 0x29, 0xfb, 0x00, 0x4d, 0xae, 0x5d, 0x40,
+	0xda, 0x9a, 0x66, 0x82, 0xff, 0xe7, 0x87, 0x49, 0xb3, 0x76, 0xc6, 0xae, 0x8f, 0xf7, 0xdc, 0x73,
+	0xce, 0xcd, 0x39, 0x04, 0x40, 0xc9, 0x2c, 0x0d, 0x0b, 0x95, 0xeb, 0x9c, 0xf6, 0xc4, 0x56, 0x07,
+	0x77, 0x30, 0x7c, 0xc9, 0x05, 0x32, 0x2c, 0x3e, 0xbe, 0xe9, 0x08, 0x48, 0x14, 0x4f, 0x1c, 0xdf,
+	0x99, 0x0d, 0x19, 0x89, 0x62, 0x33, 0x2f, 0x26, 0xc4, 0x77, 0x66, 0xa7, 0x8c, 0x44, 0x8b, 0xe0,
+	0x1a, 0xdc, 0x4d, 0x21, 0x5e, 0xf5, 0x1f, 0x7d, 0xbd, 0x32, 0xf4, 0x01, 0x23, 0xeb, 0x55, 0xe0,
+	0x01, 0x7d, 0x42, 0x5d, 0xd9, 0x25, 0x3b, 0xce, 0x19, 0x7e, 0xee, 0xb0, 0xd4, 0x16, 0x1a, 0x2b,
+	0x14, 0x0d, 0x7a, 0x03, 0x67, 0x4b, 0x99, 0x09, 0x0b, 0xaa, 0xaf, 0x39, 0x87, 0x6b, 0xb7, 0x70,
+	0xb1, 0xbf, 0xd6, 0x26, 0x59, 0x4f, 0x0c, 0x36, 0x70, 0xb5, 0x27, 0x25, 0x05, 0x72, 0xf9, 0x2e,
+	0xf9, 0x52, 0x66, 0x29, 0xaa, 0x86, 0x3e, 0x86, 0x7e, 0x05, 0xd4, 0xbe, 0x3d, 0x56, 0x4f, 0xed,
+	0x64, 0xb5, 0x6d, 0xaf, 0xb1, 0x9d, 0xff, 0x10, 0x70, 0x99, 0xcc, 0xd2, 0x04, 0xd5, 0x97, 0xe4,
+	0x48, 0x1f, 0xc0, 0xb5, 0xa2, 0xd1, 0xcb, 0x50, 0x6c, 0x75, 0x78, 0x1c, 0x76, 0x3a, 0x32, 0x8b,
+	0x43, 0xa3, 0xc1, 0x89, 0xa5, 0xac, 0x62, 0xfc, 0x57, 0x5a, 0xc1, 0x3a, 0x94, 0x73, 0x18, 0x34,
+	0x15, 0x51, 0xcf, 0x6c, 0x5b, 0x8d, 0x75, 0x68, 0x1e, 0xed, 0xce, 0x90, 0x63, 0x59, 0xe6, 0x8a,
+	0x8e, 0x0d, 0xed, 0xa8, 0xcb, 0xe9, 0xb9, 0x85, 0x37, 0x06, 0xcf, 0xe0, 0x75, 0xf5, 0x49, 0x7d,
+	0x8b, 0xdb, 0x59, 0x75, 0x97, 0xdb, 0x5b, 0xdf, 0xfc, 0xb4, 0xfb, 0xdf, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x6f, 0xe3, 0xfa, 0xcd, 0x77, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -145,7 +354,14 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RingServiceClient interface {
-	GetSucc(ctx context.Context, in *GetSuccRequest, opts ...grpc.CallOption) (*GetSuccReply, error)
+	// Theese request return you succ and pred for specific nodes
+	GetNodeSucc(ctx context.Context, in *GetNodeSuccRequest, opts ...grpc.CallOption) (*NodeReply, error)
+	GetNodePred(ctx context.Context, in *GetNodePredRequest, opts ...grpc.CallOption) (*NodeReply, error)
+	// Theese request return them for id's
+	FindPred(ctx context.Context, in *FindPredRequest, opts ...grpc.CallOption) (*NodeReply, error)
+	// Update neighbours data of a node
+	UpdatePredecessor(ctx context.Context, in *UpdatePredRequest, opts ...grpc.CallOption) (*UpdateReply, error)
+	UpdateSpecificFinger(ctx context.Context, in *UpdateSpecificFingerRequest, opts ...grpc.CallOption) (*UpdateReply, error)
 }
 
 type ringServiceClient struct {
@@ -156,9 +372,45 @@ func NewRingServiceClient(cc grpc.ClientConnInterface) RingServiceClient {
 	return &ringServiceClient{cc}
 }
 
-func (c *ringServiceClient) GetSucc(ctx context.Context, in *GetSuccRequest, opts ...grpc.CallOption) (*GetSuccReply, error) {
-	out := new(GetSuccReply)
-	err := c.cc.Invoke(ctx, "/dht.RingService/GetSucc", in, out, opts...)
+func (c *ringServiceClient) GetNodeSucc(ctx context.Context, in *GetNodeSuccRequest, opts ...grpc.CallOption) (*NodeReply, error) {
+	out := new(NodeReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/GetNodeSucc", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ringServiceClient) GetNodePred(ctx context.Context, in *GetNodePredRequest, opts ...grpc.CallOption) (*NodeReply, error) {
+	out := new(NodeReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/GetNodePred", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ringServiceClient) FindPred(ctx context.Context, in *FindPredRequest, opts ...grpc.CallOption) (*NodeReply, error) {
+	out := new(NodeReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/FindPred", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ringServiceClient) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/UpdatePredecessor", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ringServiceClient) UpdateSpecificFinger(ctx context.Context, in *UpdateSpecificFingerRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/UpdateSpecificFinger", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -167,35 +419,126 @@ func (c *ringServiceClient) GetSucc(ctx context.Context, in *GetSuccRequest, opt
 
 // RingServiceServer is the server API for RingService service.
 type RingServiceServer interface {
-	GetSucc(context.Context, *GetSuccRequest) (*GetSuccReply, error)
+	// Theese request return you succ and pred for specific nodes
+	GetNodeSucc(context.Context, *GetNodeSuccRequest) (*NodeReply, error)
+	GetNodePred(context.Context, *GetNodePredRequest) (*NodeReply, error)
+	// Theese request return them for id's
+	FindPred(context.Context, *FindPredRequest) (*NodeReply, error)
+	// Update neighbours data of a node
+	UpdatePredecessor(context.Context, *UpdatePredRequest) (*UpdateReply, error)
+	UpdateSpecificFinger(context.Context, *UpdateSpecificFingerRequest) (*UpdateReply, error)
 }
 
 // UnimplementedRingServiceServer can be embedded to have forward compatible implementations.
 type UnimplementedRingServiceServer struct {
 }
 
-func (*UnimplementedRingServiceServer) GetSucc(ctx context.Context, req *GetSuccRequest) (*GetSuccReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSucc not implemented")
+func (*UnimplementedRingServiceServer) GetNodeSucc(ctx context.Context, req *GetNodeSuccRequest) (*NodeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeSucc not implemented")
+}
+func (*UnimplementedRingServiceServer) GetNodePred(ctx context.Context, req *GetNodePredRequest) (*NodeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodePred not implemented")
+}
+func (*UnimplementedRingServiceServer) FindPred(ctx context.Context, req *FindPredRequest) (*NodeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindPred not implemented")
+}
+func (*UnimplementedRingServiceServer) UpdatePredecessor(ctx context.Context, req *UpdatePredRequest) (*UpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePredecessor not implemented")
+}
+func (*UnimplementedRingServiceServer) UpdateSpecificFinger(ctx context.Context, req *UpdateSpecificFingerRequest) (*UpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSpecificFinger not implemented")
 }
 
 func RegisterRingServiceServer(s *grpc.Server, srv RingServiceServer) {
 	s.RegisterService(&_RingService_serviceDesc, srv)
 }
 
-func _RingService_GetSucc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSuccRequest)
+func _RingService_GetNodeSucc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeSuccRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RingServiceServer).GetSucc(ctx, in)
+		return srv.(RingServiceServer).GetNodeSucc(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/dht.RingService/GetSucc",
+		FullMethod: "/dht.RingService/GetNodeSucc",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RingServiceServer).GetSucc(ctx, req.(*GetSuccRequest))
+		return srv.(RingServiceServer).GetNodeSucc(ctx, req.(*GetNodeSuccRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RingService_GetNodePred_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodePredRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).GetNodePred(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/GetNodePred",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).GetNodePred(ctx, req.(*GetNodePredRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RingService_FindPred_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindPredRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).FindPred(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/FindPred",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).FindPred(ctx, req.(*FindPredRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RingService_UpdatePredecessor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePredRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).UpdatePredecessor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/UpdatePredecessor",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).UpdatePredecessor(ctx, req.(*UpdatePredRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RingService_UpdateSpecificFinger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSpecificFingerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).UpdateSpecificFinger(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/UpdateSpecificFinger",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).UpdateSpecificFinger(ctx, req.(*UpdateSpecificFingerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -205,8 +548,24 @@ var _RingService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*RingServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSucc",
-			Handler:    _RingService_GetSucc_Handler,
+			MethodName: "GetNodeSucc",
+			Handler:    _RingService_GetNodeSucc_Handler,
+		},
+		{
+			MethodName: "GetNodePred",
+			Handler:    _RingService_GetNodePred_Handler,
+		},
+		{
+			MethodName: "FindPred",
+			Handler:    _RingService_FindPred_Handler,
+		},
+		{
+			MethodName: "UpdatePredecessor",
+			Handler:    _RingService_UpdatePredecessor_Handler,
+		},
+		{
+			MethodName: "UpdateSpecificFinger",
+			Handler:    _RingService_UpdateSpecificFinger_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

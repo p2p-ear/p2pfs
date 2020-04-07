@@ -1,15 +1,46 @@
 syntax = "proto3";
 package dht;
 
-message GetSuccReply {
+message NodeReply {
   string IP = 1;
   uint64 ID = 2;
 }
 
-message GetSuccRequest {
+message UpdateReply {
+  bool OK = 1;
+}
+
+message GetNodeSuccRequest {
+}
+
+message GetNodePredRequest {
+}
+
+message FindPredRequest {
   uint64 ID = 1;
 }
 
+message UpdatePredRequest {
+  string IP = 1;
+}
+
+message UpdateSpecificFingerRequest {
+  int64 FingID = 1;
+  uint64 ID = 2;
+  string IP = 3;
+}
+
 service RingService {
-  rpc GetSucc(GetSuccRequest) returns (GetSuccReply) {}
+
+  // Theese request return you succ and pred for specific nodes
+  rpc GetNodeSucc(GetNodeSuccRequest) returns (NodeReply) {}
+  rpc GetNodePred(GetNodePredRequest) returns (NodeReply) {}
+
+  // Theese request return them for id's
+  rpc FindPred(FindPredRequest) returns (NodeReply) {}
+
+  // Update neighbours data of a node
+  rpc UpdatePredecessor(UpdatePredRequest) returns (UpdateReply) {}
+  rpc UpdateSpecificFinger(UpdateSpecificFingerRequest) returns (UpdateReply) {}
+
 }

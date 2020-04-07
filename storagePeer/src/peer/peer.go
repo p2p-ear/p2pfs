@@ -70,6 +70,11 @@ func (p *Peer) start() {
 		p.Errs <- grpcServer.Serve(lis)
 		close(p.Errs)
 	}()
+
+	// Join the network. Build finger table and adapt the other ones.
+
+	// Download from predecessor files that are now yours.
+
 }
 
 ////////
@@ -79,11 +84,9 @@ func (p *Peer) start() {
 // Send file to a specific node
 func (p *Peer) SendFile(id uint64) (bool, error) {
 
-	ip := ""
+	ip, err := p.ring.FindSuccessor(id)
 
 	for {
-
-		var err error
 		ip, err = p.ring.FindSuccessor(id)
 
 		if err == nil {

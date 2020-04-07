@@ -27,7 +27,7 @@ func main() {
 
 	ipPtr := flag.String("ip", "", "External IP of created node")
 	numPtr := flag.Uint64("num", 0, "Number of nodes in the network")
-	entry := flag.String("entry", "", "Ip of some existing node")
+	entry := flag.String("entry", "", "Ip of some existing node (if not set this node is considered first).")
 	flag.Parse()
 
 	if *ipPtr == "" {
@@ -36,10 +36,6 @@ func main() {
 	if *numPtr == 0 {
 		panic("num flag not set")
 	}
-	if *entry == "" {
-		panic("entry flag not set")
-	}
-
 
 	p := peer.NewPeer(*ipPtr, *numPtr, *entry)
 
@@ -59,120 +55,6 @@ func main() {
 }
 
 /*
-// Ping testing
-func testPing() {
-
-	///////////
-	// Initialization
-	///////////
-
-	// This is a setup for a testing version
-
-	arguments := os.Args
-
-	if len(arguments) == 1 {
-		fmt.Println("Please provide the id of a node")
-		return
-	}
-
-	ports := make([]string, 3)
-	var ownPort string
-
-	switch arguments[1] {
-	case "0":
-		ownPort = "127.0.0.1:9000"
-		ports[0] = "127.0.0.1:9001"
-		ports[1] = "127.0.0.1:9002"
-		ports[2] = "127.0.0.1:9003"
-	case "1":
-		ownPort = "127.0.0.1:9001"
-		ports[0] = "127.0.0.1:9000"
-		ports[1] = "127.0.0.1:9002"
-		ports[2] = "127.0.0.1:9003"
-	case "2":
-		ownPort = "127.0.0.1:9002"
-		ports[0] = "127.0.0.1:9001"
-		ports[1] = "127.0.0.1:9000"
-		ports[2] = "127.0.0.1:9003"
-	case "3":
-		ownPort = "127.0.0.1:9003"
-		ports[0] = "127.0.0.1:9001"
-		ports[1] = "127.0.0.1:9002"
-		ports[2] = "127.0.0.1:9000"
-	}
-
-	// Create a peer instance
-
-	intID, err := strconv.Atoi(arguments[1])
-	if err != nil {
-		fmt.Println("Provided arguments are wrong")
-		return
-	}
-
-	s := peer.Peer{
-		ID:         intID,
-		OwnIP:      ownPort,
-		Neighbours: ports,
-	}
-
-	fmt.Println("Sending to:", ports[0])
-	///////////
-	// Routing
-	///////////
-
-	// Start gRPC server
-	errs := s.Start()
-	time.Sleep(1 * time.Second)
-
-	/////// Configure queries
-
-	// Get connections and clients
-
-	connections := make([]*grpc.ClientConn, len(s.Neighbours))
-	clients := make([]peer.PeerServiceClient, len(s.Neighbours))
-
-	for i, nei := range s.Neighbours {
-		connections[i], err = grpc.Dial(nei, grpc.WithInsecure())
-		if err != nil {
-			fmt.Println("Connection refused")
-			return
-		}
-		clients[i] = peer.NewPeerServiceClient(connections[i])
-	}
-	defer сloseConnections(connections)
-
-	/////////////////
-	// Main loop
-	/////////////////
-
-	fmt.Println("Work begins")
-
-	for {
-		select {
-
-		case err := <-errs:
-			fmt.Println("Cannot serve a request", err)
-			return
-
-		default:
-
-			_, err := clients[0].Ping(
-				context.Background(),
-				&peer.PingMessage{Ok: true},
-			)
-
-			if err != nil {
-				fmt.Printf("%s is not ok!. error: %s\n", s.Neighbours[0], err)
-			} else {
-				fmt.Printf("%s is ok\n", s.Neighbours[0])
-			}
-
-			time.Sleep(1 * time.Second)
-		}
-	}
-
-}
-
 // Generate random string with length between lo and hi
 func randString(lo, hi int) []byte {
 	length := rand.Int()%(hi-lo) + lo
