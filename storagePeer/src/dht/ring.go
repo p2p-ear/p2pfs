@@ -152,7 +152,7 @@ func (n *RingNode) inInterval(start uint64, end uint64, id uint64) bool {
 	return (id >= start && id < n.maxNodes) || (id >= 0 && id <= end)
 }
 
-// Find closest predecessing finger from the personal table (кто за лопату ответственный)
+// Find closest predecessing finger from the personal table
 func (n *RingNode) getClosestPreceding(id uint64) (finger, error) {
 
 	if n.inInterval(n.self.ID, n.fingerTable[0].ID, id) {

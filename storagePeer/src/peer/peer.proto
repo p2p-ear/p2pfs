@@ -12,7 +12,6 @@ message Empty {
 message WriteRequest {
   string Name = 1;
   bytes Data = 2;
-  int64 ChunkSize = 3;
 }
 
 message WriteReply {
@@ -29,8 +28,17 @@ message ReadReply {
   int64 Size = 2;
 }
 
+message FindSuccRequest {
+  uint64 id = 1;
+}
+
+message FindSuccReply {
+  string ip = 1;
+}
+
 service PeerService {
   rpc Ping(PingMessage) returns (PingMessage) {}
   rpc Write(stream WriteRequest) returns (WriteReply) {}
   rpc Read(ReadRequest) returns (stream ReadReply) {}
+  rpc FindSuccessor(FindSuccRequest) returns (FindSuccReply) {}
 }

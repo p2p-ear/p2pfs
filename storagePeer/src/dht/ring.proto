@@ -32,11 +32,11 @@ message UpdateSpecificFingerRequest {
 
 service RingService {
 
-  // Theese request return you succ and pred for specific nodes
+  // These request return you succ and pred for specific nodes
   rpc GetNodeSucc(GetNodeSuccRequest) returns (NodeReply) {}
   rpc GetNodePred(GetNodePredRequest) returns (NodeReply) {}
 
-  // Theese request return them for id's
+  // These request return them for id's
   rpc FindPred(FindPredRequest) returns (NodeReply) {}
 
   // Update neighbours data of a node

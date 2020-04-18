@@ -45,7 +45,7 @@ func TestFiles() {
 		return
 	}
 
-	if err := wstream.Send(&peer.WriteRequest{Name: fName, ChunkSize: 8}); err != nil {
+	if err := wstream.Send(&peer.WriteRequest{Name: fName}); err != nil {
 		log.Println("Initializing write stream failed:", err)
 	}
 

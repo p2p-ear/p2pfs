@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"math"
 	"net"
 	"os"
 
@@ -37,6 +38,8 @@ func NewPeer(ownIP string, maxNodes uint64, existingIP string) *Peer {
 	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes), Errs: make(chan error, 1)}
 
 	p.start()
+
+	// Join the network. Build finger table and adapt the other ones.
 	p.ring.Join(existingIP)
 
 	return &p
@@ -76,8 +79,6 @@ func (p *Peer) start() {
 		close(p.Errs)
 	}()
 
-	// Join the network. Build finger table and adapt the other ones.
-
 	// Download from predecessor files that are now yours.
 
 }
@@ -86,15 +87,23 @@ func (p *Peer) start() {
 // Send and recieve files
 ////////
 
-// SendFile sends file to a specific node
-func (p *Peer) SendFile(id uint64) (bool, error) {
+// Кто за лопату ответственный
+func findSuccessor(ringIP string, id uint64) (string, error) {
 
-	ip, err := p.ring.FindSuccessor(id)
+	someConn, err := grpc.Dial(ringIP, grpc.WithInsecure())
+	if err != nil {
+		return "", err
+	}
+	defer someConn.Close()
+
+	somePeer := NewPeerServiceClient(someConn)
+	ip := ""
 
 	for {
-		ip, err = p.ring.FindSuccessor(id)
+		succReply, err := somePeer.FindSuccessor(context.Background(), &FindSuccRequest{Id: id})
 
 		if err == nil {
+			ip = succReply.Ip
 			break
 		} else {
 			fmt.Println(err.Error())
@@ -103,20 +112,74 @@ func (p *Peer) SendFile(id uint64) (bool, error) {
 		}
 	}
 
+	return ip, nil
+}
+
+// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
+//export UploadFile
+func UploadFile(ringIP string, id uint64, fname string, fcontent []byte) error {
+
+	ip, err := findSuccessor(ringIP, id)
 	fmt.Printf("Ring has answered with ip %s\n", ip)
 
-	conn, err := grpc.Dial(ip, grpc.WithInsecure())
+	conn, err := grpc.Dial(ringIP, grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		return err
 	}
+	defer conn.Close()
+
 	cl := NewPeerServiceClient(conn)
 
-	mes, err := cl.Ping(
-		context.Background(),
-		&PingMessage{Ok: true},
-	)
+	fmt.Println("Opening write stream...")
+	// Stream to write
+	wstream, err := cl.Write(context.Background())
+	for err != nil {
+		fmt.Println(err.Error())
+		fmt.Println("Couldn't initialize remote write stream")
+		time.Sleep(time.Second * 1)
 
-	return mes.GetOk(), err
+		wstream, err = cl.Write(context.Background())
+	}
+
+	fmt.Println("Sending filename...")
+	// Send filename
+	err = wstream.Send(&WriteRequest{Name: fname})
+
+	for err != nil {
+		fmt.Println(err.Error())
+		fmt.Println("Couldn't send filename")
+		time.Sleep(time.Second * 1)
+		err = wstream.Send(&WriteRequest{Name: fname})
+	}
+
+	chunkSize := 8
+	chunkAmnt := int(math.Ceil(float64(len(fcontent)) / float64(chunkSize)))
+
+	fmt.Println("Writing to file, total chunks:", chunkAmnt)
+	for i := 0; i < chunkAmnt; i++ {
+
+		curChunk := fcontent[i*chunkSize:]
+		fmt.Println("ChunkSize", chunkSize, "Left", len(curChunk))
+		if len(curChunk) > chunkSize {
+			fmt.Println()
+			curChunk = curChunk[:chunkSize]
+		}
+
+		err := wstream.Send(&WriteRequest{Data: curChunk})
+
+		for err != nil {
+			fmt.Println(err.Error())
+			fmt.Println("Unable to send file contents")
+			time.Sleep(time.Second * 1)
+			err = wstream.Send(&WriteRequest{Name: fname})
+		}
+
+		fmt.Println("Written chunk", i)
+	}
+
+	_, err = wstream.CloseAndRecv()
+	fmt.Println("Finished writing, err:", err)
+	return err
 }
 
 ////////
@@ -128,6 +191,14 @@ func (p *Peer) Ping(ctx context.Context, in *PingMessage) (*PingMessage, error) 
 	log.Printf("Receive message %t", in.Ok)
 	return &PingMessage{Ok: true}, nil
 }
+
+// FindSuccessor finds id's successor
+func (p *Peer) FindSuccessor(ctx context.Context, r *FindSuccRequest) (*FindSuccReply, error) {
+	ip, err := p.ring.FindSuccessor(r.Id)
+	return &FindSuccReply{Ip: ip}, err
+}
+
+// Read & Write ----------------------
 
 // Read reads the content of a specified file
 func (p *Peer) Read(r *ReadRequest, stream PeerService_ReadServer) error {

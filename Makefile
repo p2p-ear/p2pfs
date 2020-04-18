@@ -2,8 +2,9 @@
 # Constants
 #===========#
 
-BIN_PATH  = bin
-CODE_PATH = storagePeer
+BIN_PATH    = bin
+CODE_PATH   = storagePeer
+C_INTERFACE = c_interface
 
 #===========#
 # Commands
@@ -21,6 +22,10 @@ gen_proto_ring:
     -Idht \
     --go_out=plugins=grpc:dht \
     dht/ring.proto
+
+gen_c_interface:
+	cd ${CODE_PATH}/${C_INTERFACE}
+	go build -o $(addsuffix .so, ${C_INTERFACE}) -buildmode=c-shared $(addsuffix .go, ${C_INTERFACE})
 
 run:
 	cd ${CODE_PATH}
