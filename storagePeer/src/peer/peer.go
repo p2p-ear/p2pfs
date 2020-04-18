@@ -1,15 +1,18 @@
 package peer
 
 import (
+	"bufio"
 	"context"
-	"io/ioutil"
+	"encoding/json"
+	"io"
 	"log"
 	"net"
-	"encoding/json"
+	"os"
+
 	"google.golang.org/grpc"
 
-	"storagePeer/src/dht"
 	"fmt"
+	"storagePeer/src/dht"
 	"time"
 )
 
@@ -17,8 +20,8 @@ import (
 // Data structures
 ////////
 
+// Peer is the peer struct
 type Peer struct {
-
 	ownIP string
 	ring  *dht.RingNode
 	Errs  chan error
@@ -28,6 +31,7 @@ type Peer struct {
 // Local functions
 ////////
 
+// NewPeer creates new peer
 func NewPeer(ownIP string, maxNodes uint64, existingIP string) *Peer {
 
 	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes), Errs: make(chan error, 1)}
@@ -38,15 +42,16 @@ func NewPeer(ownIP string, maxNodes uint64, existingIP string) *Peer {
 	return &p
 }
 
+// MarshalJSON converts peer to JSON
 func (p *Peer) MarshalJSON() ([]byte, error) {
 
-	return json.Marshal(struct{
-			OwnIP string
-			Ring  *dht.RingNode
-		}{
-			OwnIP: p.ownIP,
-			Ring:  p.ring,
-		})
+	return json.Marshal(struct {
+		OwnIP string
+		Ring  *dht.RingNode
+	}{
+		OwnIP: p.ownIP,
+		Ring:  p.ring,
+	})
 }
 
 // Start starts gRPC server for peer in a seperate go routine
@@ -81,7 +86,7 @@ func (p *Peer) start() {
 // Send and recieve files
 ////////
 
-// Send file to a specific node
+// SendFile sends file to a specific node
 func (p *Peer) SendFile(id uint64) (bool, error) {
 
 	ip, err := p.ring.FindSuccessor(id)
@@ -101,10 +106,10 @@ func (p *Peer) SendFile(id uint64) (bool, error) {
 	fmt.Printf("Ring has answered with ip %s\n", ip)
 
 	conn, err := grpc.Dial(ip, grpc.WithInsecure())
-  if err != nil {
-    panic(err)
-  }
-  cl := NewPeerServiceClient(conn)
+	if err != nil {
+		panic(err)
+	}
+	cl := NewPeerServiceClient(conn)
 
 	mes, err := cl.Ping(
 		context.Background(),
@@ -118,24 +123,93 @@ func (p *Peer) SendFile(id uint64) (bool, error) {
 // Remote calls
 ////////
 
-
 // Ping generates response to a Ping request
 func (p *Peer) Ping(ctx context.Context, in *PingMessage) (*PingMessage, error) {
 	log.Printf("Receive message %t", in.Ok)
 	return &PingMessage{Ok: true}, nil
 }
 
-func (p *Peer) Read(ctx context.Context, r *ReadRequest) (*ReadReply, error) {
-	data, err := ioutil.ReadFile(r.Name)
+// Read reads the content of a specified file
+func (p *Peer) Read(r *ReadRequest, stream PeerService_ReadServer) error {
+
+	f, err := os.Open(r.Name)
+	defer f.Close()
+
 	if err != nil {
 		log.Fatal(err)
 
-		return &ReadReply{}, err
+		return err
 	}
 
-	return &ReadReply{Data: data}, nil
+	reader := bufio.NewReader(f)
+	b := make([]byte, r.ChunkSize)
+
+	for {
+		n, readErr := reader.Read(b)
+
+		if readErr == io.EOF {
+			break
+		}
+
+		if readErr != nil {
+			return err
+		}
+
+		if err := stream.Send(&ReadReply{Data: b, Size: int64(n)}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (p *Peer) Write(ctx context.Context, r *WriteRequest) (*Empty, error) {
-	return &Empty{}, ioutil.WriteFile(r.Name, r.Data, 0644)
+// Write writes the content of the request r onto the disk
+func (p *Peer) Write(stream PeerService_WriteServer) error {
+
+	writeInfo, err := stream.Recv()
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(writeInfo.Name)
+	defer f.Close()
+
+	if err != nil {
+		return err
+	}
+
+	writer := bufio.NewWriter(f)
+
+	n, err := writer.Write(writeInfo.Data)
+
+	if err != nil {
+		return err
+	}
+
+	written := int64(n)
+
+	for {
+		toWrite, readErr := stream.Recv()
+
+		if readErr == io.EOF {
+			if err = writer.Flush(); err != nil {
+				return err
+			}
+
+			return stream.SendAndClose(&WriteReply{Written: int64(written)})
+		}
+
+		if readErr != nil {
+			return readErr
+		}
+
+		n, err := writer.Write(toWrite.Data)
+
+		if err != nil {
+			return err
+		}
+
+		written += int64(n)
+	}
 }

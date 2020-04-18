@@ -12,18 +12,25 @@ message Empty {
 message WriteRequest {
   string Name = 1;
   bytes Data = 2;
+  int64 ChunkSize = 3;
+}
+
+message WriteReply {
+  int64 Written = 1;
 }
 
 message ReadRequest {
   string Name = 1;
+  int64 ChunkSize=2;
 }
 
 message ReadReply {
   bytes Data = 1;
+  int64 Size = 2;
 }
 
 service PeerService {
   rpc Ping(PingMessage) returns (PingMessage) {}
-  rpc Write(WriteRequest) returns (Empty) {}
-  rpc Read(ReadRequest) returns (ReadReply) {}
+  rpc Write(stream WriteRequest) returns (WriteReply) {}
+  rpc Read(ReadRequest) returns (stream ReadReply) {}
 }

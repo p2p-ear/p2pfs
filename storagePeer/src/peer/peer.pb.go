@@ -97,6 +97,7 @@ var xxx_messageInfo_Empty proto.InternalMessageInfo
 type WriteRequest struct {
 	Name                 string   `protobuf:"bytes,1,opt,name=Name,proto3" json:"Name,omitempty"`
 	Data                 []byte   `protobuf:"bytes,2,opt,name=Data,proto3" json:"Data,omitempty"`
+	ChunkSize            int64    `protobuf:"varint,3,opt,name=ChunkSize,proto3" json:"ChunkSize,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -141,10 +142,55 @@ func (m *WriteRequest) GetData() []byte {
 	return nil
 }
 
+func (m *WriteRequest) GetChunkSize() int64 {
+	if m != nil {
+		return m.ChunkSize
+	}
+	return 0
+}
+
+type WriteReply struct {
+	Written              int64    `protobuf:"varint,1,opt,name=Written,proto3" json:"Written,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteReply) Reset()         { *m = WriteReply{} }
+func (m *WriteReply) String() string { return proto.CompactTextString(m) }
+func (*WriteReply) ProtoMessage()    {}
+func (*WriteReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_055ae5a865fc1c9e, []int{3}
+}
+
+func (m *WriteReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteReply.Unmarshal(m, b)
+}
+func (m *WriteReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteReply.Marshal(b, m, deterministic)
+}
+func (m *WriteReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteReply.Merge(m, src)
+}
+func (m *WriteReply) XXX_Size() int {
+	return xxx_messageInfo_WriteReply.Size(m)
+}
+func (m *WriteReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteReply proto.InternalMessageInfo
+
+func (m *WriteReply) GetWritten() int64 {
+	if m != nil {
+		return m.Written
+	}
+	return 0
+}
+
 type ReadRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=Name,proto3" json:"Name,omitempty"`
-	//Maximum amount of bytes to read (inf if 0)
-	Maxbytes             uint64   `protobuf:"varint,2,opt,name=Maxbytes,proto3" json:"Maxbytes,omitempty"`
+	Name                 string   `protobuf:"bytes,1,opt,name=Name,proto3" json:"Name,omitempty"`
+	ChunkSize            int64    `protobuf:"varint,2,opt,name=ChunkSize,proto3" json:"ChunkSize,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -154,7 +200,7 @@ func (m *ReadRequest) Reset()         { *m = ReadRequest{} }
 func (m *ReadRequest) String() string { return proto.CompactTextString(m) }
 func (*ReadRequest) ProtoMessage()    {}
 func (*ReadRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_055ae5a865fc1c9e, []int{3}
+	return fileDescriptor_055ae5a865fc1c9e, []int{4}
 }
 
 func (m *ReadRequest) XXX_Unmarshal(b []byte) error {
@@ -182,15 +228,16 @@ func (m *ReadRequest) GetName() string {
 	return ""
 }
 
-func (m *ReadRequest) GetMaxbytes() uint64 {
+func (m *ReadRequest) GetChunkSize() int64 {
 	if m != nil {
-		return m.Maxbytes
+		return m.ChunkSize
 	}
 	return 0
 }
 
 type ReadReply struct {
 	Data                 []byte   `protobuf:"bytes,1,opt,name=Data,proto3" json:"Data,omitempty"`
+	Size                 int64    `protobuf:"varint,2,opt,name=Size,proto3" json:"Size,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -200,7 +247,7 @@ func (m *ReadReply) Reset()         { *m = ReadReply{} }
 func (m *ReadReply) String() string { return proto.CompactTextString(m) }
 func (*ReadReply) ProtoMessage()    {}
 func (*ReadReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_055ae5a865fc1c9e, []int{4}
+	return fileDescriptor_055ae5a865fc1c9e, []int{5}
 }
 
 func (m *ReadReply) XXX_Unmarshal(b []byte) error {
@@ -228,10 +275,18 @@ func (m *ReadReply) GetData() []byte {
 	return nil
 }
 
+func (m *ReadReply) GetSize() int64 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*PingMessage)(nil), "peer.PingMessage")
 	proto.RegisterType((*Empty)(nil), "peer.Empty")
 	proto.RegisterType((*WriteRequest)(nil), "peer.WriteRequest")
+	proto.RegisterType((*WriteReply)(nil), "peer.WriteReply")
 	proto.RegisterType((*ReadRequest)(nil), "peer.ReadRequest")
 	proto.RegisterType((*ReadReply)(nil), "peer.ReadReply")
 }
@@ -241,23 +296,25 @@ func init() {
 }
 
 var fileDescriptor_055ae5a865fc1c9e = []byte{
-	// 241 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x90, 0x41, 0x4b, 0x03, 0x31,
-	0x14, 0x84, 0x37, 0x4b, 0xaa, 0xed, 0xdb, 0xa2, 0xf8, 0x4e, 0x25, 0x20, 0x96, 0x9c, 0x8a, 0xc8,
-	0x1e, 0x14, 0xbc, 0x79, 0xd3, 0x63, 0x6d, 0x89, 0x07, 0xcf, 0xa9, 0x3e, 0xca, 0xd2, 0xd6, 0xc6,
-	0x24, 0x8a, 0xf9, 0x25, 0xfe, 0x5d, 0x49, 0x82, 0x6b, 0x40, 0xe8, 0x6d, 0x32, 0xc9, 0x0c, 0xf9,
-	0x06, 0xc0, 0x10, 0xd9, 0xd6, 0xd8, 0xbd, 0xdf, 0x23, 0x8f, 0x5a, 0x9e, 0x43, 0xb3, 0xec, 0xde,
-	0xd6, 0x73, 0x72, 0x4e, 0xaf, 0x09, 0x4f, 0xa0, 0x5e, 0x6c, 0x26, 0x6c, 0xca, 0x66, 0x43, 0x55,
-	0x2f, 0x36, 0xf2, 0x18, 0x06, 0x0f, 0x3b, 0xe3, 0x83, 0xbc, 0x85, 0xf1, 0xb3, 0xed, 0x3c, 0x29,
-	0x7a, 0xff, 0x20, 0xe7, 0x11, 0x81, 0x3f, 0xea, 0x1d, 0xa5, 0xa7, 0x23, 0x95, 0x74, 0xf4, 0xee,
-	0xb5, 0xd7, 0x93, 0x7a, 0xca, 0x66, 0x63, 0x95, 0xb4, 0xbc, 0x83, 0x46, 0x91, 0x7e, 0x3d, 0x14,
-	0x13, 0x30, 0x9c, 0xeb, 0xaf, 0x55, 0xf0, 0xe4, 0x52, 0x94, 0xab, 0xfe, 0x2c, 0x2f, 0x60, 0x94,
-	0xe3, 0x66, 0x1b, 0xfa, 0x7e, 0xf6, 0xd7, 0x7f, 0xfd, 0xcd, 0xa0, 0x59, 0x12, 0xd9, 0x27, 0xb2,
-	0x9f, 0xdd, 0x0b, 0x61, 0x0b, 0x3c, 0xf2, 0xe0, 0x59, 0x9b, 0x50, 0x0b, 0x36, 0xf1, 0xdf, 0x92,
-	0x15, 0x5e, 0xc2, 0x20, 0x71, 0x21, 0xe6, 0xdb, 0x12, 0x52, 0x34, 0xd9, 0xcb, 0x0b, 0x54, 0x78,
-	0x05, 0x3c, 0x7e, 0xe6, 0xb7, 0xbb, 0xe0, 0x12, 0xa7, 0xa5, 0x65, 0xb6, 0x41, 0x56, 0xab, 0xa3,
-	0x34, 0xf3, 0xcd, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xbd, 0x19, 0x5c, 0x49, 0x74, 0x01, 0x00,
-	0x00,
+	// 278 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xcf, 0x4a, 0xc3, 0x40,
+	0x10, 0xc6, 0xbb, 0x49, 0x6a, 0xcd, 0xa4, 0xf8, 0x67, 0x4e, 0x21, 0x28, 0x84, 0x3d, 0x48, 0x4e,
+	0x41, 0xed, 0x03, 0x78, 0x50, 0x8f, 0xda, 0xb2, 0x15, 0x3c, 0xaf, 0x3a, 0xd4, 0x90, 0x36, 0x5d,
+	0x37, 0x5b, 0x21, 0x3e, 0x8d, 0x8f, 0x2a, 0xbb, 0x35, 0xb8, 0x55, 0xf0, 0xf6, 0xcd, 0x97, 0xc9,
+	0xfc, 0x66, 0xbe, 0x05, 0x50, 0x44, 0xba, 0x54, 0x7a, 0x6d, 0xd6, 0x18, 0x59, 0xcd, 0x4f, 0x21,
+	0x99, 0x55, 0xcd, 0xe2, 0x8e, 0xda, 0x56, 0x2e, 0x08, 0x0f, 0x20, 0x98, 0xd6, 0x29, 0xcb, 0x59,
+	0xb1, 0x2f, 0x82, 0x69, 0xcd, 0x47, 0x30, 0xbc, 0x5d, 0x29, 0xd3, 0xf1, 0x07, 0x18, 0x3f, 0xea,
+	0xca, 0x90, 0xa0, 0xb7, 0x0d, 0xb5, 0x06, 0x11, 0xa2, 0x7b, 0xb9, 0x22, 0xd7, 0x1a, 0x0b, 0xa7,
+	0xad, 0x77, 0x23, 0x8d, 0x4c, 0x83, 0x9c, 0x15, 0x63, 0xe1, 0x34, 0x9e, 0x40, 0x7c, 0xfd, 0xba,
+	0x69, 0xea, 0x79, 0xf5, 0x41, 0x69, 0x98, 0xb3, 0x22, 0x14, 0x3f, 0x06, 0x3f, 0x03, 0xf8, 0x9e,
+	0xaa, 0x96, 0x1d, 0xa6, 0x30, 0xb2, 0x95, 0xa1, 0xc6, 0x8d, 0x0d, 0x45, 0x5f, 0xf2, 0x2b, 0x48,
+	0x04, 0xc9, 0x97, 0xff, 0xe0, 0x3b, 0xa0, 0xe0, 0x37, 0x68, 0x02, 0xf1, 0x76, 0x80, 0xe5, 0xf4,
+	0x7b, 0x32, 0x6f, 0x4f, 0x84, 0xc8, 0xfb, 0xd3, 0xe9, 0xcb, 0x4f, 0x06, 0xc9, 0x8c, 0x48, 0xcf,
+	0x49, 0xbf, 0x57, 0xcf, 0x84, 0x25, 0x44, 0x36, 0x2b, 0x3c, 0x2e, 0x5d, 0x8c, 0x5e, 0x6e, 0xd9,
+	0x5f, 0x8b, 0x0f, 0xf0, 0x02, 0x86, 0xee, 0x3a, 0xc4, 0xed, 0x57, 0x3f, 0xc0, 0xec, 0x68, 0xc7,
+	0x53, 0xcb, 0x8e, 0x0f, 0x0a, 0x66, 0x11, 0x76, 0xcf, 0x1e, 0xe1, 0x1d, 0x9d, 0x1d, 0xfa, 0x96,
+	0xeb, 0x3f, 0x67, 0x4f, 0x7b, 0xee, 0x2d, 0x27, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x72, 0xdf,
+	0xa4, 0xe1, 0xd9, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -273,8 +330,8 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PeerServiceClient interface {
 	Ping(ctx context.Context, in *PingMessage, opts ...grpc.CallOption) (*PingMessage, error)
-	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*Empty, error)
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error)
+	Write(ctx context.Context, opts ...grpc.CallOption) (PeerService_WriteClient, error)
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (PeerService_ReadClient, error)
 }
 
 type peerServiceClient struct {
@@ -294,29 +351,77 @@ func (c *peerServiceClient) Ping(ctx context.Context, in *PingMessage, opts ...g
 	return out, nil
 }
 
-func (c *peerServiceClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/peer.PeerService/Write", in, out, opts...)
+func (c *peerServiceClient) Write(ctx context.Context, opts ...grpc.CallOption) (PeerService_WriteClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_PeerService_serviceDesc.Streams[0], "/peer.PeerService/Write", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &peerServiceWriteClient{stream}
+	return x, nil
 }
 
-func (c *peerServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error) {
-	out := new(ReadReply)
-	err := c.cc.Invoke(ctx, "/peer.PeerService/Read", in, out, opts...)
+type PeerService_WriteClient interface {
+	Send(*WriteRequest) error
+	CloseAndRecv() (*WriteReply, error)
+	grpc.ClientStream
+}
+
+type peerServiceWriteClient struct {
+	grpc.ClientStream
+}
+
+func (x *peerServiceWriteClient) Send(m *WriteRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *peerServiceWriteClient) CloseAndRecv() (*WriteReply, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(WriteReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *peerServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (PeerService_ReadClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_PeerService_serviceDesc.Streams[1], "/peer.PeerService/Read", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &peerServiceReadClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PeerService_ReadClient interface {
+	Recv() (*ReadReply, error)
+	grpc.ClientStream
+}
+
+type peerServiceReadClient struct {
+	grpc.ClientStream
+}
+
+func (x *peerServiceReadClient) Recv() (*ReadReply, error) {
+	m := new(ReadReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // PeerServiceServer is the server API for PeerService service.
 type PeerServiceServer interface {
 	Ping(context.Context, *PingMessage) (*PingMessage, error)
-	Write(context.Context, *WriteRequest) (*Empty, error)
-	Read(context.Context, *ReadRequest) (*ReadReply, error)
+	Write(PeerService_WriteServer) error
+	Read(*ReadRequest, PeerService_ReadServer) error
 }
 
 // UnimplementedPeerServiceServer can be embedded to have forward compatible implementations.
@@ -326,11 +431,11 @@ type UnimplementedPeerServiceServer struct {
 func (*UnimplementedPeerServiceServer) Ping(ctx context.Context, req *PingMessage) (*PingMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (*UnimplementedPeerServiceServer) Write(ctx context.Context, req *WriteRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
+func (*UnimplementedPeerServiceServer) Write(srv PeerService_WriteServer) error {
+	return status.Errorf(codes.Unimplemented, "method Write not implemented")
 }
-func (*UnimplementedPeerServiceServer) Read(ctx context.Context, req *ReadRequest) (*ReadReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (*UnimplementedPeerServiceServer) Read(req *ReadRequest, srv PeerService_ReadServer) error {
+	return status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 
 func RegisterPeerServiceServer(s *grpc.Server, srv PeerServiceServer) {
@@ -355,40 +460,51 @@ func _PeerService_Ping_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PeerService_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WriteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PeerServiceServer).Write(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/peer.PeerService/Write",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PeerServiceServer).Write(ctx, req.(*WriteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _PeerService_Write_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PeerServiceServer).Write(&peerServiceWriteServer{stream})
 }
 
-func _PeerService_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadRequest)
-	if err := dec(in); err != nil {
+type PeerService_WriteServer interface {
+	SendAndClose(*WriteReply) error
+	Recv() (*WriteRequest, error)
+	grpc.ServerStream
+}
+
+type peerServiceWriteServer struct {
+	grpc.ServerStream
+}
+
+func (x *peerServiceWriteServer) SendAndClose(m *WriteReply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *peerServiceWriteServer) Recv() (*WriteRequest, error) {
+	m := new(WriteRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(PeerServiceServer).Read(ctx, in)
+	return m, nil
+}
+
+func _PeerService_Read_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ReadRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/peer.PeerService/Read",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PeerServiceServer).Read(ctx, req.(*ReadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(PeerServiceServer).Read(m, &peerServiceReadServer{stream})
+}
+
+type PeerService_ReadServer interface {
+	Send(*ReadReply) error
+	grpc.ServerStream
+}
+
+type peerServiceReadServer struct {
+	grpc.ServerStream
+}
+
+func (x *peerServiceReadServer) Send(m *ReadReply) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 var _PeerService_serviceDesc = grpc.ServiceDesc{
@@ -399,15 +515,18 @@ var _PeerService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Ping",
 			Handler:    _PeerService_Ping_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "Write",
-			Handler:    _PeerService_Write_Handler,
+			StreamName:    "Write",
+			Handler:       _PeerService_Write_Handler,
+			ClientStreams: true,
 		},
 		{
-			MethodName: "Read",
-			Handler:    _PeerService_Read_Handler,
+			StreamName:    "Read",
+			Handler:       _PeerService_Read_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "peer.proto",
 }

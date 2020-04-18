@@ -3,17 +3,12 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	//"log"
-	//"math/rand"
-	//"os"
-	//"strconv"
+	"fmt"
 	"time"
 
 	"storagePeer/src/peer"
 
-	//"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -51,68 +46,4 @@ func main() {
 
 		fmt.Printf("Value %t\n", mes)
 	}
-
 }
-
-/*
-// Generate random string with length between lo and hi
-func randString(lo, hi int) []byte {
-	length := rand.Int()%(hi-lo) + lo
-	randString := make([]byte, length)
-	for i := range randString {
-		randString[i] = byte(rand.Int() % 256)
-	}
-
-	return randString
-}
-
-// testFiles tests read/write capabilities of a peer
-func testFiles() {
-	p := peer.Peer{
-		ID:         0,
-		OwnIP:      "127.0.0.1:9000",
-		Neighbours: make([]string, 0), //Don't need them in this test
-	}
-
-	p.Start()
-
-	connection, err := grpc.Dial(p.OwnIP, grpc.WithInsecure())
-	if err != nil {
-		log.Println("Cannot open connection", err)
-		return
-	}
-
-	client := peer.NewPeerServiceClient(connection)
-	defer connection.Close()
-
-	fName := "test_file"
-	fContent := randString(10, 256)
-
-	_, err = client.Write(context.Background(), &peer.WriteRequest{Name: fName, Data: fContent})
-	if err != nil {
-		log.Println("Write request failed:", err)
-		return
-	}
-
-	read, err := client.Read(context.Background(), &peer.ReadRequest{Name: fName})
-	if err != nil {
-		log.Println("Read request failed", err)
-		return
-	}
-
-	if r, w := len(read.Data), len(fContent); r != w {
-		fmt.Println("Read", r, "Wrote", w, " - doesn't match!")
-		return
-	}
-
-	for i, b := range read.Data {
-		if b != fContent[i] {
-			fmt.Println("Read data different from written data")
-			return
-		}
-	}
-
-	os.Remove(fName)
-	fmt.Println("R/W test successful!")
-}
-*/
