@@ -19,9 +19,15 @@ build:
 gen_proto_ring:
 	cd ${CODE_PATH}/src
 	protoc -I dht/ \
-    -Idht \
-    --go_out=plugins=grpc:dht \
-    dht/ring.proto
+		-Idht \
+		--go_out=plugins=grpc:dht \
+		dht/ring.proto
+
+gen_proto_peer:
+	cd ${CODE_PATH}/src
+	protoc -I peer  \
+		--go_out=plugins=grpc:peer \
+		peer/peer.proto
 
 gen_c_interface:
 	cd ${CODE_PATH}/${C_INTERFACE}

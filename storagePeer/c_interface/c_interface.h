@@ -71,7 +71,7 @@ extern "C" {
 
 // UploadFile writes to the closest node to id on the same ring as ringIP
 
-extern void UploadFile(GoString p0, GoUint64 p1, GoString p2, GoSlice p3);
+extern void UploadFile(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
 
 #ifdef __cplusplus
 }

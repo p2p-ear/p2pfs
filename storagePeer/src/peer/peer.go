@@ -116,9 +116,9 @@ func findSuccessor(ringIP string, id uint64) (string, error) {
 }
 
 // UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
-//export UploadFile
-func UploadFile(ringIP string, id uint64, fname string, fcontent []byte) error {
+func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
 
+	id := dht.Hash([]byte(fname), ringsz)
 	ip, err := findSuccessor(ringIP, id)
 	fmt.Printf("Ring has answered with ip %s\n", ip)
 

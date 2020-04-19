@@ -1,13 +1,12 @@
-package testfiles
+package peer
 
 import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
-	"storagePeer/src/peer"
+	"testing"
 
 	"google.golang.org/grpc"
 )
@@ -23,30 +22,28 @@ func randString(length int) []byte {
 	return randString
 }
 
-// TestFiles tests read/write capabilities of a peer
-func TestFiles() {
+// TestRW tests read/write capabilities of a peer
+func TestRW(t *testing.T) {
 	ownIP := "127.0.0.1:9000"
-	peer.NewPeer(ownIP, 2, "")
+	NewPeer(ownIP, 2, "")
 
 	connection, err := grpc.Dial(ownIP, grpc.WithInsecure())
 	if err != nil {
-		log.Println("Cannot open connection", err)
-		return
+		t.Error("Cannot open connection", err)
 	}
 
-	client := peer.NewPeerServiceClient(connection)
+	client := NewPeerServiceClient(connection)
 	defer connection.Close()
 
 	fName := "test_file"
 
 	wstream, err := client.Write(context.Background())
 	if err != nil {
-		log.Println("Creating write stream failed:", err)
-		return
+		t.Error("Creating write stream failed:", err)
 	}
 
-	if err := wstream.Send(&peer.WriteRequest{Name: fName}); err != nil {
-		log.Println("Initializing write stream failed:", err)
+	if err := wstream.Send(&WriteRequest{Name: fName}); err != nil {
+		t.Error("Initializing write stream failed:", err)
 	}
 
 	chunkAmnt := rand.Intn(16) + 16
@@ -56,9 +53,9 @@ func TestFiles() {
 	for i := 0; i < chunkAmnt; i++ {
 		nextChunk := randString(8)
 		fContent = append(fContent, nextChunk...)
-		if err = wstream.Send(&peer.WriteRequest{Data: nextChunk}); err != nil {
-			log.Println("Error writing to stream:", err)
-			return
+		if err = wstream.Send(&WriteRequest{Data: nextChunk}); err != nil {
+			t.Error("Error writing to stream:", err)
+
 		}
 	}
 
@@ -68,23 +65,20 @@ func TestFiles() {
 	fLength += lastChunkLen
 	fContent = append(fContent, lastChunk...)
 
-	if err := wstream.Send(&peer.WriteRequest{Data: lastChunk}); err != nil {
+	if err := wstream.Send(&WriteRequest{Data: lastChunk}); err != nil {
 		fmt.Println("Error writing final bytes to stream:", err)
-		return
 	}
 
 	writeReply, err := wstream.CloseAndRecv()
 	if err != nil {
 		fmt.Println("Error closing write stream:", err)
-		return
 	}
 
 	written := int(writeReply.Written)
 
-	rstream, err := client.Read(context.Background(), &peer.ReadRequest{Name: fName, ChunkSize: 8})
+	rstream, err := client.Read(context.Background(), &ReadRequest{Name: fName, ChunkSize: 8})
 	if err != nil {
-		log.Println("Creating read stream failed:", err)
-		return
+		t.Error("Creating read stream failed:", err)
 	}
 
 	readContent := make([]byte, 0)
@@ -96,7 +90,7 @@ func TestFiles() {
 		}
 
 		if err != nil {
-			fmt.Println("Error reading from stream:", err)
+			t.Error("Error reading from stream:", err)
 		}
 
 		nextChunk := readReply.Data[:readReply.Size]
@@ -105,17 +99,14 @@ func TestFiles() {
 	}
 
 	if r, w := len(readContent), written; r != w {
-		fmt.Println("Read", r, "Wrote", w, " - doesn't match!")
-		return
+		t.Error("Read", r, "Wrote", w, " - doesn't match!")
 	}
 
 	for i, b := range readContent {
 		if b != fContent[i] {
-			fmt.Println("Read data different from written data")
-			return
+			t.Error("Read data different from written data")
 		}
 	}
 
 	os.Remove(fName)
-	fmt.Println("R/W test successful!")
 }

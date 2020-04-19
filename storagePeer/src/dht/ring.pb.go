@@ -354,10 +354,10 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RingServiceClient interface {
-	// Theese request return you succ and pred for specific nodes
+	// These request return you succ and pred for specific nodes
 	GetNodeSucc(ctx context.Context, in *GetNodeSuccRequest, opts ...grpc.CallOption) (*NodeReply, error)
 	GetNodePred(ctx context.Context, in *GetNodePredRequest, opts ...grpc.CallOption) (*NodeReply, error)
-	// Theese request return them for id's
+	// These request return them for id's
 	FindPred(ctx context.Context, in *FindPredRequest, opts ...grpc.CallOption) (*NodeReply, error)
 	// Update neighbours data of a node
 	UpdatePredecessor(ctx context.Context, in *UpdatePredRequest, opts ...grpc.CallOption) (*UpdateReply, error)
@@ -419,10 +419,10 @@ func (c *ringServiceClient) UpdateSpecificFinger(ctx context.Context, in *Update
 
 // RingServiceServer is the server API for RingService service.
 type RingServiceServer interface {
-	// Theese request return you succ and pred for specific nodes
+	// These request return you succ and pred for specific nodes
 	GetNodeSucc(context.Context, *GetNodeSuccRequest) (*NodeReply, error)
 	GetNodePred(context.Context, *GetNodePredRequest) (*NodeReply, error)
-	// Theese request return them for id's
+	// These request return them for id's
 	FindPred(context.Context, *FindPredRequest) (*NodeReply, error)
 	// Update neighbours data of a node
 	UpdatePredecessor(context.Context, *UpdatePredRequest) (*UpdateReply, error)
