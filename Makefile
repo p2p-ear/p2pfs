@@ -38,6 +38,10 @@ gen_c_test:
 	cd ${CODE_PATH}/${C_INTERFACE}
 	gcc demo.c -o ../bin/c_demo ../bin/${C_INTERFACE}.so
 
+test:
+	cd ${CODE_PATH}/src
+	go test ./*/
+
 run:
 	cd ${CODE_PATH}
 	${BIN_PATH}/peer

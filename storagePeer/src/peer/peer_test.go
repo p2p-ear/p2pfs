@@ -12,6 +12,17 @@ import (
 	"google.golang.org/grpc"
 )
 
+func genIP() func() string {
+	port := 9000
+	return func() string {
+		ip := fmt.Sprintf("127.0.0.1:%d", port)
+		port++
+		return ip
+	}
+}
+
+var IP = genIP()
+
 // Generate random string with specified length
 func randString(length int) []byte {
 
@@ -24,7 +35,7 @@ func randString(length int) []byte {
 }
 
 func makePeer() (string, uint64, PeerServiceClient, *grpc.ClientConn, error) {
-	ownIP := "127.0.0.1:9000"
+	ownIP := IP()
 
 	ringsz := uint64(100)
 	NewPeer(ownIP, ringsz, "")
