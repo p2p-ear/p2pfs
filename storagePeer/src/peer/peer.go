@@ -204,21 +204,23 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) err
 	return SendFile(targetIP, fname, fcontent)
 }
 
-// RecvFile recieves file w/ filename=fname, from node targetIP
-func RecvFile(targetIP string, fname string) ([]byte, error) {
+// RecvFile recieves file w/ filename=fname, from node targetIP - returns how much empty space is at the end (negative, if buffer is too small)
+func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 
 	conn, peer, err := Connect(targetIP)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	defer conn.Close()
 
 	rstream, err := peer.Read(context.Background(), &ReadRequest{Name: fname, ChunkSize: chunksz})
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	readContent := make([]byte, 0)
+	contentSlice := fcontent[:]
+	bufferSmall := false
+	emptySpace := len(fcontent)
 
 	for {
 		readReply, err := rstream.Recv()
@@ -228,26 +230,41 @@ func RecvFile(targetIP string, fname string) ([]byte, error) {
 		}
 
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
 
-		nextChunk := readReply.Data[:readReply.Size]
-		readContent = append(readContent, nextChunk...)
+		if !bufferSmall && int(readReply.Size) > emptySpace {
+			for i := range contentSlice {
+				contentSlice[i] = readReply.Data[i]
+			}
+
+			emptySpace = 0
+			bufferSmall = true
+		}
+
+		if !bufferSmall {
+			for i := 0; i < int(readReply.Size); i++ {
+				contentSlice[i] = readReply.Data[i]
+			}
+			contentSlice = contentSlice[readReply.Size:]
+		}
+
+		emptySpace -= int(readReply.Size)
 	}
 
-	return readContent, nil
+	return emptySpace, nil
 }
 
 // DownloadFile downloads file from the corresponding node
-func DownloadFile(ringIP string, fname string, ringsz uint64) ([]byte, error) {
+func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (int, error) {
 	id := dht.Hash([]byte(fname), ringsz)
 	targetIP, err := connectAndFindSuccessor(ringIP, id)
 
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return RecvFile(targetIP, fname)
+	return RecvFile(targetIP, fname, fcontent)
 }
 
 ////////

@@ -182,13 +182,14 @@ func TestDownload(t *testing.T) {
 
 	ioutil.WriteFile(fname, fcontent, 0644)
 
-	fcontentRead, err := DownloadFile(ownIP, fname, ringsz)
+	fcontentRead := make([]byte, len(fcontent))
+	empty, err := DownloadFile(ownIP, fname, ringsz, fcontentRead)
 	if err != nil {
 		t.Error("Unable to download file", err)
 	}
 
-	if len(fcontentRead) != len(fcontent) {
-		t.Error("Lengths don't match: written", len(fcontent), "read", len(fcontentRead))
+	if empty != 0 {
+		t.Error("Lengths don't match: empty =", empty)
 	}
 
 	for i, b := range fcontentRead {

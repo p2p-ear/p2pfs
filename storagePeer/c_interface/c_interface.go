@@ -16,13 +16,13 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) {
 
 // DownloadFile downloads the file from the closest node to hash of fname on the same ring as ringIP
 //export DownloadFile
-func DownloadFile(ringIP string, fname string, ringsz uint64) []byte {
-	fcontent, err := peer.DownloadFile(ringIP, fname, ringsz)
+func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) int {
+	emptySpace, err := peer.DownloadFile(ringIP, fname, ringsz, fcontent)
 	if err != nil {
 		fmt.Println("Error downloading file!", err)
 	}
 
-	return fcontent
+	return emptySpace
 }
 
 func main() {
