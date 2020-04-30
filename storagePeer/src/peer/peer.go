@@ -114,14 +114,9 @@ func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
 	return ip, nil
 }
 
-// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
-func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
-
-	id := dht.Hash([]byte(fname), ringsz)
-	ip, err := connectAndFindSuccessor(ringIP, id)
-	fmt.Printf("Ring has answered with ip %s\n", ip)
-
-	conn, err := grpc.Dial(ringIP, grpc.WithInsecure())
+//SendFile sends file to the target IP
+func SendFile(targetIP string, fname string, fcontent []byte) error {
+	conn, err := grpc.Dial(targetIP, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
@@ -179,6 +174,19 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) err
 	_, err = wstream.CloseAndRecv()
 	fmt.Println("Finished writing, err:", err)
 	return err
+}
+
+// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
+func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
+
+	id := dht.Hash([]byte(fname), ringsz)
+	targetIP, err := connectAndFindSuccessor(ringIP, id)
+	fmt.Printf("Ring has answered with ip %s\n", targetIP)
+	if err != nil {
+		return err
+	}
+
+	return SendFile(targetIP, fname, fcontent)
 }
 
 ////////

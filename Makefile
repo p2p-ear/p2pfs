@@ -32,6 +32,11 @@ gen_proto_peer:
 gen_c_interface:
 	cd ${CODE_PATH}/${C_INTERFACE}
 	go build -o $(addsuffix .so, ${C_INTERFACE}) -buildmode=c-shared $(addsuffix .go, ${C_INTERFACE})
+	cp $(addsuffix .so, ${C_INTERFACE}) ../bin
+
+gen_c_test:
+	cd ${CODE_PATH}/${C_INTERFACE}
+	gcc demo.c -o ../bin/c_demo ../bin/${C_INTERFACE}.so
 
 run:
 	cd ${CODE_PATH}
