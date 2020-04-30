@@ -78,9 +78,6 @@ func (p *Peer) start() {
 		p.Errs <- grpcServer.Serve(lis)
 		close(p.Errs)
 	}()
-
-	// Download from predecessor files that are now yours.
-
 }
 
 // Connect connects to peer with specified IP
@@ -131,8 +128,11 @@ func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
 		}
 	}
 
+	fmt.Printf("Ring has answered with ip %s\n", ip)
 	return ip, nil
 }
+
+const chunksz = 8
 
 // SendFile sends file to the target IP
 func SendFile(targetIP string, fname string, fcontent []byte) error {
@@ -143,7 +143,7 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 	}
 	defer conn.Close()
 
-	fmt.Println("Opening write stream...")
+	fmt.Printf("Opening write stream to %s...", targetIP)
 	// Stream to write
 	wstream, err := cl.Write(context.Background())
 	for err != nil {
@@ -154,7 +154,7 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 		wstream, err = cl.Write(context.Background())
 	}
 
-	fmt.Println("Sending filename...")
+	fmt.Printf("Sending filename %s...", fname)
 	// Send filename
 	err = wstream.Send(&WriteRequest{Name: fname})
 
@@ -165,14 +165,13 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 		err = wstream.Send(&WriteRequest{Name: fname})
 	}
 
-	chunkSize := 8
+	chunkSize := chunksz
 	chunkAmnt := int(math.Ceil(float64(len(fcontent)) / float64(chunkSize)))
 
 	fmt.Println("Writing to file, total chunks:", chunkAmnt)
 	for i := 0; i < chunkAmnt; i++ {
 
 		curChunk := fcontent[i*chunkSize:]
-		fmt.Println("ChunkSize", chunkSize, "Left", len(curChunk))
 		if len(curChunk) > chunkSize {
 			fmt.Println()
 			curChunk = curChunk[:chunkSize]
@@ -182,16 +181,14 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 
 		for err != nil {
 			fmt.Println(err.Error())
-			fmt.Println("Unable to send file contents")
+			fmt.Printf("Unable to send chunk #%d", i)
 			time.Sleep(time.Second * 1)
 			err = wstream.Send(&WriteRequest{Name: fname})
 		}
-
-		fmt.Println("Written chunk", i)
 	}
 
-	_, err = wstream.CloseAndRecv()
-	fmt.Println("Finished writing, err:", err)
+	reply, err := wstream.CloseAndRecv()
+	fmt.Printf("Finished writing %d bytes", reply.Written)
 	return err
 }
 
@@ -200,12 +197,57 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) err
 
 	id := dht.Hash([]byte(fname), ringsz)
 	targetIP, err := connectAndFindSuccessor(ringIP, id)
-	fmt.Printf("Ring has answered with ip %s\n", targetIP)
 	if err != nil {
 		return err
 	}
 
 	return SendFile(targetIP, fname, fcontent)
+}
+
+// RecvFile recieves file w/ filename=fname, from node targetIP
+func RecvFile(targetIP string, fname string) ([]byte, error) {
+
+	conn, peer, err := Connect(targetIP)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	rstream, err := peer.Read(context.Background(), &ReadRequest{Name: fname, ChunkSize: chunksz})
+	if err != nil {
+		return nil, err
+	}
+
+	readContent := make([]byte, 0)
+
+	for {
+		readReply, err := rstream.Recv()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		nextChunk := readReply.Data[:readReply.Size]
+		readContent = append(readContent, nextChunk...)
+	}
+
+	return readContent, nil
+}
+
+// DownloadFile downloads file from the corresponding node
+func DownloadFile(ringIP string, fname string, ringsz uint64) ([]byte, error) {
+	id := dht.Hash([]byte(fname), ringsz)
+	targetIP, err := connectAndFindSuccessor(ringIP, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return RecvFile(targetIP, fname)
 }
 
 ////////

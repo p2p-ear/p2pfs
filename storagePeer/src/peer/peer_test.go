@@ -146,11 +146,49 @@ func TestUpload(t *testing.T) {
 	fcontent := randString(4096)
 	fname := "testfile.txt"
 
-	UploadFile(ownIP, fname, ringsz, fcontent)
+	err = UploadFile(ownIP, fname, ringsz, fcontent)
+	if err != nil {
+		t.Error("Unable to send file", err)
+	}
 
 	fcontentRead, err := ioutil.ReadFile(fname)
 	if err != nil {
 		t.Error("Unable to read sent file", err)
+	}
+
+	if len(fcontentRead) != len(fcontent) {
+		t.Error("Lengths don't match: written", len(fcontent), "read", len(fcontentRead))
+	}
+
+	for i, b := range fcontentRead {
+		if fcontent[i] != b {
+			t.Error("Content doesn't match!")
+		}
+	}
+
+	os.Remove(fname)
+}
+
+func TestDownload(t *testing.T) {
+
+	ownIP, ringsz, _, connection, err := makePeer()
+	defer connection.Close()
+	if err != nil {
+		t.Error(err)
+	}
+
+	fcontent := randString(4096)
+	fname := "testfile.txt"
+
+	ioutil.WriteFile(fname, fcontent, 0644)
+
+	fcontentRead, err := DownloadFile(ownIP, fname, ringsz)
+	if err != nil {
+		t.Error("Unable to download file", err)
+	}
+
+	if len(fcontentRead) != len(fcontent) {
+		t.Error("Lengths don't match: written", len(fcontent), "read", len(fcontentRead))
 	}
 
 	for i, b := range fcontentRead {

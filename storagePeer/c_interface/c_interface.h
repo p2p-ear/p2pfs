@@ -69,9 +69,13 @@ extern "C" {
 #endif
 
 
-// UploadFile writes to the closest node to id on the same ring as ringIP
+// UploadFile writes to the closest node to hash of fname on the same ring as ringIP
 
 extern void UploadFile(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
+
+// DownloadFile downloads the file from the closest node to hash of fname on the same ring as ringIP
+
+extern GoSlice DownloadFile(GoString p0, GoString p1, GoUint64 p2);
 
 #ifdef __cplusplus
 }
