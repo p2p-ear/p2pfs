@@ -87,8 +87,7 @@ func (p *Peer) start() {
 // Send and recieve files
 ////////
 
-// Кто за лопату ответственный
-func findSuccessor(ringIP string, id uint64) (string, error) {
+func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
 
 	someConn, err := grpc.Dial(ringIP, grpc.WithInsecure())
 	if err != nil {
@@ -100,7 +99,7 @@ func findSuccessor(ringIP string, id uint64) (string, error) {
 	ip := ""
 
 	for {
-		succReply, err := somePeer.FindSuccessor(context.Background(), &FindSuccRequest{Id: id})
+		succReply, err := somePeer.FindSuccessorInRing(context.Background(), &FindSuccRequest{Id: id})
 
 		if err == nil {
 			ip = succReply.Ip
@@ -119,7 +118,7 @@ func findSuccessor(ringIP string, id uint64) (string, error) {
 func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
 
 	id := dht.Hash([]byte(fname), ringsz)
-	ip, err := findSuccessor(ringIP, id)
+	ip, err := connectAndFindSuccessor(ringIP, id)
 	fmt.Printf("Ring has answered with ip %s\n", ip)
 
 	conn, err := grpc.Dial(ringIP, grpc.WithInsecure())
@@ -192,8 +191,8 @@ func (p *Peer) Ping(ctx context.Context, in *PingMessage) (*PingMessage, error) 
 	return &PingMessage{Ok: true}, nil
 }
 
-// FindSuccessor finds id's successor
-func (p *Peer) FindSuccessor(ctx context.Context, r *FindSuccRequest) (*FindSuccReply, error) {
+// FindSuccessorInRing finds id's successor in p's ring
+func (p *Peer) FindSuccessorInRing(ctx context.Context, r *FindSuccRequest) (*FindSuccReply, error) {
 	ip, err := p.ring.FindSuccessor(r.Id)
 	return &FindSuccReply{Ip: ip}, err
 }

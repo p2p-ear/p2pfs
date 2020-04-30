@@ -40,5 +40,5 @@ service PeerService {
   rpc Ping(PingMessage) returns (PingMessage) {}
   rpc Write(stream WriteRequest) returns (WriteReply) {}
   rpc Read(ReadRequest) returns (stream ReadReply) {}
-  rpc FindSuccessor(FindSuccRequest) returns (FindSuccReply) {}
+  rpc FindSuccessorInRing(FindSuccRequest) returns (FindSuccReply) {}
 }
