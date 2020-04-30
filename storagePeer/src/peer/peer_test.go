@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Generate random string with length between lo and hi
+// Generate random string with specified length
 func randString(length int) []byte {
 
 	randString := make([]byte, length)
@@ -22,18 +23,30 @@ func randString(length int) []byte {
 	return randString
 }
 
-// TestRW tests read/write capabilities of a peer
-func TestRW(t *testing.T) {
+func makePeer() (string, uint64, PeerServiceClient, *grpc.ClientConn, error) {
 	ownIP := "127.0.0.1:9000"
-	NewPeer(ownIP, 2, "")
+
+	ringsz := uint64(100)
+	NewPeer(ownIP, ringsz, "")
 
 	connection, err := grpc.Dial(ownIP, grpc.WithInsecure())
 	if err != nil {
-		t.Error("Cannot open connection", err)
+		return "", 0, nil, nil, err
 	}
 
 	client := NewPeerServiceClient(connection)
+
+	return ownIP, ringsz, client, connection, nil
+}
+
+// TestRW tests read/write capabilities of a peer
+func TestRW(t *testing.T) {
+
+	_, _, client, connection, err := makePeer()
 	defer connection.Close()
+	if err != nil {
+		t.Error(err)
+	}
 
 	fName := "test_file"
 
@@ -109,4 +122,31 @@ func TestRW(t *testing.T) {
 	}
 
 	os.Remove(fName)
+}
+
+func TestUpload(t *testing.T) {
+
+	ownIP, ringsz, _, connection, err := makePeer()
+	defer connection.Close()
+	if err != nil {
+		t.Error(err)
+	}
+
+	fcontent := randString(4096)
+	fname := "testfile.txt"
+
+	UploadFile(ownIP, fname, ringsz, fcontent)
+
+	fcontentRead, err := ioutil.ReadFile(fname)
+	if err != nil {
+		t.Error("Unable to read sent file", err)
+	}
+
+	for i, b := range fcontentRead {
+		if fcontent[i] != b {
+			t.Error("Content doesn't match!")
+		}
+	}
+
+	os.Remove(fname)
 }
