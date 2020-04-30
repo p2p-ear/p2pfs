@@ -83,21 +83,41 @@ func (p *Peer) start() {
 
 }
 
+// Connect connects to peer with specified IP
+func Connect(targetIP string) (*grpc.ClientConn, PeerServiceClient, error) {
+	conn, err := grpc.Dial(targetIP, grpc.WithInsecure())
+
+	if err != nil {
+		for {
+			conn, err = grpc.Dial(targetIP, grpc.WithInsecure())
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("Couldn't connect to node", targetIP)
+			} else {
+				break
+			}
+
+			time.Sleep(time.Second * 1)
+		}
+	}
+
+	cl := NewPeerServiceClient(conn)
+	return conn, cl, nil
+}
+
 ////////
 // Send and recieve files
 ////////
 
 func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
 
-	someConn, err := grpc.Dial(ringIP, grpc.WithInsecure())
+	someConn, somePeer, err := Connect(ringIP)
 	if err != nil {
 		return "", err
 	}
 	defer someConn.Close()
 
-	somePeer := NewPeerServiceClient(someConn)
 	ip := ""
-
 	for {
 		succReply, err := somePeer.FindSuccessorInRing(context.Background(), &FindSuccRequest{Id: id})
 
@@ -114,15 +134,14 @@ func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
 	return ip, nil
 }
 
-//SendFile sends file to the target IP
+// SendFile sends file to the target IP
 func SendFile(targetIP string, fname string, fcontent []byte) error {
-	conn, err := grpc.Dial(targetIP, grpc.WithInsecure())
+
+	conn, cl, err := Connect(targetIP)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	cl := NewPeerServiceClient(conn)
 
 	fmt.Println("Opening write stream...")
 	// Stream to write
