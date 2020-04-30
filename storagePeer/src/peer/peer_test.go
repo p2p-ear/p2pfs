@@ -1,12 +1,17 @@
 package peer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -199,4 +204,38 @@ func TestDownload(t *testing.T) {
 	}
 
 	os.Remove(fname)
+}
+
+func findBin() (string, error) {
+	absPath, err := filepath.Abs("./")
+	if err != nil {
+		return "", fmt.Errorf("Abs error: %s", err.Error())
+	}
+
+	projName := "storagePeer"
+	projPathInd := strings.LastIndex(absPath, projName)
+	projPath := absPath[:projPathInd+len(projName)]
+
+	return projPath + "/bin", nil
+}
+
+func TestC(t *testing.T) {
+	ip, ringsz, _, conn, err := makePeer()
+	if err != nil {
+		t.Error("Unable to create peer", err)
+	}
+	defer conn.Close()
+
+	binpath, err := findBin()
+	if err != nil {
+		t.Error("Unable to find file:", err)
+	}
+
+	var errStream bytes.Buffer
+	cTest := exec.Cmd{Path: "./c_test", Dir: binpath, Args: []string{binpath + "/c_test", ip, strconv.Itoa(int(ringsz))}, Stderr: &errStream}
+	err = cTest.Run()
+	if err != nil {
+		t.Error("Run error:", err)
+		t.Error(errStream.String())
+	}
 }

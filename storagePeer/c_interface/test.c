@@ -3,14 +3,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main() {
+int main(int argc, char* argv[]) {
     // Initialize the arguments. Note, that we use Go types, defined in c_interface.h.
-
+    if (argc < 3) {
+        fprintf(stderr, "Not enough arguments for c_test: %d < 3", argc);
+        return -1;
+    }
+    
     //IP - ip of any node on the network
-    GoString ip = { "127.0.0.1:9000", 14 };
+    const char* ip_string = argv[1];
+    GoString ip = { ip_string, 14 };
 
     //ID - the size of the ring
-    GoUint64 ringsz = 10000;
+    GoUint64 ringsz = atoi(argv[2]);
 
     //fname - the name of the file, same format (last number is the length of the string)
     GoString fname = { "testfile", 8 };
