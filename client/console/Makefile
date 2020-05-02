@@ -14,13 +14,12 @@ preprocess:
 	mkdir build
 
 MDupload: MDupload.o
-	$(CC) $(DIR_BLD)MDupload.o $(LFLAGS) -o $(DIR_BLD)MDupload
-
+	$(CC) $(DIR_BLD)MDupload.o $(LFLAGS) -Wl,-rpath-link,/home/alexander/computer_science/projects/dist_sys/p2pfs/client/libs/build/libc_interface.so -o $(DIR_BLD)MDupload 
 MDupload.o: $(DIR_SRC)console_upload.cpp
 	$(CC) $(CFLAGS) $(DIR_SRC)console_upload.cpp -o $(DIR_BLD)MDupload.o
 
 MDdownload: MDdownload.o
-	$(CC) $(DIR_BLD)MDdownload.o $(LFLAGS) -o $(DIR_BLD)MDdownload
+	$(CC) $(DIR_BLD)MDdownload.o $(LFLAGS) -Wl,-rpath-link,/home/alexander/computer_science/projects/dist_sys/p2pfs/client/libs/build/libc_interface.so -o $(DIR_BLD)MDdownload 
 
 MDdownload.o: $(DIR_SRC)console_download.cpp
 	$(CC) $(CFLAGS) $(DIR_SRC)console_download.cpp -o $(DIR_BLD)MDdownload.o

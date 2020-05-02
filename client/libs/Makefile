@@ -1,5 +1,5 @@
 CFLAGS_LIB =-c -std=c++1z -O3 -fPIC
-LFLAGS_LIB = -shared 
+LFLAGS_LIB = -shared -lstdc++fs
 
 CC=g++
 
@@ -16,8 +16,7 @@ clean:
 	rm -r build
 
 libduload.so: upload.o download.o common.o 
-	$(CC) $(LFLAGS_LIB) $(DIR_BLD)upload.o $(DIR_BLD)download.o $(DIR_BLD)common.o -lc_interface -o $(DIR_BLD)libduload.so
-
+	$(CC) $(LFLAGS_LIB) $(DIR_BLD)upload.o $(DIR_BLD)download.o $(DIR_BLD)common.o -lc_interface -L./build -o $(DIR_BLD)libduload.so 
 upload.o: $(DIR_INC)duload.h $(DIR_SRC)upload.cpp 
 	$(CC) $(CFLAGS_LIB) $(DIR_SRC)upload.cpp -o $(DIR_BLD)upload.o
 

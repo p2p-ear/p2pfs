@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../Interface/storagePeer/c_interface/c_interface.h"
+#include "c_interface.h"
 
 #include <stdio.h>
 #include <string.h>
