@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1250</width>
+    <height>711</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Tab 1</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="2" colspan="2">
+         <widget class="QListWidget" name="listWidget_2"/>
+        </item>
+        <item row="6" column="0" colspan="4">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Path on MyDisk:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineMyDisk"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnPath">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>srch</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnUpload">
+            <property name="maximumSize">
+             <size>
+              <width>80</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>upload</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="0" rowspan="5">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QPushButton" name="btnBack">
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>&lt;-</string>
+              </property>
+              <property name="shortcut">
+               <string>Alt+Left</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnForward">
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>26</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>-&gt;</string>
+              </property>
+              <property name="shortcut">
+               <string>Alt+Right</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnUp">
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Up</string>
+              </property>
+              <property name="shortcut">
+               <string>Alt+Up</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnHome">
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Home</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QListWidget" name="listWidget">
+            <property name="maximumSize">
+             <size>
+              <width>341</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QPushButton" name="btnAdd">
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>-&gt;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btnRemove">
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>&lt;-</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btmClear">
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>clear</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QPushButton" name="btnCd">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>cd</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="2">
+         <widget class="QLineEdit" name="linePath"/>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLineEdit" name="lineTotal"/>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Total:</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Tab 2</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1250</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuMyDisk">
+    <property name="title">
+     <string>MyDisk</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuUser">
+    <property name="title">
+     <string>User</string>
+    </property>
+    <addaction name="actionUsername_some_thing"/>
+    <addaction name="actionUser_Options"/>
+    <addaction name="actionLogout"/>
+    <addaction name="separator"/>
+    <addaction name="actionAuthorize"/>
+    <addaction name="actionChange_User"/>
+   </widget>
+   <addaction name="menuMyDisk"/>
+   <addaction name="menuUser"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionUsername_some_thing">
+   <property name="text">
+    <string>Username@some.thing</string>
+   </property>
+  </action>
+  <action name="actionUser_Options">
+   <property name="text">
+    <string>User Options</string>
+   </property>
+  </action>
+  <action name="actionAuthorize">
+   <property name="text">
+    <string>Authorize</string>
+   </property>
+  </action>
+  <action name="actionChange_User">
+   <property name="text">
+    <string>Change User</string>
+   </property>
+  </action>
+  <action name="actionLogout">
+   <property name="text">
+    <string>Logout</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
