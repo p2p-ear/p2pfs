@@ -190,8 +190,10 @@ void MainWindow::on_btnUpload_clicked() {
     v.SetField = vis1;
     QMessageBox* load = new QMessageBox();
     load->show();
+    std::string ip = "198.172.0.1:9000";
+    unsigned long ringsz = 1000;
     for (const auto& item : uploadset) {
-        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1);
+        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
     }
     load->close();
     delete load;
