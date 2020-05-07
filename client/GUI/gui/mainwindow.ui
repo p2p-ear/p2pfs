@@ -18,16 +18,13 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
         <string>Tab 1</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="1" column="2" colspan="2">
-         <widget class="QListWidget" name="listWidget_2"/>
-        </item>
         <item row="6" column="0" colspan="4">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
@@ -148,13 +145,28 @@
            </layout>
           </item>
           <item>
-           <widget class="QListWidget" name="listWidget">
+           <widget class="QTableWidget" name="tableWidget">
             <property name="maximumSize">
              <size>
               <width>341</width>
               <height>16777215</height>
              </size>
             </property>
+            <column>
+             <property name="text">
+              <string>Name</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Type</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Size</string>
+             </property>
+            </column>
            </widget>
           </item>
          </layout>
@@ -224,6 +236,9 @@
            <string>Total:</string>
           </property>
          </widget>
+        </item>
+        <item row="1" column="2" colspan="2">
+         <widget class="QTableWidget" name="tableWidget_2"/>
         </item>
        </layout>
       </widget>

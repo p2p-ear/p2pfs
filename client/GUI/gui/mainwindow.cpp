@@ -22,7 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionLogout->setDisabled(true);
     ui->actionChange_User->setDisabled(true);
     ui->actionUser_Options->setDisabled(true);
-    ui->listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->tableWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     //ui->listWidget->setDragEnabled(true);
     //ui->listWidget_2->viewport()->setAcceptDrops(true);
     //ui->listWidget_2->setDropIndicatorShown(true);
@@ -51,9 +52,17 @@ void MainWindow::on_btnBack_clicked() {
 
         QDir curr_dir(current_path);
 
-        ui->listWidget->clear();
+        ui->tableWidget->clear();
+        int i = 0;
         for (const auto& item : curr_dir.entryInfoList()) {
-            ui->listWidget->addItem(item.fileName());
+            ui->tableWidget->insertRow(i);
+            QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+            QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+            QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+            ui->tableWidget->setItem(i, 0, Name);
+            ui->tableWidget->setItem(i, 1, Type);
+            ui->tableWidget->setItem(i, 2, Size);
+            i++;
         }
 
     }
@@ -73,9 +82,18 @@ void MainWindow::on_btnForward_clicked() {
 
         QDir curr_dir(current_path);
 
-        ui->listWidget->clear();
+
+        ui->tableWidget->clear();
+        int i = 0;
         for (const auto& item : curr_dir.entryInfoList()) {
-            ui->listWidget->addItem(item.fileName());
+            ui->tableWidget->insertRow(i);
+            QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+            QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+            QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+            ui->tableWidget->setItem(i, 0, Name);
+            ui->tableWidget->setItem(i, 1, Type);
+            ui->tableWidget->setItem(i, 2, Size);
+            i++;
         }
 
     }
@@ -91,9 +109,17 @@ void MainWindow::on_btnUp_clicked() {
     }
     current_path = curr_dir.path();
     ui->linePath->setText(current_path);
-    ui->listWidget->clear();
+    ui->tableWidget->clear();
+    int i = 0;
     for (const auto& item : curr_dir.entryInfoList()) {
-        ui->listWidget->addItem(item.fileName());
+        ui->tableWidget->insertRow(i);
+        QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+        ui->tableWidget->setItem(i, 0, Name);
+        ui->tableWidget->setItem(i, 1, Type);
+        ui->tableWidget->setItem(i, 2, Size);
+        i++;
     }
 }
 
@@ -107,34 +133,48 @@ void MainWindow::on_btnHome_clicked() {
     QDir dir(homepath);
     current_path = homepath;
     ui->linePath->setText(current_path);
-    ui->listWidget->clear();
+    ui->tableWidget->clear();
     for (const auto& item : dir.entryInfoList()) {
-        ui->listWidget->addItem(item.fileName());
+        ui->tableWidget->insertRow(ui->tableWidget->rowCount());
+        QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, Name);
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 1, Type);
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 2, Size);
     }
 }
 
 void MainWindow::on_btnAdd_clicked() {
-    for (const auto& item : ui->listWidget->selectedItems()) {
+    for (const auto& item : ui->tableWidget->selectedItems()) {
         QString fname = item->text();
         QString fullpath = current_path+"/"+fname;
         if (uploadset.find(fullpath) == uploadset.end()) {
             std::vector<fs::path> ld;
             ld.push_back(fs::path(fullpath.toStdString()));
-            totalSize += EvaluateSize(ld, "");
+            unsigned long long size = EvaluateSize(ld, "");
+            totalSize += size;
             uploadset.insert(fullpath);
-            ui->listWidget_2->addItem(fullpath);
+            ui->tableWidget_2->insertRow(ui->tableWidget_2->rowCount());
+            QTableWidgetItem * Name = new QTableWidgetItem(fullpath);
+            QTableWidgetItem * Type = new QTableWidgetItem(QFileInfo(fullpath).isDir() ? "dir" : "file");
+            QTableWidgetItem * Size = new QTableWidgetItem(QString::number(size));
+
+            ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount(), 0, Name);
+            ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount(), 1, Type);
+            ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount(), 2, Size);
         }
     }
     ui->lineTotal->setText(QString::number(totalSize));
 }
 
 void MainWindow::on_btnRemove_clicked() {
-    for (QListWidgetItem *item : ui->listWidget_2->selectedItems()) {
+    for (QTableWidgetItem *item : ui->tableWidget_2->selectedItems()) {
         uploadset.erase(item->text());
         std::vector<fs::path> ld;
         ld.push_back(fs::path(item->text().toStdString()));
         totalSize -= EvaluateSize(ld, "");
-        delete ui->listWidget_2->takeItem(ui->listWidget_2->row(item));
+        ui->tableWidget_2->removeRow(ui->tableWidget_2->row(item));
     }
     ui->lineTotal->setText(QString::number(totalSize));
 
@@ -142,7 +182,7 @@ void MainWindow::on_btnRemove_clicked() {
 
 void MainWindow::on_btmClear_clicked() {
     uploadset.clear();
-    ui->listWidget_2->clear();
+    ui->tableWidget->clear();
     totalSize = 0;
     ui->lineTotal->setText(QString::number(totalSize));
 }
@@ -169,9 +209,17 @@ void MainWindow::on_listWidget_itemActivated(QListWidgetItem *item) {
     }
     current_path = curr_dir.path();
     ui->linePath->setText(current_path);
-    ui->listWidget->clear();
+    ui->tableWidget->clear();
+    int i = 0;
     for (const auto& item : curr_dir.entryInfoList()) {
-        ui->listWidget->addItem(item.fileName());
+        ui->tableWidget->insertRow(i);
+        QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+        ui->tableWidget->setItem(i, 0, Name);
+        ui->tableWidget->setItem(i, 1, Type);
+        ui->tableWidget->setItem(i, 2, Size);
+        i++;
     }
 }
 
@@ -198,7 +246,7 @@ void MainWindow::on_btnUpload_clicked() {
     load->close();
     delete load;
     uploadset.clear();
-    ui->listWidget_2->clear();
+    ui->tableWidget_2->clear();
     totalSize = 0;
     ui->lineTotal->setText(QString::number(totalSize));
 }
@@ -275,9 +323,17 @@ void MainWindow::on_btnCd_clicked() {
     current_path = ui->linePath->text();
     QDir dir(current_path);
     ui->linePath->setText(current_path);
-    ui->listWidget->clear();
+    ui->tableWidget->clear();
+    int i = 0;
     for (const auto& item : dir.entryInfoList()) {
-        ui->listWidget->addItem(item.fileName());
+        ui->tableWidget->insertRow(i);
+        QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(item.size());
+        ui->tableWidget->setItem(i, 0, Name);
+        ui->tableWidget->setItem(i, 1, Type);
+        ui->tableWidget->setItem(i, 2, Size);
+        i++;
     }
 }
 

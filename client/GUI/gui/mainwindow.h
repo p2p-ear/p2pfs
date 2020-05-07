@@ -9,6 +9,7 @@
 #include <stack>
 #include <set>
 #include <filesystem>
+#include <QTableWidget>
 
 #include "../../libs/include/duload_export.h"
 
