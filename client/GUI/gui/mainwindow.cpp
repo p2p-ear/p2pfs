@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnBack->setDisabled(true);
     ui->btnForward->setDisabled(true);
     ui->btnUp->setDisabled(true);
+    ui->tableWidget->resizeColumnsToContents();
+    ui->tableWidget_2->resizeColumnsToContents();
+
 }
 
 MainWindow::~MainWindow()
