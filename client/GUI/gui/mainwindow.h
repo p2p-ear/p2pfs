@@ -65,6 +65,12 @@ private slots:
 
     void on_btnCd_clicked();
 
+    void updateTable(const QString&);
+
+    void updateTable2(const QString&);
+
+    void on_tableWidget_itemActivated(QTableWidgetItem *item);
+
 private:
     Ui::MainWindow *ui;
     QString current_path;
