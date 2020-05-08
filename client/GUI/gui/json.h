@@ -54,6 +54,10 @@ public:
         return res;
     }
 
+    QString GetCurrPath() {
+        return path;
+    }
+
 private:
     QJsonObject root;
     QString path = "/";

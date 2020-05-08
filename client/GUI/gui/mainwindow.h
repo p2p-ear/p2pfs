@@ -72,15 +72,23 @@ private slots:
 
     void updateTable3(const std::vector<MDfile>&);
 
+    void updateTable4(const MDfile&);
+
     void on_tableWidget_itemActivated(QTableWidgetItem *item);
 
     void on_btnCd_2_clicked();
+
+    void on_btnAdd2_clicked();
+
+    void on_btnRemove2_clicked();
+
+    void on_btmClear2_clicked();
 
 private:
     Ui::MainWindow *ui;
     QString current_path;
     std::stack<QString> uploadBack, uploadForward;
-    std::set<QString> uploadset;
+    std::set<QString> uploadset, downloadset;
     unsigned long long totalSize = 0;
 
     MyDiskFs FS;

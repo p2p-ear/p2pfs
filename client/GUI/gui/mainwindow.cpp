@@ -33,6 +33,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget_2->resizeColumnsToContents();
     FS.Load();
+
+    //non-func buttons
+    ui->btnBack2->setDisabled(true);
+    ui->btnForward2->setDisabled(true);
+    ui->btnHome2->setDisabled(true);
+    ui->btnUp2->setDisabled(true);
+    ui->btnPath2->setDisabled(true);
+    ui->btnPath->setDisabled(true);
+    ui->btnUpload2->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -108,7 +117,12 @@ void MainWindow::on_btnAdd_clicked() {
     for (const auto& item : ui->tableWidget->selectedItems()) {
         if (item->column() == 0) {
             QString fname = item->text();
-            QString fullpath = current_path+"/"+fname;
+            QString fullpath;
+            if (current_path[current_path.length()-1] == '/') {
+                fullpath = current_path+fname;
+            } else {
+                fullpath = current_path+"/"+fname;
+            }
             if (uploadset.find(fullpath) == uploadset.end()) {
                 updateTable2(fullpath);
             }
@@ -119,7 +133,7 @@ void MainWindow::on_btnAdd_clicked() {
 
 void MainWindow::on_btnRemove_clicked() {
     for (QTableWidgetItem *item : ui->tableWidget_2->selectedItems()) {
-        if (item->column() == 0) {
+        if (item != nullptr && ui->tableWidget_2->column(item) == 0) {
             uploadset.erase(item->text());
             std::vector<fs::path> ld;
             ld.push_back(fs::path(item->text().toStdString()));
@@ -301,6 +315,18 @@ void MainWindow::updateTable3(const std::vector<MDfile> &src) {
     }
 }
 
+void MainWindow::updateTable4(const MDfile & file) {
+    downloadset.insert(file.Name);
+    ui->tableWidget_4->insertRow(ui->tableWidget_4->rowCount());
+    QTableWidgetItem * Name = new QTableWidgetItem(file.Name);
+    QTableWidgetItem * Type = new QTableWidgetItem(file.isDir ? "dir" : "file");
+    QTableWidgetItem * Size = new QTableWidgetItem(QString::number(file.Size));
+
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 0, Name);
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 1, Type);
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 2, Size);
+}
+
 unsigned long long MainWindow::EvaluateSize(std::vector<std::filesystem::__cxx11::path> &args, const std::string &start_path) {
     unsigned long long res = 0;
         for (auto& arg : args) {
@@ -337,5 +363,45 @@ void MainWindow::on_tableWidget_itemActivated(QTableWidgetItem *item) {
 void MainWindow::on_btnCd_2_clicked() {
     if (FS.Cd(ui->linePath_2->text())) {
         updateTable3(FS.Ls());
+        on_btmClear2_clicked();
     }
+}
+
+void MainWindow::on_btnAdd2_clicked() {
+    for (const auto& item : ui->tableWidget_3->selectedItems()) {
+        if (item->column() == 0) {
+            MDfile file;
+            QString fname = item->text();
+            QString fullpath;
+            QString cpath = FS.GetCurrPath();
+            if (cpath[cpath.length()-1] == '/') {
+                fullpath = cpath+fname;
+            } else {
+                fullpath = cpath+"/"+fname;
+            }
+            file.Name = fullpath;
+            file.Size = ui->tableWidget_3->item(item->row(), 2)->text().toUInt();
+            file.isDir = ui->tableWidget_3->item(item->row(), 2)->text() == "dir";
+            if (downloadset.find(fullpath) == downloadset.end()) {
+                updateTable4(file);
+            }
+        }
+    }
+    //ui->lineTotal->setText(QString::number(totalSize));
+}
+
+void MainWindow::on_btnRemove2_clicked() {
+    for (QTableWidgetItem *item : ui->tableWidget_4->selectedItems()) {
+        if (item != nullptr && ui->tableWidget_4->row(item) == 0) {
+            downloadset.erase(item->text());
+            ui->tableWidget_4->removeRow(ui->tableWidget_4->row(item));
+        }
+    }
+}
+
+
+
+void MainWindow::on_btmClear2_clicked() {
+    downloadset.clear();
+    ui->tableWidget_4->setRowCount(0);
 }
