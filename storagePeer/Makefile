@@ -1,7 +1,3 @@
-SERVERPATH = storagePeer
-CLIENTPATH = client
-
-<<<<<<< Updated upstream:storagePeer/Makefile
 BIN_PATH    = bin
 C_INTERFACE = c_interface
 
@@ -42,9 +38,3 @@ test:
 
 run:
 	${BIN_PATH}/peer
-=======
-shared:
-	cd ${SERVERPATH}/ ; $(MAKE) gen_c_interface
-	cp ${SERVERPATH}/bin/libc_interface.so ${CLIENTPATH}/libs/build
-	cp ${SERVERPATH}/c_interface/c_interface.h ${CLIENTPATH}/libs/include
->>>>>>> Stashed changes:Makefile
