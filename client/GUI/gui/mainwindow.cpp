@@ -276,6 +276,9 @@ void MainWindow::updateTable(const QString& currentPath) {
     ui->tableWidget->setRowCount(0);
     QDir dir(currentPath);
     for (const auto& item : dir.entryInfoList()) {
+        if (item.fileName() == ".") {
+            continue;
+        }
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
         QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
@@ -283,6 +286,7 @@ void MainWindow::updateTable(const QString& currentPath) {
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, Name);
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 1, Type);
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 2, Size);
+        ui->tableWidget->resizeColumnsToContents();
     }
 }
 
@@ -300,6 +304,7 @@ void MainWindow::updateTable2(const QString & fullpath) {
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 0, Name);
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 1, Type);
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 2, Size);
+    ui->tableWidget_2->resizeColumnsToContents();
 }
 
 void MainWindow::updateTable3(const std::vector<MDfile> &src) {
@@ -312,6 +317,7 @@ void MainWindow::updateTable3(const std::vector<MDfile> &src) {
         ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 0, Name);
         ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 1, Type);
         ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 2, Size);
+        ui->tableWidget_3->resizeColumnsToContents();
     }
 }
 
@@ -325,6 +331,7 @@ void MainWindow::updateTable4(const MDfile & file) {
     ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 0, Name);
     ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 1, Type);
     ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 2, Size);
+    ui->tableWidget_4->resizeColumnsToContents();
 }
 
 unsigned long long MainWindow::EvaluateSize(std::vector<std::filesystem::__cxx11::path> &args, const std::string &start_path) {
