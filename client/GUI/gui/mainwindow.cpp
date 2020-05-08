@@ -185,9 +185,24 @@ void MainWindow::on_btnUpload_clicked() {
     load->show();
     std::string ip = "198.172.0.1:9000";
     unsigned long ringsz = 1000;
-    for (const auto& item : uploadset) {
-        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+//    for (const auto& item : uploadset) {
+//        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+//    }
+    QJsonArray arr;
+    for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
+        UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+        QJsonObject obj;
+        obj.insert(T_NAME, ui->tableWidget_2->item(i, 0)->text());
+        obj.insert(T_ISDIR, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false);
+        obj.insert(T_SIZE, ui->tableWidget_2->item(i, 2)->text());
+        if (ui->tableWidget_2->item(i, 1)->text() == "dir") {
+            obj.insert(T_CHILD, QJsonArray());
+        }
+        arr.append(obj);
     }
+    //arr -- array of jsons, pathToLoad -- path on MyDisk
+    QString pathToLoad = ui->linePath->text();
+
     load->close();
     delete load;
     uploadset.clear();
