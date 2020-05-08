@@ -10,6 +10,7 @@
 #include <set>
 #include <filesystem>
 #include <QTableWidget>
+#include "json.h"
 
 #include "../../libs/include/duload_export.h"
 
@@ -69,7 +70,11 @@ private slots:
 
     void updateTable2(const QString&);
 
+    void updateTable3(const std::vector<MDfile>&);
+
     void on_tableWidget_itemActivated(QTableWidgetItem *item);
+
+    void on_btnCd_2_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -77,6 +82,8 @@ private:
     std::stack<QString> uploadBack, uploadForward;
     std::set<QString> uploadset;
     unsigned long long totalSize = 0;
+
+    MyDiskFs FS;
 
     unsigned long long EvaluateSize(std::vector<fs::path>& args, const std::string& start_path);
 };

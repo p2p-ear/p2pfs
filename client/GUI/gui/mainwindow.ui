@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -386,7 +386,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QTableWidget" name="tableWidget_4">
+                <widget class="QTableWidget" name="tableWidget_3">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>

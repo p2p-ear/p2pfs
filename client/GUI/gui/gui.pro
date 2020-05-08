@@ -24,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     authwindow.h \
+    json.h \
     mainwindow.h
 
 FORMS += \

@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnUp->setDisabled(true);
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget_2->resizeColumnsToContents();
-
+    FS.Load();
 }
 
 MainWindow::~MainWindow()
@@ -288,6 +288,19 @@ void MainWindow::updateTable2(const QString & fullpath) {
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 2, Size);
 }
 
+void MainWindow::updateTable3(const std::vector<MDfile> &src) {
+    ui->tableWidget_3->setRowCount(0);
+    for (const auto& item : src) {
+        ui->tableWidget_3->insertRow(ui->tableWidget_3->rowCount());
+        QTableWidgetItem * Name = new QTableWidgetItem(item.Name);
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(QString::number(item.Size));
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 0, Name);
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 1, Type);
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 2, Size);
+    }
+}
+
 unsigned long long MainWindow::EvaluateSize(std::vector<std::filesystem::__cxx11::path> &args, const std::string &start_path) {
     unsigned long long res = 0;
         for (auto& arg : args) {
@@ -319,4 +332,10 @@ void MainWindow::on_tableWidget_itemActivated(QTableWidgetItem *item) {
     current_path = curr_dir.path();
     ui->linePath->setText(current_path);
     updateTable(current_path);
+}
+
+void MainWindow::on_btnCd_2_clicked() {
+    if (FS.Cd(ui->linePath_2->text())) {
+        updateTable3(FS.Ls());
+    }
 }
