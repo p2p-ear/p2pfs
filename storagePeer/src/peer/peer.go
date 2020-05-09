@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/klauspost/reedsolomon"
 	"google.golang.org/grpc"
 
 	"fmt"
@@ -218,6 +219,11 @@ func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 		return 0, err
 	}
 
+	readReply, err := rstream.Recv()
+	if !readReply.Exists {
+		return 0, os.ErrNotExist
+	}
+
 	contentSlice := fcontent[:]
 	bufferSmall := false
 	emptySpace := len(fcontent)
@@ -268,6 +274,98 @@ func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (
 }
 
 ////////
+// Reed-Solomon
+////////
+
+const dataRSC = 8
+const parityRSC = 2
+
+// UploadFileRSC - like UploadFile but with Reed-Solomon erasure coding
+func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
+	enc, err := reedsolomon.New(dataRSC, parityRSC)
+	if err != nil {
+		return err
+	}
+
+	N := len(fcontent)
+	data := make([][]byte, dataRSC+parityRSC)
+	shardLen := int(math.Ceil(float64(N) / float64(dataRSC)))
+	fcontentSlice := fcontent
+
+	for i := 0; i < dataRSC-1; i++ {
+		data[i] = fcontentSlice[:shardLen]
+		fcontentSlice = fcontentSlice[shardLen:]
+	}
+
+	data[dataRSC-1] = fcontentSlice
+	for i := 0; i < parityRSC; i++ {
+		data[dataRSC+i] = make([]byte, shardLen)
+	}
+
+	err = enc.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	for i, s := range data {
+		err := UploadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, i), ringsz, s)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DownloadFileRSC downloads file using Reed Solomon Codes
+func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) (int, error) {
+	enc, _ := reedsolomon.New(dataRSC, parityRSC)
+
+	shards := make([][]byte, dataRSC+parityRSC)
+	var shardlen int
+	totalEmpty := len(fcontent)
+	for i := 0; i < dataRSC+parityRSC; i++ {
+		if i < dataRSC {
+			shards[i] = fcontent[len(fcontent)-totalEmpty:]
+		} else {
+			shards[i] = make([]byte, len(shards[0]))
+		}
+
+		empty, err := DownloadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, i), ringsz, shards[i])
+		if os.IsNotExist(err) {
+			shards[i] = nil
+			continue
+		}
+
+		if err != nil {
+			return 0, err
+		}
+
+		if i == 0 {
+			shardlen = totalEmpty - empty
+		}
+
+		shards[i] = shards[i][:shardlen]
+		totalEmpty = empty
+	}
+
+	for i := 0; i < dataRSC; i++ {
+		shards[i] = shards[i][:shardlen]
+	}
+
+	if shardlen == 0 {
+		return totalEmpty, fmt.Errorf("Not enough space in buffer to download all shards")
+	}
+
+	err := enc.ReconstructData(shards)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalEmpty, nil
+}
+
+////////
 // Remote calls
 ////////
 
@@ -289,13 +387,20 @@ func (p *Peer) FindSuccessorInRing(ctx context.Context, r *FindSuccRequest) (*Fi
 func (p *Peer) Read(r *ReadRequest, stream PeerService_ReadServer) error {
 
 	f, err := os.Open(r.Name)
-	defer f.Close()
+	if os.IsNotExist(err) {
+		stream.Send(&ReadReply{Exists: false})
+		return nil
+	}
+
+	stream.Send(&ReadReply{Exists: true})
 
 	if err != nil {
 		log.Fatal(err)
 
 		return err
 	}
+
+	defer f.Close()
 
 	reader := bufio.NewReader(f)
 	b := make([]byte, r.ChunkSize)

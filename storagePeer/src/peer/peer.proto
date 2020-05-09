@@ -26,6 +26,7 @@ message ReadRequest {
 message ReadReply {
   bytes Data = 1;
   int64 Size = 2;
+  bool Exists = 3;
 }
 
 message FindSuccRequest {

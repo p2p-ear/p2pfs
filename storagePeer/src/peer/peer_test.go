@@ -28,6 +28,10 @@ func genIP() func() string {
 
 var IP = genIP()
 
+////////
+// Service funcs
+////////
+
 // Generate random string with specified length
 func randString(length int) []byte {
 
@@ -39,10 +43,11 @@ func randString(length int) []byte {
 	return randString
 }
 
+// Make one peer
 func makePeer() (string, uint64, PeerServiceClient, *grpc.ClientConn, error) {
 	ownIP := IP()
 
-	ringsz := uint64(100)
+	ringsz := uint64(1000)
 	NewPeer(ownIP, ringsz, "")
 
 	connection, err := grpc.Dial(ownIP, grpc.WithInsecure())
@@ -53,6 +58,23 @@ func makePeer() (string, uint64, PeerServiceClient, *grpc.ClientConn, error) {
 	client := NewPeerServiceClient(connection)
 
 	return ownIP, ringsz, client, connection, nil
+}
+
+// Make n peers in one ring
+func makeRing(n uint) (string, uint64) {
+
+	ringsz := uint64(1000)
+	host := IP()
+
+	NewPeer(host, ringsz, "")
+
+	ips := make([]string, n)
+	for i := uint(0); i < n; i++ {
+		ips[i] = IP()
+		NewPeer(ips[i], ringsz, host)
+	}
+
+	return host, ringsz
 }
 
 // TestRW tests read/write capabilities of a peer
@@ -235,7 +257,34 @@ func TestC(t *testing.T) {
 	cTest := exec.Cmd{Path: "./c_test", Dir: binpath, Args: []string{binpath + "/c_test", ip, strconv.Itoa(int(ringsz))}, Stderr: &errStream}
 	err = cTest.Run()
 	if err != nil {
-		t.Error("Run error:", err)
-		t.Error(errStream.String())
+		t.Error("Run error:", err, "stderr:", errStream.String())
+	}
+}
+
+func TestRSC(t *testing.T) {
+	host, ringsz := makeRing(10)
+
+	fname := "testfile"
+	fcontent := randString(4096)
+
+	err := UploadFileRSC(host, fname, ringsz, fcontent)
+	if err != nil {
+		t.Error("UploadRSC error:", err)
+	}
+
+	fcontentRead := make([]byte, len(fcontent)*2)
+	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead)
+	if err != nil {
+		t.Error("DownloadRSC error:", err)
+	}
+
+	if empty < 0 {
+		t.Error("File read too large, empty =", empty)
+	}
+
+	for i, b := range fcontent {
+		if b != fcontentRead[i] {
+			t.Error("Bytes at place", i, "don't match")
+		}
 	}
 }
