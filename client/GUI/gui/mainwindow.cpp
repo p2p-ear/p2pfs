@@ -32,7 +32,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnUp->setDisabled(true);
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget_2->resizeColumnsToContents();
+    FS.Load();
 
+    //non-func buttons
+    ui->btnBack2->setDisabled(true);
+    ui->btnForward2->setDisabled(true);
+    ui->btnHome2->setDisabled(true);
+    ui->btnUp2->setDisabled(true);
+    ui->btnPath2->setDisabled(true);
+    ui->btnPath->setDisabled(true);
+    ui->btnUpload2->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -108,7 +117,12 @@ void MainWindow::on_btnAdd_clicked() {
     for (const auto& item : ui->tableWidget->selectedItems()) {
         if (item->column() == 0) {
             QString fname = item->text();
-            QString fullpath = current_path+"/"+fname;
+            QString fullpath;
+            if (current_path[current_path.length()-1] == '/') {
+                fullpath = current_path+fname;
+            } else {
+                fullpath = current_path+"/"+fname;
+            }
             if (uploadset.find(fullpath) == uploadset.end()) {
                 updateTable2(fullpath);
             }
@@ -119,7 +133,7 @@ void MainWindow::on_btnAdd_clicked() {
 
 void MainWindow::on_btnRemove_clicked() {
     for (QTableWidgetItem *item : ui->tableWidget_2->selectedItems()) {
-        if (item->column() == 0) {
+        if (item != nullptr && ui->tableWidget_2->column(item) == 0) {
             uploadset.erase(item->text());
             std::vector<fs::path> ld;
             ld.push_back(fs::path(item->text().toStdString()));
@@ -171,9 +185,24 @@ void MainWindow::on_btnUpload_clicked() {
     load->show();
     std::string ip = "198.172.0.1:9000";
     unsigned long ringsz = 1000;
-    for (const auto& item : uploadset) {
-        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+//    for (const auto& item : uploadset) {
+//        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+//    }
+    QJsonArray arr;
+    for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
+        UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+        QJsonObject obj;
+        obj.insert(T_NAME, ui->tableWidget_2->item(i, 0)->text());
+        obj.insert(T_ISDIR, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false);
+        obj.insert(T_SIZE, ui->tableWidget_2->item(i, 2)->text());
+        if (ui->tableWidget_2->item(i, 1)->text() == "dir") {
+            obj.insert(T_CHILD, QJsonArray());
+        }
+        arr.append(obj);
     }
+    //arr -- array of jsons, pathToLoad -- path on MyDisk
+    QString pathToLoad = ui->linePath->text();
+
     load->close();
     delete load;
     uploadset.clear();
@@ -262,6 +291,9 @@ void MainWindow::updateTable(const QString& currentPath) {
     ui->tableWidget->setRowCount(0);
     QDir dir(currentPath);
     for (const auto& item : dir.entryInfoList()) {
+        if (item.fileName() == ".") {
+            continue;
+        }
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         QTableWidgetItem * Name = new QTableWidgetItem(item.fileName());
         QTableWidgetItem * Type = new QTableWidgetItem(item.isDir() ? "dir" : "file");
@@ -269,6 +301,7 @@ void MainWindow::updateTable(const QString& currentPath) {
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, Name);
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 1, Type);
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 2, Size);
+        ui->tableWidget->resizeColumnsToContents();
     }
 }
 
@@ -286,6 +319,34 @@ void MainWindow::updateTable2(const QString & fullpath) {
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 0, Name);
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 1, Type);
     ui->tableWidget_2->setItem(ui->tableWidget_2->rowCount()-1, 2, Size);
+    ui->tableWidget_2->resizeColumnsToContents();
+}
+
+void MainWindow::updateTable3(const std::vector<MDfile> &src) {
+    ui->tableWidget_3->setRowCount(0);
+    for (const auto& item : src) {
+        ui->tableWidget_3->insertRow(ui->tableWidget_3->rowCount());
+        QTableWidgetItem * Name = new QTableWidgetItem(item.Name);
+        QTableWidgetItem * Type = new QTableWidgetItem(item.isDir ? "dir" : "file");
+        QTableWidgetItem * Size = new QTableWidgetItem(QString::number(item.Size));
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 0, Name);
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 1, Type);
+        ui->tableWidget_3->setItem(ui->tableWidget_3->rowCount()-1, 2, Size);
+        ui->tableWidget_3->resizeColumnsToContents();
+    }
+}
+
+void MainWindow::updateTable4(const MDfile & file) {
+    downloadset.insert(file.Name);
+    ui->tableWidget_4->insertRow(ui->tableWidget_4->rowCount());
+    QTableWidgetItem * Name = new QTableWidgetItem(file.Name);
+    QTableWidgetItem * Type = new QTableWidgetItem(file.isDir ? "dir" : "file");
+    QTableWidgetItem * Size = new QTableWidgetItem(QString::number(file.Size));
+
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 0, Name);
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 1, Type);
+    ui->tableWidget_4->setItem(ui->tableWidget_4->rowCount()-1, 2, Size);
+    ui->tableWidget_4->resizeColumnsToContents();
 }
 
 unsigned long long MainWindow::EvaluateSize(std::vector<std::filesystem::__cxx11::path> &args, const std::string &start_path) {
@@ -319,4 +380,50 @@ void MainWindow::on_tableWidget_itemActivated(QTableWidgetItem *item) {
     current_path = curr_dir.path();
     ui->linePath->setText(current_path);
     updateTable(current_path);
+}
+
+void MainWindow::on_btnCd_2_clicked() {
+    if (FS.Cd(ui->linePath_2->text())) {
+        updateTable3(FS.Ls());
+        on_btmClear2_clicked();
+    }
+}
+
+void MainWindow::on_btnAdd2_clicked() {
+    for (const auto& item : ui->tableWidget_3->selectedItems()) {
+        if (item->column() == 0) {
+            MDfile file;
+            QString fname = item->text();
+            QString fullpath;
+            QString cpath = FS.GetCurrPath();
+            if (cpath[cpath.length()-1] == '/') {
+                fullpath = cpath+fname;
+            } else {
+                fullpath = cpath+"/"+fname;
+            }
+            file.Name = fullpath;
+            file.Size = ui->tableWidget_3->item(item->row(), 2)->text().toUInt();
+            file.isDir = ui->tableWidget_3->item(item->row(), 2)->text() == "dir";
+            if (downloadset.find(fullpath) == downloadset.end()) {
+                updateTable4(file);
+            }
+        }
+    }
+    //ui->lineTotal->setText(QString::number(totalSize));
+}
+
+void MainWindow::on_btnRemove2_clicked() {
+    for (QTableWidgetItem *item : ui->tableWidget_4->selectedItems()) {
+        if (item != nullptr && ui->tableWidget_4->row(item) == 0) {
+            downloadset.erase(item->text());
+            ui->tableWidget_4->removeRow(ui->tableWidget_4->row(item));
+        }
+    }
+}
+
+
+
+void MainWindow::on_btmClear2_clicked() {
+    downloadset.clear();
+    ui->tableWidget_4->setRowCount(0);
 }

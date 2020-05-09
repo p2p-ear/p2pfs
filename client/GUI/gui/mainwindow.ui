@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -219,7 +219,11 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineTotal"/>
+                  <widget class="QLineEdit" name="lineTotal">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </item>
@@ -330,7 +334,7 @@
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
-                 <widget class="QPushButton" name="btnBack_4">
+                 <widget class="QPushButton" name="btnBack2">
                   <property name="maximumSize">
                    <size>
                     <width>140</width>
@@ -344,7 +348,7 @@
                    <string>Alt+Left</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="btnForward_4">
+                 <widget class="QPushButton" name="btnForward2">
                   <property name="maximumSize">
                    <size>
                     <width>140</width>
@@ -358,7 +362,7 @@
                    <string>Alt+Right</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="btnUp_4">
+                 <widget class="QPushButton" name="btnUp2">
                   <property name="maximumSize">
                    <size>
                     <width>140</width>
@@ -372,7 +376,7 @@
                    <string>Alt+Up</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="btnHome_4">
+                 <widget class="QPushButton" name="btnHome2">
                   <property name="maximumSize">
                    <size>
                     <width>140</width>
@@ -386,7 +390,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QTableWidget" name="tableWidget_4">
+                <widget class="QTableWidget" name="tableWidget_3">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -398,6 +402,9 @@
                    <width>560</width>
                    <height>16777215</height>
                   </size>
+                 </property>
+                 <property name="selectionBehavior">
+                  <enum>QAbstractItemView::SelectRows</enum>
                  </property>
                  <attribute name="horizontalHeaderCascadingSectionResizes">
                   <bool>true</bool>
@@ -426,7 +433,7 @@
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
-               <widget class="QPushButton" name="btnAdd_5">
+               <widget class="QPushButton" name="btnAdd2">
                 <property name="maximumSize">
                  <size>
                   <width>80</width>
@@ -437,7 +444,7 @@
                  <string>-&gt;</string>
                 </property>
                </widget>
-               <widget class="QPushButton" name="btnRemove_5">
+               <widget class="QPushButton" name="btnRemove2">
                 <property name="maximumSize">
                  <size>
                   <width>80</width>
@@ -448,7 +455,7 @@
                  <string>&lt;-</string>
                 </property>
                </widget>
-               <widget class="QPushButton" name="btmClear_5">
+               <widget class="QPushButton" name="btmClear2">
                 <property name="maximumSize">
                  <size>
                   <width>80</width>
@@ -498,7 +505,11 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineTotal_2"/>
+                  <widget class="QLineEdit" name="lineTotal_2">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </item>
@@ -525,7 +536,7 @@
               <widget class="QLineEdit" name="lineMyDisk_6"/>
              </item>
              <item>
-              <widget class="QPushButton" name="btnPath_6">
+              <widget class="QPushButton" name="btnPath2">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -544,7 +555,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnUpload_6">
+              <widget class="QPushButton" name="btnUpload2">
                <property name="maximumSize">
                 <size>
                  <width>80</width>

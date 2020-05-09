@@ -1,0 +1,41 @@
+{
+    "Name": "/",
+    "isDir": true,
+    "Size": 0,
+    "Child": [
+        {
+            "Name": "home",
+            "isDir": true,
+            "Size": 0,
+            "Child": [
+                {
+                    "Name": "file1",
+                    "isDir": true,
+                    "Size": 0
+                },
+                {
+                    "Name": "file2",
+                    "isDir": true,
+                    "Size": 0
+                }
+            ]
+        },
+        {
+            "Name": "tmp",
+            "isDir": true,
+            "Size": 0,
+            "Child": [
+                {
+                    "Name": "file1",
+                    "isDir": true,
+                    "Size": 0
+                },
+                {
+                    "Name": "file2",
+                    "isDir": true,
+                    "Size": 0
+                }
+            ]
+        }
+    ]
+}
