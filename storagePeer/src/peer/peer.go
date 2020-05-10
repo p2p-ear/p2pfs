@@ -280,6 +280,10 @@ func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (
 const dataRSC = 8
 const parityRSC = 2
 
+func getShardName(fname string, number int) string {
+	return fmt.Sprintf("%s_rep%d", fname, number)
+}
+
 // UploadFileRSC - like UploadFile but with Reed-Solomon erasure coding
 func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
 	enc, err := reedsolomon.New(dataRSC, parityRSC)
@@ -308,7 +312,7 @@ func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) 
 	}
 
 	for i, s := range data {
-		err := UploadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, i), ringsz, s)
+		err := UploadFile(ringIP, getShardName(fname, i), ringsz, s)
 		if err != nil {
 			return err
 		}
@@ -323,17 +327,46 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 
 	shards := make([][]byte, dataRSC+parityRSC)
 	var shardlen int
-	totalEmpty := len(fcontent)
-	for i := 0; i < dataRSC+parityRSC; i++ {
-		if i < dataRSC {
-			shards[i] = fcontent[len(fcontent)-totalEmpty:]
-		} else {
-			shards[i] = make([]byte, len(shards[0]))
+	maxshardlen := int(math.Floor(float64(len(fcontent)) / float64(dataRSC)))
+	firstShard := make([]byte, maxshardlen)
+	shardnum := 0
+	nilshards := make(map[int]bool)
+
+	for {
+		if shardnum > parityRSC {
+			return 0, fmt.Errorf("Too many corrupt files, can't recover")
 		}
 
-		empty, err := DownloadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, i), ringsz, shards[i])
+		empty, err := DownloadFile(ringIP, getShardName(fname, shardnum), ringsz, firstShard)
+		if !os.IsNotExist(err) {
+			shardlen = maxshardlen - empty
+			if (shardnum+1)*shardlen > len(fcontent) {
+				return 0, fmt.Errorf("Not enough space in buffer")
+			}
+
+			copy(fcontent[shardnum*shardlen:], firstShard)
+			//shardnum++
+			break
+		}
+
+		shards[shardnum] = nil
+		nilshards[shardnum] = true
+		shardnum++
+	}
+
+	totalEmpty := 0
+
+	for ; shardnum < dataRSC+parityRSC; shardnum++ {
+		if shardnum < dataRSC {
+			shards[shardnum] = fcontent[shardlen*shardnum : shardlen*(shardnum+1)]
+		} else {
+			shards[shardnum] = make([]byte, shardlen)
+		}
+
+		empty, err := DownloadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, shardnum), ringsz, shards[shardnum])
 		if os.IsNotExist(err) {
-			shards[i] = nil
+			shards[shardnum] = nil
+			nilshards[shardnum] = true
 			continue
 		}
 
@@ -341,25 +374,16 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 			return 0, err
 		}
 
-		if i == 0 {
-			shardlen = totalEmpty - empty
-		}
-
-		shards[i] = shards[i][:shardlen]
-		totalEmpty = empty
-	}
-
-	for i := 0; i < dataRSC; i++ {
-		shards[i] = shards[i][:shardlen]
-	}
-
-	if shardlen == 0 {
-		return totalEmpty, fmt.Errorf("Not enough space in buffer to download all shards")
+		totalEmpty += empty
 	}
 
 	err := enc.ReconstructData(shards)
 	if err != nil {
 		return 0, err
+	}
+
+	for n := range nilshards {
+		copy(fcontent[shardlen*n:shardlen*(n+1)], shards[n])
 	}
 
 	return totalEmpty, nil

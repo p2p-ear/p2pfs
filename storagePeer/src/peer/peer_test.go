@@ -272,7 +272,13 @@ func TestRSC(t *testing.T) {
 		t.Error("UploadRSC error:", err)
 	}
 
+	f1 := rand.Intn(10)
+	f2 := (f1 + rand.Intn(9) + 1) % 10
+	os.Remove(fmt.Sprintf("%s_rep%d", fname, f1))
+	os.Remove(fmt.Sprintf("%s_rep%d", fname, f2))
+
 	fcontentRead := make([]byte, len(fcontent)*2)
+
 	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead)
 	if err != nil {
 		t.Error("DownloadRSC error:", err)
