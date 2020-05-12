@@ -1,4 +1,3 @@
-BIN_PATH    = bin
 C_INTERFACE = c_interface
 
 #===========#
@@ -7,34 +6,42 @@ C_INTERFACE = c_interface
 
 .ONESHELL:
 
-build:
-	go build -o ${BIN_PATH}/peer .
+build: $(addprefix src/,peer/peer.go dht/ring.go dht/ring_struct.go)
+	go build -o bin/peer .
 
-gen_proto_ring:
+$(addprefix src/peer/,peer.go peer_test.go): src/peer/peer.proto
+$(addprefix src/dht/,ring.go ring_struct.go ring_test.go): src/dht/ring.proto
+
+src/dht/ring.proto:
 	cd src
 	protoc -I dht/ \
 		-Idht \
 		--go_out=plugins=grpc:dht \
 		dht/ring.proto
 
-gen_proto_peer:
+src/peer/peer.proto:
 	cd src
 	protoc -I peer  \
 		--go_out=plugins=grpc:peer \
 		peer/peer.proto
 
-gen_c_interface:
-	cd ${C_INTERFACE}
-	go build -o $(addsuffix .so, ${C_INTERFACE}) -buildmode=c-shared $(addsuffix .go, ${C_INTERFACE})
-	mv $(addsuffix .so, ${C_INTERFACE}) ../bin
+c_interface/c_interface.go: mkbin
+	cd c_interface
+	go build -o libc_interface.so -buildmode=c-shared c_interface.go
+	mv libc_interface.so ../bin
 
-gen_c_test:
-	cd ${C_INTERFACE}
-	gcc test.c -o ../bin/c_test ../bin/${C_INTERFACE}.so
+c_interface/test.c: mkbin c_interface/c_interface.go
+	cd c_interface
+	gcc test.c -o ../bin/c_test ../bin/libc_interface.so
 
-test:
+test: c_interface/test.c $(addprefix src/,peer/peer_test.go dht/ring_test.go)
 	cd src
 	go test ./*/
 
-run:
-	${BIN_PATH}/peer
+mkbin:
+	mkdir -p bin/
+
+clean:
+	rm -rf bin/*
+
+gen_c_interface: c_interface/c_interface.go
