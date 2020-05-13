@@ -1,12 +1,17 @@
 package dht
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"math"
-	"math/big"
 )
+
+////////
+// This is a realisation of a Chord ring - names of the methods are consistent with the paper.
+// title: Chord: A Scalable Peer-to-peer Lookup Service for Internet Applications
+// authors: Ion Stoica and others
+// link: https://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf
+////////
+
 
 ////////
 // Data structures
@@ -25,22 +30,6 @@ type RingNode struct {
 	self        finger
 	predecessor finger
 	fingerTable []finger
-}
-
-// Hash is a hash function used for node and file ids.
-func Hash(data []byte, maxNum uint64) uint64 {
-
-	hash := sha256.Sum256(data)
-
-	gen := new(big.Int)
-	gen.SetString(hex.EncodeToString(hash[:]), 16)
-
-	base := new(big.Int)
-	base.SetUint64(maxNum)
-
-	base.Mod(gen, base)
-
-	return base.Uint64()
 }
 
 // NewRingNode is a RingNode constructor. After constructing an object make sure to enable a gRPC server.
