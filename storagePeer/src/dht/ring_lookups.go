@@ -1,7 +1,7 @@
 package dht
 
 import (
-  "errors"
+  //"errors"
   "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -13,19 +13,15 @@ import (
 // Find closest predecessing finger from the personal table
 func (n *RingNode) getClosestPreceding(id uint64) (finger, error) {
 
-	if n.inInterval(n.self.ID, n.fingerTable[0].ID, id) {
-		//fmt.Printf("I am %s and the answer is me\n", n.self.IP)
-		return n.self, nil
-	}
-
 	for i := len(n.fingerTable) - 1; i >= 0; i-- {
-		if n.fingerTable[i].IP != n.self.IP && n.inInterval(n.self.ID, id, n.fingerTable[i].ID) { // TODO: this is a hack! just refactor inInterval not to include start
+		if n.inInterval(n.self.ID, id, n.fingerTable[i].ID, false, false) {
 			//fmt.Printf("I am %s and the answer is %s\n", n.self.IP, n.fingerTable[i].IP)
 			return n.fingerTable[i], nil
 		}
 	}
 
-	return finger{}, errors.New("Couldn't find a place on a circle")
+  return n.self, nil
+
 }
 
 // Going to reuse this function in findPredecessor and during

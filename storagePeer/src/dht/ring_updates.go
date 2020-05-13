@@ -16,7 +16,8 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 	ip := in.IP
 	id := Hash([]byte(ip), n.maxNodes)
 
-	ok := n.inInterval(n.predecessor.ID, n.self.ID, id)
+	//fmt.Printf("Curr pred: %d, self: %d, id: %d, IP: %s", n.predecessor.ID, n.self.ID, id, ip)
+	ok := n.inInterval(n.predecessor.ID, n.self.ID, id, true, false)
 
 	if ok {
 		n.predecessor = finger{ID: id, IP: ip}
@@ -52,7 +53,8 @@ func (n *RingNode) UpdateSpecificFinger(ctx context.Context, in *UpdateSpecificF
 		s := finger{ID: in.GetID(), IP: in.GetIP()}
 		i := in.GetFingID()
 
-		if n.inInterval(n.self.ID, n.fingerTable[i].ID, s.ID) {
+		//fmt.Printf("Asking %d to change %dth finger from %d to %d\n", n.self.ID, i, n.fingerTable[i].ID, s.ID)
+		if n.inInterval(n.self.ID, n.fingerTable[i].ID, s.ID, true, false) {
 
 			n.fingerTable[i].ID = s.ID
 			n.fingerTable[i].IP = s.IP

@@ -6,6 +6,7 @@ import (
   "math/big"
   "math"
   "google.golang.org/grpc"
+  //"fmt"
 )
 
 ////////
@@ -16,15 +17,19 @@ import (
 func Hash(data []byte, maxNum uint64) uint64 {
 
 	hash := sha256.Sum256(data)
+  //fmt.Println("Hashing: ", string(data))
 
 	gen := new(big.Int)
 	gen.SetString(hex.EncodeToString(hash[:]), 16)
+
+  //fmt.Println("Big: ", gen)
 
 	base := new(big.Int)
 	base.SetUint64(maxNum)
 
 	base.Mod(gen, base)
 
+  //fmt.Println("Id: ", base.Uint64())
 	return base.Uint64()
 }
 
@@ -51,18 +56,23 @@ func (n *RingNode) fingerIndex(i int64, clockWise bool) uint64 {
 }
 
 // Check whether id is located inside (start, end) interval.
-func (n *RingNode) inInterval(start uint64, end uint64, id uint64) bool {
+func (n *RingNode) inInterval(start uint64, end uint64, id uint64, include_start bool, include_end bool) bool {
 
 	start %= n.maxNodes
 	end %= n.maxNodes
 	id %= n.maxNodes
 
+
+  first  := (include_start && id >= start) || (!include_start && id > start)
+  second := (include_end && id <= end) || (!include_end && id < end)
+
 	if start == end {
 		return true
 	} else if start < end {
-		return id >= start && id <= end
+		return first && second
 	}
-	return (id >= start && id < n.maxNodes) || (id >= 0 && id <= end)
+  // This is a situation where zero of the ring is being crossed
+	return (first && id < n.maxNodes) || (second && id < end)
 }
 
 // Make a connection with other node

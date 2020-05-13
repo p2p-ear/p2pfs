@@ -1,5 +1,8 @@
 package dht
 
+import (
+	"fmt"
+)
 
 ////////
 // Code for initial join of a node to the ring
@@ -35,7 +38,7 @@ func (n *RingNode) initFingerTable(existingIP string) {
 
 	succ, err := n.invokeGetSucc(n.predecessor.IP)
 	if err != nil {
-		panic(err)
+		panic("Couldn't get a successor!")
 	}
 
 	n.fingerTable[0] = succ
@@ -46,7 +49,8 @@ func (n *RingNode) initFingerTable(existingIP string) {
 	ok, err := n.invokeUpdatePredecessor(succ.IP)
 
 	if err != nil || !ok {
-		panic(err)
+		fmt.Println(ok)
+		panic("Couldn't update pred!")
 	}
 
 	// Now update other entries in finger table
@@ -56,12 +60,12 @@ func (n *RingNode) initFingerTable(existingIP string) {
 
 		//fmt.Printf("finger %d with start %d\n", i, start)
 
-		if n.inInterval(n.predecessor.ID, n.self.ID, start) {
+		if n.inInterval(n.predecessor.ID, n.self.ID, start, true, false) {
 			// It means that new node is responsible for theese keys
 			n.fingerTable[i] = n.self
 
 		} else {
-			if n.inInterval(n.self.ID, n.fingerTable[i-1].ID, start) {
+			if n.inInterval(n.self.ID, n.fingerTable[i-1].ID, start, true, false) {
 
 				n.fingerTable[i] = n.fingerTable[i-1]
 				//fmt.Printf("using old one\n")
@@ -86,6 +90,8 @@ func (n *RingNode) initFingerTable(existingIP string) {
 // Update finger tables of other nodes
 func (n *RingNode) updateOthers() {
 
+	//fmt.Printf("Node %d is updating others\n", n.self.ID)
+
 	for i := int64(0); i < int64(len(n.fingerTable)); i++ {
 
 		p := n.recursivePredFindingStep(n.fingerIndex(i, false), n.fingerTable[0], n.self) // Don't use your own table
@@ -94,7 +100,24 @@ func (n *RingNode) updateOthers() {
 			break
 		}
 
-		n.invokeUpdateSpecificFinger(p.IP, i, n.self)
+		//fmt.Printf("For %d: %d id got %d\n", i, n.fingerIndex(i, false), p.ID)
+
+		// If this anticlockwise finger hits some node exactly then we also have to change it's fingers (or not :( )
+		succ, err := n.invokeGetSucc(p.IP)
+		if err != nil {
+			panic(err)
+		}
+
+		var target string
+		target = p.IP
+
+		if succ.ID == n.fingerIndex(i, false) {
+			target = succ.IP
+		} else {
+			target = p.IP
+		}
+
+		n.invokeUpdateSpecificFinger(target, i, n.self)
 
 	}
 }
