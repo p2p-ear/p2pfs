@@ -10,6 +10,12 @@
 #include <set>
 #include <filesystem>
 #include <QTableWidget>
+
+#include <QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QNetworkAccessManager>
+
 #include "json.h"
 
 #include "../../libs/include/duload_export.h"
@@ -30,7 +36,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void setAuthLogin(const QString& auth_login);
+    void setAuthLogin(const QString& auth_login, const QString& auth_pass, const QString& auth_JWT);
 
     void on_btnBack_clicked();
 
@@ -84,14 +90,46 @@ private slots:
 
     void on_btmClear2_clicked();
 
+    void on_pushButton_clicked();
+
+    void on_pushButton_2_clicked();
+
+    void on_btnAddCoins_clicked();
+
+    void on_btnUodateJson_clicked();
+
+    void on_btnGetCoins_clicked();
+
+    void on_btnAddDir_clicked();
+
+    void on_btnDelteDir_clicked();
+
 private:
+    //addresses for requests
+    const QString addressUpdate = "http://172.104.136.183/auth/update";
+    const QString addressRegister = "http://172.104.136.183/auth/register";
+    const QString addressRequest = "http://172.104.136.183/auth/request";
+
+    //processing requests responses
+    int processingAddCoins(QJsonObject repBody, int status);
+    int processingGetJson(QJsonObject repBody, int status);
+    int processingGetCoinsAccount(QJsonObject repBody, int status);
+    int processingAddDir(QJsonObject repBody, int status);
+    int processingDelDir(QJsonObject repBody, int status);
+
     Ui::MainWindow *ui;
     QString current_path;
     std::stack<QString> uploadBack, uploadForward;
     std::set<QString> uploadset, downloadset;
     unsigned long long totalSize = 0;
+    bool is_authorised = false;
 
     MyDiskFs FS;
+
+    QString Login, Password, JWT;
+
+    QNetworkAccessManager * manager;
+    int MakeReqRequest(QJsonObject& body, int type);
 
     unsigned long long EvaluateSize(std::vector<fs::path>& args, const std::string& start_path);
 };

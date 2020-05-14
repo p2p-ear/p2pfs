@@ -42,7 +42,8 @@ void AuthWindow::on_btnSignIn_clicked() {
             authConfig << IsRemembered << "\n";
         }
         authConfig.close();
-        emit AuthorizedLogin(Login);
+        QString JWT;
+        emit AuthorizedLogin(login, pass, JWT);
         QMessageBox::information(this, "Authoriztion", "Authorization successful");
         this->close();
     } else {
@@ -55,7 +56,7 @@ void AuthWindow::on_btnSignUp_clicked() {
 }
 
 int AuthWindow::Auth(const QString &login, const QString &pass) {
-    if (login == "sanya" && pass == "123") {
+    if ((login == "sanya" && pass == "123") || (login == "daunich" && pass == "123")) {
         return 1;
     } else {
         return 0;

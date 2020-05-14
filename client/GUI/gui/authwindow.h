@@ -22,7 +22,7 @@ public:
     ~AuthWindow();
 
 signals:
-    void AuthorizedLogin(const QString& auth_login);
+    void AuthorizedLogin(const QString& auth_login, const QString& auth_pass, const QString& auth_JWT);
 
 private slots:
     void on_btnSignIn_clicked();
@@ -33,9 +33,8 @@ private:
     int Auth(const QString& login, const QString& pass);
 
 
-
     Ui::AuthWindow *ui;
-    QString Login;
+    QString Login, Password;
     bool IsRemembered = false;
 };
 
