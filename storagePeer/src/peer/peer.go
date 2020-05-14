@@ -107,33 +107,11 @@ func Connect(targetIP string) (*grpc.ClientConn, PeerServiceClient, error) {
 // Send and recieve files
 ////////
 
-func connectAndFindSuccessor(ringIP string, id uint64) (string, error) {
-
-	someConn, somePeer, err := Connect(ringIP)
-	if err != nil {
-		return "", err
-	}
-	defer someConn.Close()
-
-	ip := ""
-	for {
-		succReply, err := somePeer.FindSuccessorInRing(context.Background(), &FindSuccRequest{Id: id})
-
-		if err == nil {
-			ip = succReply.Ip
-			break
-		} else {
-			fmt.Println(err.Error())
-			fmt.Println("Couldn't fetch ip")
-			time.Sleep(time.Second * 1)
-		}
-	}
-
-	fmt.Printf("Ring has answered with ip %s\n", ip)
-	return ip, nil
-}
-
 const chunksz = 8
+
+////
+// With specific IP
+////
 
 // SendFile sends file to the target IP
 func SendFile(targetIP string, fname string, fcontent []byte) error {
@@ -193,18 +171,6 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 	return err
 }
 
-// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
-func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
-
-	id := dht.Hash([]byte(fname), ringsz)
-	targetIP, err := connectAndFindSuccessor(ringIP, id)
-	if err != nil {
-		return err
-	}
-
-	return SendFile(targetIP, fname, fcontent)
-}
-
 // RecvFile recieves file w/ filename=fname, from node targetIP - returns how much empty space is at the end (negative, if buffer is too small)
 func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 
@@ -261,16 +227,85 @@ func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 	return emptySpace, nil
 }
 
+func RemvFile(targetIP string, fname string) error {
+	conn, peer, err := Connect(targetIP)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	r, err := peer.Delete(context.Background(), &DeleteRequest{Fname: fname})
+	if err == nil && !r.Exists {
+		err = os.ErrNotExist
+	}
+
+	return err
+}
+
+////
+// From IP on ring
+////
+
+// Service func to connect to the ringIP, and find successor on that ring
+func findSuccessorWithRingIP(ringIP string, id uint64) (string, error) {
+
+	someConn, somePeer, err := Connect(ringIP)
+	if err != nil {
+		return "", err
+	}
+	defer someConn.Close()
+
+	ip := ""
+	for {
+		succReply, err := somePeer.FindSuccessorInRing(context.Background(), &FindSuccRequest{Id: id})
+
+		if err == nil {
+			ip = succReply.Ip
+			break
+		} else {
+			fmt.Println(err.Error())
+			fmt.Println("Couldn't fetch ip")
+			time.Sleep(time.Second * 1)
+		}
+	}
+
+	fmt.Printf("Ring has answered with ip %s\n", ip)
+	return ip, nil
+}
+
+// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
+func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
+
+	id := dht.Hash([]byte(fname), ringsz)
+	targetIP, err := findSuccessorWithRingIP(ringIP, id)
+	if err != nil {
+		return err
+	}
+
+	return SendFile(targetIP, fname, fcontent)
+}
+
 // DownloadFile downloads file from the corresponding node
 func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (int, error) {
 	id := dht.Hash([]byte(fname), ringsz)
-	targetIP, err := connectAndFindSuccessor(ringIP, id)
+	targetIP, err := findSuccessorWithRingIP(ringIP, id)
 
 	if err != nil {
 		return 0, err
 	}
 
 	return RecvFile(targetIP, fname, fcontent)
+}
+
+func DeleteFile(ringIP string, fname string, ringsz uint64) error {
+	id := dht.Hash([]byte(fname), ringsz)
+	targetIP, err := findSuccessorWithRingIP(ringIP, id)
+
+	if err != nil {
+		return err
+	}
+
+	return RemvFile(targetIP, fname)
 }
 
 ////////
@@ -389,6 +424,17 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 	return totalEmpty, nil
 }
 
+func DeleteFileRSC(ringIP string, fname string, ringsz uint64) error {
+	for i := 0; i < dataRSC+parityRSC; i++ {
+		err := DeleteFile(ringIP, getShardName(fname, i), ringsz)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	return nil
+}
+
 ////////
 // Remote calls
 ////////
@@ -497,4 +543,13 @@ func (p *Peer) Write(stream PeerService_WriteServer) error {
 
 		written += int64(n)
 	}
+}
+
+func (p *Peer) Delete(ctx context.Context, r *DeleteRequest) (*DeleteReply, error) {
+	err := os.Remove(r.Fname)
+	if os.IsNotExist(err) {
+		return &DeleteReply{Exists: false}, nil
+	}
+
+	return &DeleteReply{Exists: true}, err
 }

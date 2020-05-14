@@ -293,4 +293,10 @@ func TestRSC(t *testing.T) {
 			t.Error("Bytes at place", i, "don't match")
 		}
 	}
+
+	err = DeleteFileRSC(host, fname, ringsz)
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Error(err)
+	}
 }
