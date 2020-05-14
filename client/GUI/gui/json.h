@@ -9,7 +9,7 @@
 #include <QDebug>
 
 #define T_NAME "Name"
-#define T_ISDIR "isDir"
+#define T_ISDIR "IsDir"
 #define T_SIZE "Size"
 #define T_CHILD "Child"
 
@@ -45,9 +45,9 @@ public:
 
     std::vector<MDfile> Ls() {
         std::vector<MDfile> res;
-        QJsonArray arr = GetObj(path)[T_CHILD].toArray();
-        for (const auto& dir : arr) {
-            QJsonObject obj = dir.toObject();
+        QJsonObject subdir = GetObj(path)[T_CHILD].toObject();
+        for (const auto& dir : subdir.keys()) {
+            QJsonObject obj = subdir[dir].toObject();
             MDfile fl = {obj[T_NAME].toString(), obj[T_ISDIR].toBool(), (unsigned long long)obj[T_SIZE].toInt()};
             res.push_back(fl);
         }
@@ -73,16 +73,10 @@ private:
                 continue;
             }
             if (ptr[T_ISDIR].toBool() == true) {
-                QJsonArray arr = ptr["Child"].toArray();
-                bool found = 0;
-                for (const auto& item : arr) {
-                    if (item.toObject()[T_NAME].toString() == dir) {
-                        ptr = item.toObject();
-                        found = 1;
-                        break;
-                    }
-                }
-                if (!found) {
+                QJsonObject subdir = ptr[T_CHILD].toObject();
+                if (subdir.contains(dir)) {
+                    ptr = subdir[dir].toObject();
+                } else {
                     ret.insert(T_NAME, "");
                     return ret;
                 }
