@@ -26,10 +26,10 @@ MainWindow::MainWindow(QWidget *parent)
         QString responce;
         ui->textBrowser->clear();
         // Обработка ошибок
-        if (reply->error()) {
-            responce += QString("Error %1").arg(reply->errorString())+"\n";
-            reply->deleteLater();
-        }
+//        if (reply->error()) {
+//            responce += QString("Error %1").arg(reply->errorString())+"\n";
+//            reply->deleteLater();
+//        }
 
         // Вывод заголовков
 //        for (auto &i:reply->rawHeaderPairs()) {
@@ -49,10 +49,22 @@ MainWindow::MainWindow(QWidget *parent)
         responce += doc.toJson();
         QJsonObject rep = doc.object();
         if (rep["status"].toInt() != 0) {
-            QMessageBox::information(this, "Error", rep["message"].toString());
+            QMessageBox::warning(this, "Error", rep["message"].toString());
         } else if (rep["email"] != Login) {
             QMessageBox::warning(this, "Authoriztion", "Authorization failed");
-        } else {}
+        } else {
+            switch (rep["type"].toInt()) {
+                case 2:
+                    processingAddCoins(rep["body"].toObject());
+                    break;
+                case 3:
+                    processingGetJson(rep["body"].toObject());
+                    break;
+                case 4:
+                    processingGetCoinsAccount(rep["body"].toObject());
+                    break;
+            }
+        }
 
         ui->textBrowser->setText(responce);
         // Delete garbage && Exit
@@ -523,4 +535,18 @@ void MainWindow::on_btnGetCoins_clicked() {
         //jBody.insert("Null", "Null");
         MakeReqRequest(jBody, 4);
     }
+}
+
+int MainWindow::processingAddCoins(QJsonObject repBody) {
+    QMessageBox::information(this, "Success", "Coins successfuly added");
+    return 1;
+}
+
+int MainWindow::processingGetJson(QJsonObject repBody) {
+
+}
+
+int MainWindow::processingGetCoinsAccount(QJsonObject repBody) {
+    ui->lineEdit_2->setText(QString::number(repBody["value"].toInt()));
+    return 1;
 }
