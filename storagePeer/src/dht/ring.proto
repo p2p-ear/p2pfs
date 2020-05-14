@@ -30,6 +30,10 @@ message UpdateSpecificFingerRequest {
   string IP = 3;
 }
 
+message UpdateSuccListRequest {
+  string IP = 1;
+}
+
 service RingService {
 
   // These request return you succ and pred for specific nodes
@@ -43,4 +47,6 @@ service RingService {
   rpc UpdatePredecessor(UpdatePredRequest) returns (UpdateReply) {}
   rpc UpdateSpecificFinger(UpdateSpecificFingerRequest) returns (UpdateReply) {}
 
+  // Update succ list
+  rpc UpdateSuccList(UpdateSuccListRequest) returns (UpdateReply) {}
 }

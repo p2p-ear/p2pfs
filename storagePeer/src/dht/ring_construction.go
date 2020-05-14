@@ -12,24 +12,43 @@ import (
 func (n *RingNode) Join(existingIP string) {
 
 	if len(existingIP) == 0 {
-		//First join
+
+		// First join
+
+		// Init finger table
 		for i := int64(0); i < int64(len(n.fingerTable)); i++ {
 			n.fingerTable[i].start = n.fingerIndex(i, true) // TODO: Might want to refactor it to create a new Node structure
 			n.fingerTable[i].IP = n.self.IP
 			n.fingerTable[i].ID = n.self.ID
 		}
+
+		// Init succList
+		for i := uint64(0); i < n.succListSize; i++ {
+			n.succList.PushBack(neighbour{node:n.self})
+		}
+
+		// Init a predecessor
 		n.predecessor = n.fingerTable[len(n.fingerTable)-1] // TODO: panics when one node in network
+
 	} else {
 
-		n.initFingerTable(existingIP)
-		n.updateOthers()
+		// First initialize your succ and pred
+		n.initClosest(existingIP)
+
+		// First we deal with succ lists since they are important for correctness
+		n.initSuccList()
+		n.updateOthersSuccLists()
+
+		// Now finger tables for perfomance
+		n.initFingerTable()
+		n.updateOthersFingerTables()
 	}
 }
 
-// Get information about your neighbours
-func (n *RingNode) initFingerTable(existingIP string) {
+///// Say hello to your closest friends
 
-	//fmt.Printf("===Initiating for node %s with remote %s===\n", n.self.IP, existingIP)
+// First init your succ and pred and tell them about yourself
+func (n *RingNode) initClosest(existingIP string) {
 
 	existingNode := finger{IP: existingIP, ID: Hash([]byte(existingIP), n.maxNodes)}
 
@@ -44,14 +63,62 @@ func (n *RingNode) initFingerTable(existingIP string) {
 	n.fingerTable[0] = succ
 	n.fingerTable[0].start = n.self.ID + 1
 
-	// Insert new node as this node's predecessor
+	// Update others
+	n.insertYourself(n.predecessor.IP, succ.IP)
 
-	ok, err := n.invokeUpdatePredecessor(succ.IP)
+}
+
+// Insert yourself as succ and pred of neighbour node
+func (n *RingNode) insertYourself(predIP string, succIP string) {
+
+	// Insert new node as succ's predecessor
+	ok, err := n.invokeUpdatePredecessor(succIP)
 
 	if err != nil || !ok {
 		fmt.Println(ok)
 		panic("Couldn't update pred!")
 	}
+
+	// Now as pred's successor
+	n.invokeUpdateSpecificFinger(predIP, 0, n.self)
+
+}
+
+///// Succ lists
+
+// Get information about closest neighbours
+func (n *RingNode) initSuccList() {
+
+	first, err := n.invokeGetSucc(n.fingerTable[0].IP)
+	if err != nil {
+		fmt.Println("Couldn't build a succ list. Someone died probably :(")
+		panic(err)
+	}
+
+	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}})
+
+	for i := uint64(1); i < n.succListSize; i++ {
+
+		node, err := n.invokeGetSucc(n.succList.Back().Value.(neighbour).node.IP)
+		if err != nil {
+			fmt.Println("Couldn't build a succ list. Someone died probably :(")
+			panic(err)
+		}
+
+		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}})
+	}
+}
+
+// Insert yourself to some of the predecessors
+func (n *RingNode) updateOthersSuccLists() {
+
+}
+
+///// FT
+// Get information about your neighbours
+func (n *RingNode) initFingerTable() {
+
+	//fmt.Printf("===Initiating for node %s with remote %s===\n", n.self.IP, existingIP)
 
 	// Now update other entries in finger table
 	for i := int64(1); i < int64(len(n.fingerTable)); i++ {
@@ -72,7 +139,7 @@ func (n *RingNode) initFingerTable(existingIP string) {
 
 			} else {
 
-				pred := n.recursivePredFindingStep(start, existingNode, n.self)
+				pred := n.recursivePredFindingStep(start, n.fingerTable[0], n.self)
 				succ, err := n.invokeGetSucc(pred.IP)
 				if err != nil {
 					panic(err)
@@ -88,7 +155,7 @@ func (n *RingNode) initFingerTable(existingIP string) {
 }
 
 // Update finger tables of other nodes
-func (n *RingNode) updateOthers() {
+func (n *RingNode) updateOthersFingerTables() {
 
 	//fmt.Printf("Node %d is updating others\n", n.self.ID)
 
@@ -102,7 +169,7 @@ func (n *RingNode) updateOthers() {
 
 		//fmt.Printf("For %d: %d id got %d\n", i, n.fingerIndex(i, false), p.ID)
 
-		// If this anticlockwise finger hits some node exactly then we also have to change it's fingers (or not :( )
+		// If this anticlockwise finger hits some node exactly then we also have to change it's fingers
 		succ, err := n.invokeGetSucc(p.IP)
 		if err != nil {
 			panic(err)

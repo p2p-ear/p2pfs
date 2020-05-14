@@ -206,11 +206,41 @@ func validateRing(nodes []*RingNode, t *testing.T) bool {
 	return true
 }
 
+func validateSuccLists(nodes []*RingNode, t *testing.T) {
+
+	firstTime := true
+
+	for _, n := range nodes {
+
+		succ := n.fingerTable[0].ID
+
+		if findNext(nodes, n.self.ID) != succ {
+			t.Errorf("Node %d has succ %d but actual is %d", n.self.ID, succ, findNext(nodes, n.self.ID))
+			if firstTime {
+				printNodes(nodes)
+				firstTime = false
+			}
+		}
+
+		for el := n.succList.Front(); el != nil; el = el.Next() {
+			inlist := el.Value.(neighbour).node.ID
+			if findNext(nodes, succ) != inlist {
+				t.Errorf("Node %d has %d in succ list but actual is %d", n.self.ID, inlist, findNext(nodes, n.self.ID))
+				if firstTime {
+					printNodes(nodes)
+					firstTime = false
+				}
+			}
+			succ = findNext(nodes, succ)
+		}
+	}
+}
+
 func TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var start uint64 = 10
-	var maxRingSize uint64 = 50
+	var maxRingSize uint64 = 11
 	var step uint64 = 10
 
 	fmt.Println("Testing construction of different ring topologies...")
@@ -229,10 +259,11 @@ func TestJoin(t *testing.T) {
 
 		nodes[0].Join("")
 
-		for j:= 1; j < len(nodes); j++ {
+		for j:= 1; j < 2; j++ {
 			nodes[j].Join(nodes[j-1].self.IP)
-			time.Sleep(time.Millisecond * 5)
+			time.Sleep(time.Millisecond * 10)
 			validateRing(nodes[:j+1], t)
+			validateSuccLists(nodes[:j+1], t)
 		}
 
 		for _, conn := range b {

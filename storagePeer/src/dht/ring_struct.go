@@ -3,7 +3,11 @@ package dht
 import (
 	"encoding/json"
 	"math"
+	"container/list"
 )
+
+
+
 
 ////////
 // This is a realisation of a Chord ring - names of the methods are consistent with the paper.
@@ -12,6 +16,9 @@ import (
 // link: https://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf
 ////////
 
+// Theese constants specify system requirements
+const FAIL_PROB = 0.1 // probability that one node will fail in time delta T
+const TOLERABLE_FAIL_PROB = 0.001 // tolerable probability of failure (epsilon)
 
 ////////
 // Data structures
@@ -24,12 +31,21 @@ type finger struct {
 	ID    uint64
 }
 
+// Node and it's contents
+type neighbour struct {
+	node finger
+	contents list.List
+}
+
 // RingNode is a Chord node
 type RingNode struct {
 	maxNodes    uint64
 	self        finger
 	predecessor finger
+
 	fingerTable []finger
+	succList    *list.List
+	succListSize uint64
 }
 
 // NewRingNode is a RingNode constructor. After constructing an object make sure to enable a gRPC server.
@@ -38,25 +54,18 @@ func NewRingNode(ownIP string, maxNodes uint64) *RingNode {
 	id := Hash([]byte(ownIP), maxNodes)
 
 	fingSize := uint64(math.RoundToEven(math.Log2(float64(maxNodes))))
+	succListSize := uint64(math.Log(TOLERABLE_FAIL_PROB) / math.Log(FAIL_PROB)) - 1 // this -1 apears since first successor is in the fingertable, it's convinient
 
 	n := RingNode{
 		self:        finger{IP: ownIP, ID: id, start: id},
 		predecessor: finger{},
 		maxNodes:    maxNodes,
 		fingerTable: make([]finger, fingSize),
+		succList:    list.New(),
+		succListSize: succListSize,
 	}
 
 	return &n
-}
-
-// GetPersonalSuccessor gets your node's successor
-func (n *RingNode) GetPersonalSuccessor() finger {
-	return finger{IP: n.fingerTable[0].IP, ID: n.fingerTable[0].ID}
-}
-
-// GetPersonalPredecessor gets your node's predecessor
-func (n *RingNode) GetPersonalPredecessor() finger {
-	return finger{IP: n.predecessor.IP, ID: n.predecessor.ID}
 }
 
 // MarshalJSON serializes node for printing
@@ -68,11 +77,17 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 		ID    uint64
 	}
 
+	type PublicNeighbour struct {
+		Node     PublicFinger
+		Contents list.List
+	}
+
 	type PublicRingNode struct {
 		MaxNodes    uint64
 		Self        PublicFinger
 		Predecessor PublicFinger
 		FingerTable []PublicFinger
+		SuccList    []PublicNeighbour
 	}
 
 	p := PublicRingNode{
@@ -88,12 +103,20 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 		},
 		MaxNodes:    n.maxNodes,
 		FingerTable: make([]PublicFinger, len(n.fingerTable)),
+		SuccList:    make([]PublicNeighbour, n.succListSize),
 	}
 
 	for i, f := range n.fingerTable {
 		p.FingerTable[i].Start = f.start
 		p.FingerTable[i].IP = f.IP
 		p.FingerTable[i].ID = f.ID
+	}
+
+	i:=0
+	for el := n.succList.Front(); el !=nil; el = el.Next() {
+		p.SuccList[i].Node = PublicFinger{ID: el.Value.(neighbour).node.ID, IP: el.Value.(neighbour).node.IP}
+		p.SuccList[i].Contents = el.Value.(neighbour).contents
+		i++
 	}
 
 	return json.Marshal(p)
