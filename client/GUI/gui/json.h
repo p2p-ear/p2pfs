@@ -34,6 +34,11 @@ public:
         }
     }
 
+    int Load(QJsonObject res) {
+        root = res;
+        return 1;
+    }
+
     int Cd(const QString& aim) {
         QJsonObject currentDir = GetObj(aim);
         if (currentDir[T_NAME].toString() == "") {

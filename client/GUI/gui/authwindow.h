@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QDebug>
 #include <QMessageBox>
+#include <QFile>
 
 #include <fstream>
 #include <sstream>

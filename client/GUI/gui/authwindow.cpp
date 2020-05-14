@@ -30,7 +30,12 @@ void AuthWindow::on_btnSignIn_clicked() {
     qDebug() << "sign_in\n";
     QString login = ui->lineLogin->text(), pass = ui->linePasswd->text();
     if (Auth(login, pass) == 1) {
+        QFile f(".auth");
+        f.remove();
+        f.open(QIODevice::ReadWrite);
+        f.close();
         std::fstream authConfig(".auth");
+
         authConfig.clear();
         if (ui->checkBox->checkState() == Qt::CheckState::Checked) {
             IsRemembered = true;
