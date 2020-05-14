@@ -74,7 +74,7 @@ private:
             }
             if (ptr[T_ISDIR].toBool() == true) {
                 QJsonObject subdir = ptr[T_CHILD].toObject();
-                if (subdir.contains(dir)) {
+                if (subdir.contains(dir) && subdir[dir].toObject()[T_ISDIR].toBool() == true) {
                     ptr = subdir[dir].toObject();
                 } else {
                     ret.insert(T_NAME, "");
