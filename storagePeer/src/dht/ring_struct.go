@@ -61,7 +61,7 @@ func NewRingNode(ownIP string, maxNodes uint64) *RingNode {
 		predecessor: finger{},
 		maxNodes:    maxNodes,
 		fingerTable: make([]finger, fingSize),
-		succList:    list.New(),
+		succList:    list.New(), // at first it's empty
 		succListSize: succListSize,
 	}
 

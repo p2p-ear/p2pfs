@@ -24,6 +24,10 @@ message UpdatePredRequest {
   string IP = 1;
 }
 
+message UpdateSuccRequest {
+  string IP = 1;
+}
+
 message UpdateSpecificFingerRequest {
   int64 FingID = 1;
   uint64 ID = 2;
@@ -45,6 +49,7 @@ service RingService {
 
   // Update neighbours data of a node
   rpc UpdatePredecessor(UpdatePredRequest) returns (UpdateReply) {}
+  rpc UpdateSucc(UpdateSuccRequest) returns (UpdateReply) {}
   rpc UpdateSpecificFinger(UpdateSpecificFingerRequest) returns (UpdateReply) {}
 
   // Update succ list

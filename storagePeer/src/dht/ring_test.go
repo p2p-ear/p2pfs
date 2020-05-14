@@ -222,8 +222,18 @@ func validateSuccLists(nodes []*RingNode, t *testing.T) {
 			}
 		}
 
+		if uint64(n.succList.Len()) > n.succListSize {
+			t.Errorf("SuccList size is %d but must be %d at max", n.succList.Len(), n.succListSize)
+		}
+
 		for el := n.succList.Front(); el != nil; el = el.Next() {
+
 			inlist := el.Value.(neighbour).node.ID
+
+			if findNext(nodes, succ) == n.self.ID {
+				break
+			}
+
 			if findNext(nodes, succ) != inlist {
 				t.Errorf("Node %d has %d in succ list but actual is %d", n.self.ID, inlist, findNext(nodes, n.self.ID))
 				if firstTime {
@@ -240,7 +250,7 @@ func TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var start uint64 = 10
-	var maxRingSize uint64 = 11
+	var maxRingSize uint64 = 50
 	var step uint64 = 10
 
 	fmt.Println("Testing construction of different ring topologies...")
@@ -259,7 +269,7 @@ func TestJoin(t *testing.T) {
 
 		nodes[0].Join("")
 
-		for j:= 1; j < 2; j++ {
+		for j:= 1; j < len(nodes); j++ {
 			nodes[j].Join(nodes[j-1].self.IP)
 			time.Sleep(time.Millisecond * 10)
 			validateRing(nodes[:j+1], t)
@@ -272,6 +282,5 @@ func TestJoin(t *testing.T) {
 				panic(err)
 			}
 		}
-
 	}
 }

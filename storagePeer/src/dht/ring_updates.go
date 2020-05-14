@@ -60,6 +60,11 @@ func (n *RingNode) UpdateSpecificFinger(ctx context.Context, in *UpdateSpecificF
 	s := finger{ID: in.GetID(), IP: in.GetIP()}
 	i := in.GetFingID()
 
+	if i == 0 {
+		// Use update succ for this
+		return &UpdateReply{OK: false}, nil
+	}
+
 	//fmt.Printf("Asking %d to change %dth finger from %d to %d\n", n.self.ID, i, n.fingerTable[i].ID, s.ID)
 	if n.inInterval(n.self.ID, n.fingerTable[i].ID, s.ID, true, false) {
 
@@ -102,36 +107,110 @@ func (n *RingNode) invokeUpdateSpecificFinger(invokeIP string, fingIndex int64, 
 	return mes.GetOK(), nil
 }
 
-/////////////////// Predecessor
+/////////////////// Successor
 
-func (n *RingNode) UpdateSuccList(ctx context.Context, in *UpdateSuccListRequest) (*UpdateReply, error) {
+// Insert node into succlist and make sure that it's <= succListSize
+// Returns true if element was inserted
+func (n *RingNode) insertToSuccList(node finger) bool {
+
+	// Finding our place
+	for neighb := n.succList.Front(); neighb != nil; neighb = neighb.Next() {
+
+		if n.inInterval(n.fingerTable[0].ID, neighb.Value.(neighbour).node.ID, node.ID, false, false) {
+
+			el := n.succList.InsertBefore(neighbour{node: node}, neighb)
+			if el == nil {
+				panic("Couldn't insert a node into succ list!")
+			}
+
+			if uint64(n.succList.Len()) > n.succListSize {
+				n.succList.Remove(n.succList.Back())
+			}
+			return true
+		}
+	}
+
+	// Insert first element or in the end
+	if uint64(n.succList.Len()) < n.succListSize {
+		n.succList.PushBack(neighbour{node: node})
+		return true
+	}
+
+	return false
+}
+
+// Insert new succ and update successor lists on previous nodes
+func (n *RingNode) UpdateSucc(ctx context.Context, in *UpdateSuccRequest) (*UpdateReply, error) {
 
 	ip := in.IP
 	id := Hash([]byte(ip), n.maxNodes)
 
-	// Check if it's too far away
-	if n.inInterval(n.fingerTable[0].ID, n.succList.Back().Value.(neighbour).node.ID, id, false, false) {
+	//fmt.Printf("update succ: %d is updated with %d\n", n.self.ID, id)
 
-		for neighb := n.succList.Front(); neighb != nil; neighb = neighb.Next() {
+	oldSuc := n.fingerTable[0]
 
-			if n.inInterval(n.fingerTable[0].ID, neighb.Value.(neighbour).node.ID, id, false, false) {
-				el := n.succList.InsertBefore(neighbour{node: finger{ID:id, IP:ip}}, neighb)
-				if el == nil {
-					panic("Couldn't insert a node into succ list!")
-				}
-				n.succList.Remove(n.succList.Back())
-				break
-			}
+	n.fingerTable[0].ID = id; n.fingerTable[0].IP = ip
+
+	// Check if it's second node joining
+	if oldSuc.ID != n.self.ID {
+
+		if !n.insertToSuccList(oldSuc) {
+			panic("Couldn't insert old suc")
 		}
 
 		// Propogate change
-		// TODO: same as the previous one
 		go func() {
 			_, err := n.invokeUpdateSuccList(n.predecessor.IP, finger{IP: ip, ID: id})
 			if err != nil {
 				panic(err)
 			}
 		}()
+	}
+
+	return &UpdateReply{OK:true}, nil
+}
+
+func (n* RingNode) invokeUpdateSucc(invokeIP string, node finger) (bool, error) {
+
+	conn, err := grpc.Dial(invokeIP, grpc.WithInsecure())
+	if err != nil {
+		return false, err
+	}
+	cl := NewRingServiceClient(conn)
+
+	mes, err := cl.UpdateSucc(
+		context.Background(),
+		&UpdateSuccRequest{IP: node.IP},
+	)
+	if err != nil {
+		return false, err
+	}
+	conn.Close()
+
+	return mes.GetOK(), nil
+}
+
+/////////////////// Successor list
+
+func (n *RingNode) UpdateSuccList(ctx context.Context, in *UpdateSuccListRequest) (*UpdateReply, error) {
+
+	ip := in.IP
+	id := Hash([]byte(ip), n.maxNodes)
+
+	//fmt.Printf("update succ list: %d is updated with %d, size %d\n", n.self.ID, id, n.succList.Len())
+
+	// Don't add yourself to a succ list!
+	if id != n.self.ID {
+
+		if n.insertToSuccList(finger{IP: ip, ID: id}) {
+			// Propogate only changes you made yourself
+			go func() {
+				_, err := n.invokeUpdateSuccList(n.predecessor.IP, finger{IP: ip, ID: id})
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
 	}
 
 	return &UpdateReply{OK: true}, nil

@@ -22,11 +22,6 @@ func (n *RingNode) Join(existingIP string) {
 			n.fingerTable[i].ID = n.self.ID
 		}
 
-		// Init succList
-		for i := uint64(0); i < n.succListSize; i++ {
-			n.succList.PushBack(neighbour{node:n.self})
-		}
-
 		// Init a predecessor
 		n.predecessor = n.fingerTable[len(n.fingerTable)-1] // TODO: panics when one node in network
 
@@ -37,7 +32,6 @@ func (n *RingNode) Join(existingIP string) {
 
 		// First we deal with succ lists since they are important for correctness
 		n.initSuccList()
-		n.updateOthersSuccLists()
 
 		// Now finger tables for perfomance
 		n.initFingerTable()
@@ -80,8 +74,7 @@ func (n *RingNode) insertYourself(predIP string, succIP string) {
 	}
 
 	// Now as pred's successor
-	n.invokeUpdateSpecificFinger(predIP, 0, n.self)
-
+	n.invokeUpdateSucc(predIP, n.self)
 }
 
 ///// Succ lists
@@ -107,11 +100,6 @@ func (n *RingNode) initSuccList() {
 
 		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}})
 	}
-}
-
-// Insert yourself to some of the predecessors
-func (n *RingNode) updateOthersSuccLists() {
-
 }
 
 ///// FT
