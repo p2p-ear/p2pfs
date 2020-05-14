@@ -48,20 +48,26 @@ MainWindow::MainWindow(QWidget *parent)
         QJsonDocument doc(QJsonDocument::fromJson(responseData));
         responce += doc.toJson();
         QJsonObject rep = doc.object();
-        if (rep["status"].toInt() != 0) {
+        if (rep["status"].toInt() != 0) {//add int value for error processing
             QMessageBox::warning(this, "Error", rep["message"].toString());
-        } else if (rep["email"] != Login) {
+        } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
             QMessageBox::warning(this, "Authoriztion", "Authorization failed");
         } else {
             switch (rep["type"].toInt()) {
+                case 0:
+                    processingAddDir(rep["body"].toObject(), rep["status"].toInt());
+                    break;
+                case 1:
+                    processingDelDir(rep["body"].toObject(), rep["status"].toInt());
+                    break;
                 case 2:
-                    processingAddCoins(rep["body"].toObject());
+                    processingAddCoins(rep["body"].toObject(), rep["status"].toInt());
                     break;
                 case 3:
-                    processingGetJson(rep["body"].toObject());
+                    processingGetJson(rep["body"].toObject(), rep["status"].toInt());
                     break;
                 case 4:
-                    processingGetCoinsAccount(rep["body"].toObject());
+                    processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
                     break;
             }
         }
@@ -501,6 +507,8 @@ void MainWindow::on_btnAddCoins_clicked() {
         QJsonObject jBody;
         jBody.insert("value", ui->lineEdit->text().toInt());
         MakeReqRequest(jBody, 2);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
     }
 }
 
@@ -509,6 +517,8 @@ void MainWindow::on_btnUodateJson_clicked() {
         QJsonObject jBody;
         //jBody.insert("Null", "Null");
         MakeReqRequest(jBody, 3);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
     }
 }
 
@@ -534,19 +544,74 @@ void MainWindow::on_btnGetCoins_clicked() {
         QJsonObject jBody;
         //jBody.insert("Null", "Null");
         MakeReqRequest(jBody, 4);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
     }
 }
 
-int MainWindow::processingAddCoins(QJsonObject repBody) {
-    QMessageBox::information(this, "Success", "Coins successfuly added");
+int MainWindow::processingAddCoins(QJsonObject repBody, int status) {
+    if (status == 0) {
+        QMessageBox::information(this, "Success", "Coins successfuly added");
+        return 1;
+    } else {
+        QMessageBox::warning(this, "Something went wrong", "Coins was not added");
+        return 0;
+    }
+
+}
+
+int MainWindow::processingGetJson(QJsonObject repBody, int status) {
+
+}
+
+int MainWindow::processingGetCoinsAccount(QJsonObject repBody, int status) {
+    if (status == 0) {
+        ui->lineEdit_2->setText(QString::number(repBody["value"].toInt()));
+        return 1;
+    } else {
+        QMessageBox::warning(this, "Something went wrong", "Coins account was not loaded");
+        return 0;
+    }
+}
+
+int MainWindow::processingAddDir(QJsonObject repBody, int status) {
+    //reload my disk table
     return 1;
 }
 
-int MainWindow::processingGetJson(QJsonObject repBody) {
+int MainWindow::processingDelDir(QJsonObject repBody, int status)
+{
 
 }
 
-int MainWindow::processingGetCoinsAccount(QJsonObject repBody) {
-    ui->lineEdit_2->setText(QString::number(repBody["value"].toInt()));
-    return 1;
+void MainWindow::on_btnAddDir_clicked() {
+    QString path, dirname;
+    path = ui->lineEdit_3->text();
+    dirname = ui->lineEdit_4->text();
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("path", path);
+        jBody.insert("name", dirname);
+        MakeReqRequest(jBody, 0);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+    }
+    if (is_authorised) { // update json after adding dir
+        QJsonObject jBody;
+        //jBody.insert("Null", "Null");
+        MakeReqRequest(jBody, 3);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+    }
+}
+
+void MainWindow::on_btnDelteDir_clicked() {
+    QString path = ui->lineEdit_5->text();
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("path", path);
+        MakeReqRequest(jBody, 1);
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+    }
 }

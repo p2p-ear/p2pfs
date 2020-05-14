@@ -115,6 +115,7 @@ private:
     int processingGetJson(QJsonObject repBody, int status);
     int processingGetCoinsAccount(QJsonObject repBody, int status);
     int processingAddDir(QJsonObject repBody, int status);
+    int processingDelDir(QJsonObject repBody, int status);
 
     Ui::MainWindow *ui;
     QString current_path;
