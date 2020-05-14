@@ -17,6 +17,49 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    manager = new QNetworkAccessManager;
+    QObject::connect(
+                manager,
+                &QNetworkAccessManager::finished,
+                // Лямбда функция - обработчик HTTP ответа
+                [=](QNetworkReply *reply) {
+        QString responce;
+        ui->textBrowser->clear();
+        // Обработка ошибок
+        if (reply->error()) {
+            responce += QString("Error %1").arg(reply->errorString())+"\n";
+            reply->deleteLater();
+        }
+
+        // Вывод заголовков
+//        for (auto &i:reply->rawHeaderPairs()) {
+//            QString str;
+//            responce += str.sprintf(
+//                            "%40s: %s",
+//                            i.first.data(),
+//                            i.second.data());
+//        }
+
+        // Вывод стандартного заголовка
+        responce += reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
+
+        // Тело ответа в формате JSON
+        QByteArray responseData = reply->readAll();
+        QJsonDocument doc(QJsonDocument::fromJson(responseData));
+        responce += doc.toJson();
+        QJsonObject rep = doc.object();
+        if (rep["status"].toInt() != 0) {
+            QMessageBox::information(this, "Error", rep["message"].toString());
+        } else if (rep["email"] != Login) {
+            QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+        } else {}
+
+        ui->textBrowser->setText(responce);
+        // Delete garbage && Exit
+        reply->deleteLater();
+    });
+
+
     ui->setupUi(this);
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
@@ -224,6 +267,7 @@ void MainWindow::on_actionLogout_triggered() {
         authFile.close();
         ui->actionAuthorize->setEnabled(true);
         ui->actionUser_Options->setDisabled(true);
+        is_authorised = false;
     }
 }
 
@@ -240,7 +284,7 @@ void MainWindow::on_actionChange_User_triggered() {
         authFile.clear();
         authFile << false << "\n";
         authFile.close();
-
+        is_authorised = false;
         on_actionAuthorize_triggered();
     }
 
@@ -248,10 +292,10 @@ void MainWindow::on_actionChange_User_triggered() {
 
 void MainWindow::on_actionAuthorize_triggered() {
     AuthWindow * auth = new AuthWindow();
-    connect(auth, SIGNAL(AuthorizedLogin(QString)), this, SLOT(setAuthLogin(QString)));
+    connect(auth, SIGNAL(AuthorizedLogin(QString, QString, QString)), this, SLOT(setAuthLogin(QString, QString, QString)));
     auth->setModal(true);
     auth->exec();
-    disconnect(auth, SIGNAL(AuthorizedLogin(QString)), this, SLOT(setAuthLogin(QString)));
+    disconnect(auth, SIGNAL(AuthorizedLogin(QString, QString, QString)), this, SLOT(setAuthLogin(QString, QString, QString)));
     delete auth;
 }
 
@@ -265,13 +309,17 @@ void MainWindow::on_actionUsername_some_thing_triggered()
 
 }
 
-void MainWindow::setAuthLogin(const QString &auth_login) {
+void MainWindow::setAuthLogin(const QString &auth_login, const QString & auth_pass, const QString& auth_JWT) {
+    Login = auth_login;
+    Password = auth_pass;
+    JWT = auth_JWT;
     ui->actionLogout->setEnabled(true);
     ui->actionChange_User->setEnabled(true);
     ui->actionUsername_some_thing->setEnabled(true);
     ui->actionUsername_some_thing->setText(auth_login);
     ui->actionUser_Options->setEnabled(true);
     ui->actionAuthorize->setDisabled(true);
+    is_authorised = true;
 }
 
 void MainWindow::on_btnCd_clicked() {
@@ -426,4 +474,53 @@ void MainWindow::on_btnRemove2_clicked() {
 void MainWindow::on_btmClear2_clicked() {
     downloadset.clear();
     ui->tableWidget_4->setRowCount(0);
+}
+
+void MainWindow::on_pushButton_clicked() {
+
+}
+
+void MainWindow::on_pushButton_2_clicked() {
+
+}
+
+void MainWindow::on_btnAddCoins_clicked() {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("value", ui->lineEdit->text().toInt());
+        MakeReqRequest(jBody, 2);
+    }
+}
+
+void MainWindow::on_btnUodateJson_clicked() {
+    if (is_authorised) {
+        QJsonObject jBody;
+        //jBody.insert("Null", "Null");
+        MakeReqRequest(jBody, 3);
+    }
+}
+
+int MainWindow::MakeReqRequest(QJsonObject &body, int type) {
+    QJsonObject jObj;
+    jObj.insert("email", Login);
+    jObj.insert("pass", Password);
+    jObj.insert("JWT", "a");//JWT);
+    jObj.insert("type", type);
+    jObj.insert("body", body);
+    qDebug() << jObj.keys().size();
+    QJsonDocument jDoc(jObj);
+    QNetworkRequest req;
+    req.setUrl(QUrl(addressRequest));
+    qDebug() << jDoc.toJson();
+    req.setRawHeader("Content-Type","application/json");
+    manager->post(req, jDoc.toJson());
+    return 1;
+}
+
+void MainWindow::on_btnGetCoins_clicked() {
+    if (is_authorised) {
+        QJsonObject jBody;
+        //jBody.insert("Null", "Null");
+        MakeReqRequest(jBody, 4);
+    }
 }
