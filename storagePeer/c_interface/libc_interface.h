@@ -79,6 +79,12 @@ extern GoInt DownloadFile(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
 
 extern void DeleteFile(GoString p0, GoString p1, GoUint64 p2);
 
+extern void UploadFileRSC(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
+
+extern GoInt DownloadFileRSC(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
+
+extern void DeleteFileRSC(GoString p0, GoString p1, GoUint64 p2);
+
 #ifdef __cplusplus
 }
 #endif
