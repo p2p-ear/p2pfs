@@ -58,6 +58,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    DeleteFile(ip, fname, ringsz);
+
     free(fcontent_read);
     free(fcontent);
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"C"
-	"fmt"
+	"log"
 	"storagePeer/src/peer"
 )
 
@@ -10,7 +10,7 @@ import (
 //export UploadFile
 func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) {
 	if err := peer.UploadFile(ringIP, fname, ringsz, fcontent); err != nil {
-		fmt.Println("Error uploading file!", err)
+		log.Println("Error uploading file!", err)
 	}
 }
 
@@ -19,10 +19,18 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) {
 func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) int {
 	emptySpace, err := peer.DownloadFile(ringIP, fname, ringsz, fcontent)
 	if err != nil {
-		fmt.Println("Error downloading file!", err)
+		log.Println("Error downloading file!", err)
 	}
 
 	return emptySpace
+}
+
+//export DeleteFile
+func DeleteFile(ringIP string, fname string, ringsz uint64) {
+	err := peer.DeleteFile(ringIP, fname, ringsz)
+	if err != nil {
+		log.Println("Error deleting file!", err)
+	}
 }
 
 func main() {
