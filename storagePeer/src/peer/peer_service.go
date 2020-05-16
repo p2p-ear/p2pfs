@@ -15,7 +15,9 @@ import (
 // NewPeer creates new peer
 func NewPeer(ownIP string, maxNodes uint64, existingIP string) *Peer {
 
-	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes), Errs: make(chan error, 1)}
+	const deltaT = time.Second //TODO: make it configurable
+
+	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes, deltaT), Errs: make(chan error, 1)}
 
 	p.start()
 
@@ -50,8 +52,9 @@ func (p *Peer) start() {
 	grpcServer := grpc.NewServer()
 
 	// attach services to handler object
+
+	p.ring.Start(grpcServer)
 	RegisterPeerServiceServer(grpcServer, p)
-	dht.RegisterRingServiceServer(grpcServer, p.ring)
 
 	// Start listening in a separate go routine
 	go func() {

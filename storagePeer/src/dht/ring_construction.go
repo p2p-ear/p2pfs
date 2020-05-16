@@ -31,12 +31,18 @@ func (n *RingNode) Join(existingIP string) {
 		n.initClosest(existingIP)
 
 		// First we deal with succ lists since they are important for correctness
-		n.initSuccList()
+		err := n.initSuccList()
+		if err != nil {
+			panic(err)
+		}
 
 		// Now finger tables for perfomance
 		n.initFingerTable()
 		n.updateOthersFingerTables()
 	}
+
+	// Launch fix routine
+	go n.fixRoutine(n.deltaT)
 }
 
 ///// Say hello to your closest friends
@@ -80,12 +86,11 @@ func (n *RingNode) insertYourself(predIP string, succIP string) {
 ///// Succ lists
 
 // Get information about closest neighbours
-func (n *RingNode) initSuccList() {
+func (n *RingNode) initSuccList() error{
 
 	first, err := n.invokeGetSucc(n.fingerTable[0].IP)
 	if err != nil {
-		fmt.Println("Couldn't build a succ list. Someone died probably :(")
-		panic(err)
+		return err
 	}
 
 	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}})
@@ -94,12 +99,13 @@ func (n *RingNode) initSuccList() {
 
 		node, err := n.invokeGetSucc(n.succList.Back().Value.(neighbour).node.IP)
 		if err != nil {
-			fmt.Println("Couldn't build a succ list. Someone died probably :(")
-			panic(err)
+			return err
 		}
 
 		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}})
 	}
+
+	return nil
 }
 
 ///// FT

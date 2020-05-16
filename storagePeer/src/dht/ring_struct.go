@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"math"
 	"container/list"
+	"time"
+	"google.golang.org/grpc"
 )
-
-
-
 
 ////////
 // This is a realisation of a Chord ring - names of the methods are consistent with the paper.
@@ -46,10 +45,14 @@ type RingNode struct {
 	fingerTable []finger
 	succList    *list.List
 	succListSize uint64
+
+	// Fix routine information
+	stopSignal   chan struct{}
+	deltaT time.Duration
 }
 
 // NewRingNode is a RingNode constructor. After constructing an object make sure to enable a gRPC server.
-func NewRingNode(ownIP string, maxNodes uint64) *RingNode {
+func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode {
 
 	id := Hash([]byte(ownIP), maxNodes)
 
@@ -63,9 +66,23 @@ func NewRingNode(ownIP string, maxNodes uint64) *RingNode {
 		fingerTable: make([]finger, fingSize),
 		succList:    list.New(), // at first it's empty
 		succListSize: succListSize,
+		stopSignal: make(chan struct{}),
+		deltaT: deltaT,
 	}
 
 	return &n
+}
+
+// Connect service to the gRPC server and start fix routine
+func (n *RingNode) Start(grpcServer *grpc.Server) (){
+
+	RegisterRingServiceServer(grpcServer, n)
+
+}
+
+// Gracefull shutdown
+func (n *RingNode) Stop() {
+	close(n.stopSignal)
 }
 
 // MarshalJSON serializes node for printing

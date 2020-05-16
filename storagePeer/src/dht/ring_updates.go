@@ -21,13 +21,21 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 	id := Hash([]byte(ip), n.maxNodes)
 
 	//fmt.Printf("Curr pred: %d, self: %d, id: %d, IP: %s", n.predecessor.ID, n.self.ID, id, ip)
-	ok := n.inInterval(n.predecessor.ID, n.self.ID, id, true, false)
+	isBetween := n.inInterval(n.predecessor.ID, n.self.ID, id, true, false)
+	var isNotOkay bool = false
 
-	if ok {
+	if isBetween {
 		n.predecessor = finger{ID: id, IP: ip}
+	} else {
+		// This request might be made because our good friend passed away
+		_, err := n.invokeGetSucc(n.predecessor.IP)
+		isNotOkay = err != nil
+		if isNotOkay {
+			n.predecessor = finger{ID: id, IP: ip}
+		}
 	}
 
-	return &UpdateReply{OK: ok}, nil
+	return &UpdateReply{OK: (isNotOkay || isBetween)}, nil
 }
 
 func (n *RingNode) invokeUpdatePredecessor(invokeIP string) (bool, error) {
