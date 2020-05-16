@@ -34,6 +34,11 @@ public:
         }
     }
 
+    int Load(QJsonObject res) {
+        root = res;
+        return 1;
+    }
+
     int Cd(const QString& aim) {
         QJsonObject currentDir = GetObj(aim);
         if (currentDir[T_NAME].toString() == "") {
@@ -74,7 +79,7 @@ private:
             }
             if (ptr[T_ISDIR].toBool() == true) {
                 QJsonObject subdir = ptr[T_CHILD].toObject();
-                if (subdir.contains(dir)) {
+                if (subdir.contains(dir) && subdir[dir].toObject()[T_ISDIR].toBool() == true) {
                     ptr = subdir[dir].toObject();
                 } else {
                     ret.insert(T_NAME, "");

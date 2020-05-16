@@ -51,6 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
         if (rep["status"].toInt() != 0) {//add int value for error processing
             QMessageBox::warning(this, "Error", rep["message"].toString());
         } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
+            qDebug() << Login;
+            qDebug() << rep["email"];
             QMessageBox::warning(this, "Authoriztion", "Authorization failed");
         } else {
             switch (rep["type"].toInt()) {
