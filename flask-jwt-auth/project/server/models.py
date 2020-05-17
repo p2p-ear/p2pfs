@@ -5,6 +5,7 @@ import jwt # for encode_auth_token method in class User
 import json
 
 from project.server import app, db, bcrypt
+from sqlalchemy.dialects import postgresql # for IP
 
 
 class User(db.Model):
@@ -33,7 +34,7 @@ class User(db.Model):
                 }
             }
     data = db.Column(db.Text, nullable=False, default=json.dumps(default_data)) # For JSON
-    files = db.relationship('File', backref='owner', lazy=True)
+    files = db.relationship('File', backref='owner')
     coins = db.Column(db.Integer, nullable=False, default=0) # For storing money
     registered_on = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow()) # Added: default=datetime.datetime.utcnow()
     admin = db.Column(db.Boolean, nullable=False, default=False)
@@ -90,11 +91,22 @@ class File(db.Model):
     __tablename__ = "files"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     file_name = db.Column(db.Text, nullable=False)
 
     def __repr__(self):
-        return f"File('{self.user_id}', '{self.file_name}')"
+        return "File('{}', '{}')".format(self.user_id, self.file_name)
+
+
+class Node(db.Model):
+    """ Node Model for storing node related IPs """
+    __tablename__ = "nodes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(postgresql.INET, nullable=False)
+
+    def __repr__(self):
+        return "File('{}')".format(self.ip_address)
 
 
 class BlacklistToken(db.Model):

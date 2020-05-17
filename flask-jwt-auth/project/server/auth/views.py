@@ -262,7 +262,9 @@ class RequestAPI(MethodView):
                 if not (len(self.body) == 2):
                     raise ValueError({'status': 1, 'message': 'Too many arguments in "Add directory" method!'}, 400)
                 
-                path = self.body.get('path') + self.body.get('name')
+                path = self.body.get('path')
+                if (self.body.get('name').find("/") != -1):
+                    raise ValueError({'status': 1, 'message': 'You can\'t use "/" symbol in directory name!'}, 400)
                 abs_path = ["Child"]
                 if (path[0] != '/'):
                     raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
@@ -274,6 +276,7 @@ class RequestAPI(MethodView):
                 else:
                     initial_path = path.split('/')[1:]
                 
+                initial_path.append(self.body.get('name'))
                 abs_path = ["Child"]
                 for i in initial_path[:-1]:
                     abs_path.append(i)
@@ -376,7 +379,9 @@ class RequestAPI(MethodView):
                 if not (len(self.body) == 2):
                     raise ValueError({'status': 1, 'message': 'Too many arguments in "Add file" method!'}, 400)
                 
-                path = self.body.get('path') + self.body.get('name')
+                path = self.body.get('path')
+                if (self.body.get('name').find("/") != -1):
+                    raise ValueError({'status': 1, 'message': 'You can\'t use "/" symbol in file name!'}, 400)
                 abs_path = ["Child"]
                 if (path[0] != '/'):
                     raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
@@ -388,6 +393,7 @@ class RequestAPI(MethodView):
                 else:
                     initial_path = path.split('/')[1:]
                 
+                initial_path.append(self.body.get('name'))
                 abs_path = ["Child"]
                 for i in initial_path[:-1]:
                     abs_path.append(i)
