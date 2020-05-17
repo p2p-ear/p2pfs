@@ -10,6 +10,7 @@
 #include <set>
 #include <filesystem>
 #include <QTableWidget>
+#include <QInputDialog>
 
 #include <QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -104,6 +105,10 @@ private slots:
 
     void on_btnDelteDir_clicked();
 
+    void on_btnUpdateDir_clicked();
+
+    void on_btnHome2_clicked();
+
 private:
     //addresses for requests
     const QString addressUpdate = "http://172.104.136.183/auth/update";
@@ -117,6 +122,15 @@ private:
     int processingAddDir(QJsonObject repBody, int status);
     int processingDelDir(QJsonObject repBody, int status);
 
+
+    //making requests
+    int GetDirTreeRequest();
+    int AddDirRequest(const QString& path, const QString& dirname);
+    int AddCoinsRequest(const int value);
+    int DelDirRequest(const QString& filename);
+    int GetCoinsAccountRequest();
+
+    //
     Ui::MainWindow *ui;
     QString current_path;
     std::stack<QString> uploadBack, uploadForward;
@@ -129,7 +143,7 @@ private:
     QString Login, Password, JWT;
 
     QNetworkAccessManager * manager;
-    int MakeReqRequest(QJsonObject& body, int type);
+    QNetworkReply* MakeReqRequest(QJsonObject& body, int type);
 
     unsigned long long EvaluateSize(std::vector<fs::path>& args, const std::string& start_path);
 };

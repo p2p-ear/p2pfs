@@ -17,69 +17,67 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    manager = new QNetworkAccessManager;
+    manager = new QNetworkAccessManager; 
     QObject::connect(
-                manager,
-                &QNetworkAccessManager::finished,
-                // Лямбда функция - обработчик HTTP ответа
-                [=](QNetworkReply *reply) {
-        QString responce;
-        ui->textBrowser->clear();
-        // Обработка ошибок
-//        if (reply->error()) {
-//            responce += QString("Error %1").arg(reply->errorString())+"\n";
-//            reply->deleteLater();
-//        }
+                    manager,
+                    &QNetworkAccessManager::finished,
+                    // Лямбда функция - обработчик HTTP ответа
+                    [=](QNetworkReply *reply) {
+            QString responce;
+            ui->textBrowser->clear();
+            // Обработка ошибок
+    //        if (reply->error()) {
+    //            responce += QString("Error %1").arg(reply->errorString())+"\n";
+    //            reply->deleteLater();
+    //        }
 
-        // Вывод заголовков
-//        for (auto &i:reply->rawHeaderPairs()) {
-//            QString str;
-//            responce += str.sprintf(
-//                            "%40s: %s",
-//                            i.first.data(),
-//                            i.second.data());
-//        }
+            // Вывод заголовков
+    //        for (auto &i:reply->rawHeaderPairs()) {
+    //            QString str;
+    //            responce += str.sprintf(
+    //                            "%40s: %s",
+    //                            i.first.data(),
+    //                            i.second.data());
+    //        }
 
-        // Вывод стандартного заголовка
-        responce += reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
+            // Вывод стандартного заголовка
+            responce += reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
 
-        // Тело ответа в формате JSON
-        QByteArray responseData = reply->readAll();
-        QJsonDocument doc(QJsonDocument::fromJson(responseData));
-        responce += doc.toJson();
-        QJsonObject rep = doc.object();
-        if (rep["status"].toInt() != 0) {//add int value for error processing
-            QMessageBox::warning(this, "Error", rep["message"].toString());
-        } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
-            qDebug() << Login;
-            qDebug() << rep["email"];
-            QMessageBox::warning(this, "Authoriztion", "Authorization failed");
-        } else {
-            switch (rep["type"].toInt()) {
-                case 0:
-                    processingAddDir(rep["body"].toObject(), rep["status"].toInt());
-                    break;
-                case 1:
-                    processingDelDir(rep["body"].toObject(), rep["status"].toInt());
-                    break;
-                case 2:
-                    processingAddCoins(rep["body"].toObject(), rep["status"].toInt());
-                    break;
-                case 3:
-                    processingGetJson(rep["body"].toObject(), rep["status"].toInt());
-                    break;
-                case 4:
-                    processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
-                    break;
+            // Тело ответа в формате JSON
+            QByteArray responseData = reply->readAll();
+            QJsonDocument doc(QJsonDocument::fromJson(responseData));
+            responce += doc.toJson();
+            QJsonObject rep = doc.object();
+            if (rep["status"].toInt() != 0) {//add int value for error processing
+                QMessageBox::warning(this, "Error", rep["message"].toString());
+            } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
+                qDebug() << Login;
+                qDebug() << rep["email"];
+                QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+            } else {
+                switch (rep["type"].toInt()) {
+                    case 0:
+                        processingAddDir(rep["body"].toObject(), rep["status"].toInt());
+                        break;
+                    case 1:
+                        processingDelDir(rep["body"].toObject(), rep["status"].toInt());
+                        break;
+                    case 2:
+                        processingAddCoins(rep["body"].toObject(), rep["status"].toInt());
+                        break;
+                    case 3:
+                        processingGetJson(rep["body"].toObject(), rep["status"].toInt());
+                        break;
+                    case 4:
+                        processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
+                        break;
+                }
             }
-        }
 
-        ui->textBrowser->setText(responce);
-        // Delete garbage && Exit
-        reply->deleteLater();
-    });
-
-
+            ui->textBrowser->setText(responce);
+            // Delete garbage && Exit
+            reply->deleteLater();
+        });
     ui->setupUi(this);
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
@@ -95,13 +93,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnUp->setDisabled(true);
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget_2->resizeColumnsToContents();
-    FS.Load();
+
+    //laoding fs todo check result
 
     //non-func buttons
     ui->btnBack2->setDisabled(true);
     ui->btnForward2->setDisabled(true);
-    ui->btnHome2->setDisabled(true);
-    ui->btnUp2->setDisabled(true);
     ui->btnPath2->setDisabled(true);
     ui->btnPath->setDisabled(true);
     ui->btnUpload2->setDisabled(true);
@@ -515,16 +512,10 @@ void MainWindow::on_btnAddCoins_clicked() {
 }
 
 void MainWindow::on_btnUodateJson_clicked() {
-    if (is_authorised) {
-        QJsonObject jBody;
-        //jBody.insert("Null", "Null");
-        MakeReqRequest(jBody, 3);
-    } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-    }
+    GetDirTreeRequest();
 }
 
-int MainWindow::MakeReqRequest(QJsonObject &body, int type) {
+QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     QJsonObject jObj;
     jObj.insert("email", Login);
     jObj.insert("pass", Password);
@@ -537,8 +528,8 @@ int MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     req.setUrl(QUrl(addressRequest));
     qDebug() << jDoc.toJson();
     req.setRawHeader("Content-Type","application/json");
-    manager->post(req, jDoc.toJson());
-    return 1;
+    auto reply = manager->post(req, jDoc.toJson());
+    return reply;
 }
 
 void MainWindow::on_btnGetCoins_clicked() {
@@ -563,6 +554,12 @@ int MainWindow::processingAddCoins(QJsonObject repBody, int status) {
 }
 
 int MainWindow::processingGetJson(QJsonObject repBody, int status) {
+    if (!status) {
+        FS.Load(repBody);
+    } else {
+        QMessageBox::warning(this, "Something went wrong", "Failing resfreshing dirtree");
+        return 0;
+    }
 
 }
 
@@ -586,17 +583,27 @@ int MainWindow::processingDelDir(QJsonObject repBody, int status)
 
 }
 
-void MainWindow::on_btnAddDir_clicked() {
-    QString path, dirname;
-    path = ui->lineEdit_3->text();
-    dirname = ui->lineEdit_4->text();
+int MainWindow::GetDirTreeRequest() {
+    if (is_authorised) {
+        QJsonObject jBody;
+        auto reply = MakeReqRequest(jBody, 3);
+        return 1;
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        return 0;
+    }
+}
+
+int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
     if (is_authorised) {
         QJsonObject jBody;
         jBody.insert("path", path);
         jBody.insert("name", dirname);
         MakeReqRequest(jBody, 0);
+        return 1;
     } else {
         QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        return 0;
     }
 //    if (is_authorised) { // update json after adding dir
 //        QJsonObject jBody;
@@ -605,6 +612,13 @@ void MainWindow::on_btnAddDir_clicked() {
 //    } else {
 //        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
 //    }
+}
+
+void MainWindow::on_btnAddDir_clicked() {
+    QString path, dirname;
+    path = ui->lineEdit_3->text();
+    dirname = ui->lineEdit_4->text();
+    AddDirRequest(path, dirname);
 }
 
 void MainWindow::on_btnDelteDir_clicked() {
@@ -616,4 +630,25 @@ void MainWindow::on_btnDelteDir_clicked() {
     } else {
         QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
     }
+}
+
+
+
+void MainWindow::on_btnUpdateDir_clicked() {
+    GetDirTreeRequest();
+}
+
+void MainWindow::on_btnHome2_clicked() {
+    bool bOk;
+    QString dirname = QInputDialog::getText( 0,
+                                         "Make dir",
+                                         "Dirname:",
+                                         QLineEdit::Normal,
+                                         "NewDir",
+                                         &bOk
+                                        );
+    if (!bOk) {
+        return;
+    }
+    AddDirRequest(FS.GetCurrPath(), dirname);//check return value
 }
