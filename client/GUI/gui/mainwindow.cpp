@@ -598,13 +598,13 @@ void MainWindow::on_btnAddDir_clicked() {
     } else {
         QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
     }
-    if (is_authorised) { // update json after adding dir
-        QJsonObject jBody;
-        //jBody.insert("Null", "Null");
-        MakeReqRequest(jBody, 3);
-    } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-    }
+//    if (is_authorised) { // update json after adding dir
+//        QJsonObject jBody;
+//        //jBody.insert("Null", "Null");
+//        MakeReqRequest(jBody, 3);
+//    } else {
+//        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+//    }
 }
 
 void MainWindow::on_btnDelteDir_clicked() {
