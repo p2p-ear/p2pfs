@@ -228,6 +228,42 @@ func TestDownload(t *testing.T) {
 	os.Remove(fname)
 }
 
+func TestUD(t *testing.T) {
+	ownIP, ringsz, _, connection, err := makePeer()
+	if err != nil {
+		t.Error(err)
+	}
+	defer connection.Close()
+
+	fcontent := randString(4096)
+	fname := "testfile.txt"
+
+	err = UploadFile(ownIP, fname, ringsz, fcontent)
+	if err != nil {
+		t.Error("Unable to send file", err)
+	}
+
+	fcontentRead := make([]byte, len(fcontent))
+	empty, err := DownloadFile(ownIP, fname, ringsz, fcontentRead)
+	if err != nil {
+		t.Error("Unable to download file", err)
+	}
+
+	if empty != 0 {
+		t.Error("Lengths don't match: empty =", empty)
+	}
+
+	for i, b := range fcontentRead {
+		if fcontent[i] != b {
+			t.Error("Content doesn't match!")
+		}
+	}
+
+	if err = DeleteFile(ownIP, fname, ringsz); err != nil {
+		t.Error("Error deleting file", err)
+	}
+}
+
 func findBin() (string, error) {
 	absPath, err := filepath.Abs("./")
 	if err != nil {
