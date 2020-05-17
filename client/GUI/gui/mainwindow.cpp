@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent)
 
             ui->textBrowser->setText(responce);
             // Delete garbage && Exit
+            reply->close();
             reply->deleteLater();
         });
     ui->setupUi(this);
@@ -451,6 +452,8 @@ void MainWindow::on_btnCd_2_clicked() {
     if (FS.Cd(ui->linePath_2->text())) {
         updateTable3(FS.Ls());
         on_btmClear2_clicked();
+    } else {
+        QMessageBox::warning(this, "Error", "No such path: \""+ui->linePath_2->text()+"\"");
     }
 }
 
@@ -556,11 +559,11 @@ int MainWindow::processingAddCoins(QJsonObject repBody, int status) {
 int MainWindow::processingGetJson(QJsonObject repBody, int status) {
     if (!status) {
         FS.Load(repBody);
+        return 1;
     } else {
         QMessageBox::warning(this, "Something went wrong", "Failing resfreshing dirtree");
         return 0;
     }
-
 }
 
 int MainWindow::processingGetCoinsAccount(QJsonObject repBody, int status) {
@@ -600,18 +603,23 @@ int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
         jBody.insert("path", path);
         jBody.insert("name", dirname);
         MakeReqRequest(jBody, 0);
+//        if (is_authorised) { // update json after adding dir
+//            GetDirTreeRequest();
+//        } else {
+//            QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+//            return 0;
+//        }
+//        //refreshing tab
+//        if (FS.Cd(FS.GetCurrPath())) {
+//            updateTable3(FS.Ls());
+//            on_btmClear2_clicked();
+//        }
         return 1;
     } else {
         QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
         return 0;
     }
-//    if (is_authorised) { // update json after adding dir
-//        QJsonObject jBody;
-//        //jBody.insert("Null", "Null");
-//        MakeReqRequest(jBody, 3);
-//    } else {
-//        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-//    }
+
 }
 
 void MainWindow::on_btnAddDir_clicked() {
@@ -636,6 +644,16 @@ void MainWindow::on_btnDelteDir_clicked() {
 
 void MainWindow::on_btnUpdateDir_clicked() {
     GetDirTreeRequest();
+//    if (FS.Cd(FS.GetCurrPath())) { not working(((
+//        updateTable3(FS.Ls());
+//        on_btmClear2_clicked();
+//        ui->linePath_2->setText(FS.GetCurrPath());
+//    } else {
+//        FS.Cd("/");
+//        updateTable3(FS.Ls());
+//        on_btmClear2_clicked();
+//        ui->linePath_2->setText("/");
+//    }
 }
 
 void MainWindow::on_btnHome2_clicked() {
