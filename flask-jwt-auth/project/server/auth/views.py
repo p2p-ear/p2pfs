@@ -4,12 +4,13 @@ from flask import Blueprint, request, make_response, jsonify
 from flask.views import MethodView
 
 from project.server import bcrypt, db
-from project.server.models import User, BlacklistToken, Сertificate
+from project.server.models import User, BlacklistToken, Сertificate, File, Node
 
 import json
 from functools import reduce  # forward compatibility for Python 3
 import operator
 from werkzeug.exceptions import BadRequest
+from ipaddress import ip_address as IPA
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -92,7 +93,7 @@ class LoginAPI(MethodView):
                 }
                 return make_response(jsonify(responseObject)), 404
         except Exception as e:
-            print(e)
+            #print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -268,7 +269,7 @@ class RequestAPI(MethodView):
                 abs_path = ["Child"]
                 if (path[0] != '/'):
                     raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
-                if (len(path) == 1):
+                if (len(path) == 1) and (not self.body.get('name')):
                     raise ValueError({'status': 1, 'message': 'You must specify directory!'}, 400)
                 data = json.loads(self.user.data)
                 if (path[-1] == '/'):
@@ -385,7 +386,7 @@ class RequestAPI(MethodView):
                 abs_path = ["Child"]
                 if (path[0] != '/'):
                     raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
-                if (len(path) == 1):
+                if (len(path) == 1) and (not self.body.get('name')):
                     raise ValueError({'status': 1, 'message': 'You must specify file!'}, 400)
                 data = json.loads(self.user.data)
                 if (path[-1] == '/'):
@@ -423,12 +424,175 @@ class RequestAPI(MethodView):
             return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
 
 
+class NodeUploadAPI(MethodView):
+    """
+    Node Upload Resource
+    """
+
+    def post(self):
+        try:
+            # get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+        
+            # Get user
+            user = User.query.filter_by(email=post_data.get('email')).first()
+            if not user: # if user exists
+                raise ValueError({'status': 1, 'message': 'User doesn\'t exist.'}, 404)
+            if not post_data.get('password'):
+                raise ValueError({'status': 1, 'message': 'You should specify password!'}, 400)
+            if not post_data.get('n_shards') or not isinstance(post_data.get('n_shards'), int):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify num of shards or it\'s incorrect!'}, 400)
+            if not post_data.get('mini_shard_size') or not isinstance(post_data.get('mini_shard_size'), int):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify mini-shard size or it\'s incorrect!'}, 400)
+            if not post_data.get('file_name') or not isinstance(post_data.get('file_name'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to file name or it\'s incorrect!'}, 400)
+            if not (len(post_data) == 5):
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+            
+            if bcrypt.check_password_hash(user.password, post_data.get('password')): # password is correct
+                exist_file = File.query.filter_by(file_name=post_data.get('file_name')).first()
+                if exist_file: # File already exists
+                    raise ValueError({'status': 1, 'message': 'File already exists!'}, 400)
+
+                certificate = Сertificate(user_id=user.id, mini_shard_size=post_data.get('mini_shard_size'), shards=post_data.get('n_shards'))
+                new_file = File(user_id=user.id, file_name=post_data.get('file_name'))
+                
+                if certificate and new_file:
+                    db.session.add(certificate)
+                    db.session.add(new_file)
+                    db.session.commit()
+                
+                    responseObject = {
+                        'status': 0,
+                        'message': 'Successfully get certificate!',
+                        'certificate_token': certificate.token.decode()
+                    }
+                    return make_response(jsonify(responseObject)), 200
+            
+                raise ValueError({'status': 1, 'message': 'Can\'t make certificate!'}, 400)
+            else:
+                raise ValueError({'status': 1, 'message': 'Incorrect password!'}, 400)
+
+        except ValueError as responseObject:
+            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
+
+class AddNodeAPI(MethodView):
+    """
+    Add Node Resource
+    """
+
+    def post(self):
+        try:
+            # get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+        
+            if not post_data.get('ip_address'):
+                raise ValueError({'status': 1, 'message': 'You must specify IP address!'}, 400)
+            if not (len(post_data) == 1):
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+            
+            # Get node
+            ip_address_int = int(IPA(post_data.get('ip_address')))
+            node = Node.query.filter_by(ip_address=ip_address_int).first()
+            if not node: # if node doesn't exist
+                new_node = Node(ip_address_int)
+                
+                if new_node:
+                    db.session.add(new_node)
+                    db.session.commit()
+
+                    responseObject = {
+                        'status': 0,
+                        'message': 'Successfully added node!',
+                    }
+                    return make_response(jsonify(responseObject)), 200
+                else:
+                    raise ValueError({'status': 1, 'message': 'Can\'t load node\'s IP!'}, 400)
+            else:
+                raise ValueError({'status': 1, 'message': 'Node already exists!'}, 400)
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+        except ValueError as responseObject:
+            if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
+                return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+            else:
+                return make_response(jsonify({'status': 1, 'message': 'Wrong IP format!'})), 400 
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
+
+class DeleteNodeAPI(MethodView):
+    """
+    Delete Node Resource
+    """
+
+    def delete(self):
+        try:
+            # get the delete data
+            delete_data = request.get_json()
+
+            if not delete_data: # Request isn't JSON type
+                raise BadRequest
+        
+            if not delete_data.get('ip_address'):
+                raise ValueError({'status': 1, 'message': 'You must specify IP address!'}, 400)
+            if not (len(delete_data) == 1):
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+            
+            # Get node
+            ip_address_int = int(IPA(delete_data.get('ip_address')))
+            print(ip_address_int)
+            node = Node.query.filter_by(ip_address=ip_address_int).first()
+            if not node: # if node doesn't exist
+                raise ValueError({'status': 1, 'message': 'Node doesn\'t exist!'}, 400)
+            else:
+                db.session.delete(node)
+                db.session.commit()
+
+                responseObject = {
+                    'status': 0,
+                    'message': 'Successfully deleted node!',
+                }
+                return make_response(jsonify(responseObject)), 200
+        
+        except ValueError as responseObject:
+            if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
+                return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+            else:
+                return make_response(jsonify({'status': 1, 'message': 'Wrong IP format!'})), 400 
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+    
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
 login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 request_view = RequestAPI.as_view('request_api')
+upload_view = NodeUploadAPI.as_view('upload_api')
+add_node_view = AddNodeAPI.as_view('add_node_api')
+delete_node_view = DeleteNodeAPI.as_view('delete_node_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -454,5 +618,20 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/request',
     view_func=request_view,
-    methods=['POST', 'GET']
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/upload',
+    view_func=upload_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/node/add',
+    view_func=add_node_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/node/delete',
+    view_func=delete_node_view,
+    methods=['DELETE']
 )

@@ -5,8 +5,6 @@ import jwt # for encode_auth_token method in class User
 import json
 
 from project.server import app, db, bcrypt
-from sqlalchemy.dialects import postgresql # for IP
-
 
 class User(db.Model):
     """ User Model for storing user related details """
@@ -94,6 +92,11 @@ class File(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     file_name = db.Column(db.Text, nullable=False)
 
+    def __init__(self, user_id, file_name):
+        self.user_id = token
+        self.file_name = file_name
+
+
     def __repr__(self):
         return "File('{}', '{}')".format(self.user_id, self.file_name)
 
@@ -103,8 +106,11 @@ class Node(db.Model):
     __tablename__ = "nodes"
 
     id = db.Column(db.Integer, primary_key=True)
-    ip_address = db.Column(postgresql.INET, nullable=False)
+    ip_address = db.Column(db.BigInteger, nullable=False)
 
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+    
     def __repr__(self):
         return "File('{}')".format(self.ip_address)
 
