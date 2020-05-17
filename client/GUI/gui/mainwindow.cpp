@@ -100,7 +100,6 @@ MainWindow::MainWindow(QWidget *parent)
     //non-func buttons
     ui->btnBack2->setDisabled(true);
     ui->btnForward2->setDisabled(true);
-    ui->btnPath2->setDisabled(true);
     ui->btnPath->setDisabled(true);
     ui->btnUpload2->setDisabled(true);
 }
@@ -229,9 +228,8 @@ void MainWindow::on_listWidget_itemActivated(QListWidgetItem *item) {
 
 }
 
-void MainWindow::on_btnPath_clicked()
-{
-
+void MainWindow::on_btnPath_clicked() {
+    //upload to server
 }
 
 void MainWindow::on_btnUpload_clicked() {
@@ -669,4 +667,9 @@ void MainWindow::on_btnHome2_clicked() {
         return;
     }
     AddDirRequest(FS.GetCurrPath(), dirname);//check return value
+}
+
+void MainWindow::on_btnPath2_clicked() {
+    QString selectedPath = QFileDialog::getExistingDirectory(this, "Choose path", "");
+    ui->lineMyDisk_6->setText(selectedPath);
 }

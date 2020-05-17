@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <QTableWidget>
 #include <QInputDialog>
+#include <QFileDialog>
 
 #include <QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -108,6 +109,8 @@ private slots:
     void on_btnUpdateDir_clicked();
 
     void on_btnHome2_clicked();
+
+    void on_btnPath2_clicked();
 
 private:
     //addresses for requests
