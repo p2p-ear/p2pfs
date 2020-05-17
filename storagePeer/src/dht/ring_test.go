@@ -322,8 +322,8 @@ func TestFailures(t *testing.T) {
 		waitTime      time.Duration
 		deleteNum     int
 	}{
-		{30, 2*time.Second, 2}, // Just a delete
-		{20, 5*time.Second, 3}, // Two in a row
+		{10, 2*time.Second, 2}, // Just a delete
+		//{20, 5*time.Second, 3}, // Two in a row
 	}
 
 	fmt.Println("Testing fix routine...")

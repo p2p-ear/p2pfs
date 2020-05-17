@@ -13,13 +13,11 @@ import (
 )
 
 // NewPeer creates new peer
-func NewPeer(ownIP string, maxNodes uint64, existingIP string) *Peer {
-
-	const deltaT = time.Second //TODO: make it configurable
+func NewPeer(ownIP string, listeningIP string, maxNodes uint64, existingIP string, deltaT time.Duration) *Peer {
 
 	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes, deltaT), Errs: make(chan error, 1)}
 
-	p.start()
+	p.start(listeningIP)
 
 	// Join the network. Build finger table and adapt the other ones.
 	p.ring.Join(existingIP)
@@ -40,10 +38,10 @@ func (p *Peer) MarshalJSON() ([]byte, error) {
 }
 
 // Start starts gRPC server for peer in a seperate go routine
-func (p *Peer) start() {
+func (p *Peer) start(listeningIP string) {
 	// Configure listening
 
-	lis, err := net.Listen("tcp", p.ownIP)
+	lis, err := net.Listen("tcp", listeningIP)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
