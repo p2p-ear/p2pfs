@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -48,7 +49,7 @@ func makePeer() (string, uint64, PeerServiceClient, *grpc.ClientConn, error) {
 	ownIP := IP()
 
 	ringsz := uint64(1000)
-	NewPeer(ownIP, ringsz, "")
+	NewPeer(ownIP, ownIP, ringsz, "", time.Second)
 
 	connection, err := grpc.Dial(ownIP, grpc.WithInsecure())
 	if err != nil {
@@ -66,12 +67,12 @@ func makeRing(n uint) (string, uint64) {
 	ringsz := uint64(1000)
 	host := IP()
 
-	NewPeer(host, ringsz, "")
+	NewPeer(host, host, ringsz, "", time.Second)
 
 	ips := make([]string, n)
 	for i := uint(0); i < n; i++ {
 		ips[i] = IP()
-		NewPeer(ips[i], ringsz, host)
+		NewPeer(ips[i], ips[i], ringsz, host, time.Second)
 	}
 
 	return host, ringsz

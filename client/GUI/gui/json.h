@@ -21,19 +21,6 @@ struct MDfile {
 
 class MyDiskFs {
 public:
-    int Load() {
-        QFile jFile("test.json");
-        if (jFile.open(QIODevice::ReadOnly | QFile::Text)) {
-            qDebug() << jFile.size();
-            QJsonDocument doc = QJsonDocument::fromJson(QByteArray(jFile.readAll()));
-            root = QJsonObject(doc.object());
-            jFile.close();
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
     int Load(QJsonObject res) {
         root = res;
         return 1;

@@ -16,7 +16,11 @@ func (n *RingNode) getClosestPreceding(id uint64) (finger, error) {
 	for i := len(n.fingerTable) - 1; i >= 0; i-- {
 		if n.inInterval(n.self.ID, id, n.fingerTable[i].ID, false, false) {
 			//fmt.Printf("I am %s and the answer is %s\n", n.self.IP, n.fingerTable[i].IP)
-			return n.fingerTable[i], nil
+      // In case dude has fallen just go to the other one
+      _, err := n.invokeGetPred(n.fingerTable[i].IP)
+      if err == nil {
+        return n.fingerTable[i], nil
+      }
 		}
 	}
 

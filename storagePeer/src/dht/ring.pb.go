@@ -24,92 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type NodeReply struct {
-	IP                   string   `protobuf:"bytes,1,opt,name=IP,proto3" json:"IP,omitempty"`
-	ID                   uint64   `protobuf:"varint,2,opt,name=ID,proto3" json:"ID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *NodeReply) Reset()         { *m = NodeReply{} }
-func (m *NodeReply) String() string { return proto.CompactTextString(m) }
-func (*NodeReply) ProtoMessage()    {}
-func (*NodeReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{0}
-}
-
-func (m *NodeReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NodeReply.Unmarshal(m, b)
-}
-func (m *NodeReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NodeReply.Marshal(b, m, deterministic)
-}
-func (m *NodeReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NodeReply.Merge(m, src)
-}
-func (m *NodeReply) XXX_Size() int {
-	return xxx_messageInfo_NodeReply.Size(m)
-}
-func (m *NodeReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_NodeReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NodeReply proto.InternalMessageInfo
-
-func (m *NodeReply) GetIP() string {
-	if m != nil {
-		return m.IP
-	}
-	return ""
-}
-
-func (m *NodeReply) GetID() uint64 {
-	if m != nil {
-		return m.ID
-	}
-	return 0
-}
-
-type UpdateReply struct {
-	OK                   bool     `protobuf:"varint,1,opt,name=OK,proto3" json:"OK,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *UpdateReply) Reset()         { *m = UpdateReply{} }
-func (m *UpdateReply) String() string { return proto.CompactTextString(m) }
-func (*UpdateReply) ProtoMessage()    {}
-func (*UpdateReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{1}
-}
-
-func (m *UpdateReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UpdateReply.Unmarshal(m, b)
-}
-func (m *UpdateReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UpdateReply.Marshal(b, m, deterministic)
-}
-func (m *UpdateReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UpdateReply.Merge(m, src)
-}
-func (m *UpdateReply) XXX_Size() int {
-	return xxx_messageInfo_UpdateReply.Size(m)
-}
-func (m *UpdateReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_UpdateReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UpdateReply proto.InternalMessageInfo
-
-func (m *UpdateReply) GetOK() bool {
-	if m != nil {
-		return m.OK
-	}
-	return false
-}
-
+// Requests
 type GetNodeSuccRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -120,7 +35,7 @@ func (m *GetNodeSuccRequest) Reset()         { *m = GetNodeSuccRequest{} }
 func (m *GetNodeSuccRequest) String() string { return proto.CompactTextString(m) }
 func (*GetNodeSuccRequest) ProtoMessage()    {}
 func (*GetNodeSuccRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{2}
+	return fileDescriptor_26381ed67e202a6e, []int{0}
 }
 
 func (m *GetNodeSuccRequest) XXX_Unmarshal(b []byte) error {
@@ -151,7 +66,7 @@ func (m *GetNodePredRequest) Reset()         { *m = GetNodePredRequest{} }
 func (m *GetNodePredRequest) String() string { return proto.CompactTextString(m) }
 func (*GetNodePredRequest) ProtoMessage()    {}
 func (*GetNodePredRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{3}
+	return fileDescriptor_26381ed67e202a6e, []int{1}
 }
 
 func (m *GetNodePredRequest) XXX_Unmarshal(b []byte) error {
@@ -183,7 +98,7 @@ func (m *FindPredRequest) Reset()         { *m = FindPredRequest{} }
 func (m *FindPredRequest) String() string { return proto.CompactTextString(m) }
 func (*FindPredRequest) ProtoMessage()    {}
 func (*FindPredRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{4}
+	return fileDescriptor_26381ed67e202a6e, []int{2}
 }
 
 func (m *FindPredRequest) XXX_Unmarshal(b []byte) error {
@@ -222,7 +137,7 @@ func (m *UpdatePredRequest) Reset()         { *m = UpdatePredRequest{} }
 func (m *UpdatePredRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdatePredRequest) ProtoMessage()    {}
 func (*UpdatePredRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{5}
+	return fileDescriptor_26381ed67e202a6e, []int{3}
 }
 
 func (m *UpdatePredRequest) XXX_Unmarshal(b []byte) error {
@@ -261,7 +176,7 @@ func (m *UpdateSuccRequest) Reset()         { *m = UpdateSuccRequest{} }
 func (m *UpdateSuccRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateSuccRequest) ProtoMessage()    {}
 func (*UpdateSuccRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{6}
+	return fileDescriptor_26381ed67e202a6e, []int{4}
 }
 
 func (m *UpdateSuccRequest) XXX_Unmarshal(b []byte) error {
@@ -302,7 +217,7 @@ func (m *UpdateSpecificFingerRequest) Reset()         { *m = UpdateSpecificFinge
 func (m *UpdateSpecificFingerRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateSpecificFingerRequest) ProtoMessage()    {}
 func (*UpdateSpecificFingerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{7}
+	return fileDescriptor_26381ed67e202a6e, []int{5}
 }
 
 func (m *UpdateSpecificFingerRequest) XXX_Unmarshal(b []byte) error {
@@ -355,7 +270,7 @@ func (m *UpdateSuccListRequest) Reset()         { *m = UpdateSuccListRequest{} }
 func (m *UpdateSuccListRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateSuccListRequest) ProtoMessage()    {}
 func (*UpdateSuccListRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_26381ed67e202a6e, []int{8}
+	return fileDescriptor_26381ed67e202a6e, []int{6}
 }
 
 func (m *UpdateSuccListRequest) XXX_Unmarshal(b []byte) error {
@@ -383,9 +298,180 @@ func (m *UpdateSuccListRequest) GetIP() string {
 	return ""
 }
 
+type UpdateKeysInfoRequest struct {
+	ID                   uint64   `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Keys                 []string `protobuf:"bytes,2,rep,name=keys,proto3" json:"keys,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdateKeysInfoRequest) Reset()         { *m = UpdateKeysInfoRequest{} }
+func (m *UpdateKeysInfoRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateKeysInfoRequest) ProtoMessage()    {}
+func (*UpdateKeysInfoRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{7}
+}
+
+func (m *UpdateKeysInfoRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateKeysInfoRequest.Unmarshal(m, b)
+}
+func (m *UpdateKeysInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateKeysInfoRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateKeysInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateKeysInfoRequest.Merge(m, src)
+}
+func (m *UpdateKeysInfoRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateKeysInfoRequest.Size(m)
+}
+func (m *UpdateKeysInfoRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateKeysInfoRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateKeysInfoRequest proto.InternalMessageInfo
+
+func (m *UpdateKeysInfoRequest) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *UpdateKeysInfoRequest) GetKeys() []string {
+	if m != nil {
+		return m.Keys
+	}
+	return nil
+}
+
+type UpdateKeysRequest struct {
+	Keys                 []string `protobuf:"bytes,2,rep,name=keys,proto3" json:"keys,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdateKeysRequest) Reset()         { *m = UpdateKeysRequest{} }
+func (m *UpdateKeysRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateKeysRequest) ProtoMessage()    {}
+func (*UpdateKeysRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{8}
+}
+
+func (m *UpdateKeysRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateKeysRequest.Unmarshal(m, b)
+}
+func (m *UpdateKeysRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateKeysRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateKeysRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateKeysRequest.Merge(m, src)
+}
+func (m *UpdateKeysRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateKeysRequest.Size(m)
+}
+func (m *UpdateKeysRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateKeysRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateKeysRequest proto.InternalMessageInfo
+
+func (m *UpdateKeysRequest) GetKeys() []string {
+	if m != nil {
+		return m.Keys
+	}
+	return nil
+}
+
+// Replies
+type NodeReply struct {
+	IP                   string   `protobuf:"bytes,1,opt,name=IP,proto3" json:"IP,omitempty"`
+	ID                   uint64   `protobuf:"varint,2,opt,name=ID,proto3" json:"ID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *NodeReply) Reset()         { *m = NodeReply{} }
+func (m *NodeReply) String() string { return proto.CompactTextString(m) }
+func (*NodeReply) ProtoMessage()    {}
+func (*NodeReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{9}
+}
+
+func (m *NodeReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NodeReply.Unmarshal(m, b)
+}
+func (m *NodeReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NodeReply.Marshal(b, m, deterministic)
+}
+func (m *NodeReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeReply.Merge(m, src)
+}
+func (m *NodeReply) XXX_Size() int {
+	return xxx_messageInfo_NodeReply.Size(m)
+}
+func (m *NodeReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NodeReply proto.InternalMessageInfo
+
+func (m *NodeReply) GetIP() string {
+	if m != nil {
+		return m.IP
+	}
+	return ""
+}
+
+func (m *NodeReply) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+type UpdateReply struct {
+	OK                   bool     `protobuf:"varint,1,opt,name=OK,proto3" json:"OK,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UpdateReply) Reset()         { *m = UpdateReply{} }
+func (m *UpdateReply) String() string { return proto.CompactTextString(m) }
+func (*UpdateReply) ProtoMessage()    {}
+func (*UpdateReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_26381ed67e202a6e, []int{10}
+}
+
+func (m *UpdateReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateReply.Unmarshal(m, b)
+}
+func (m *UpdateReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateReply.Marshal(b, m, deterministic)
+}
+func (m *UpdateReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateReply.Merge(m, src)
+}
+func (m *UpdateReply) XXX_Size() int {
+	return xxx_messageInfo_UpdateReply.Size(m)
+}
+func (m *UpdateReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateReply proto.InternalMessageInfo
+
+func (m *UpdateReply) GetOK() bool {
+	if m != nil {
+		return m.OK
+	}
+	return false
+}
+
 func init() {
-	proto.RegisterType((*NodeReply)(nil), "dht.NodeReply")
-	proto.RegisterType((*UpdateReply)(nil), "dht.UpdateReply")
 	proto.RegisterType((*GetNodeSuccRequest)(nil), "dht.GetNodeSuccRequest")
 	proto.RegisterType((*GetNodePredRequest)(nil), "dht.GetNodePredRequest")
 	proto.RegisterType((*FindPredRequest)(nil), "dht.FindPredRequest")
@@ -393,6 +479,10 @@ func init() {
 	proto.RegisterType((*UpdateSuccRequest)(nil), "dht.UpdateSuccRequest")
 	proto.RegisterType((*UpdateSpecificFingerRequest)(nil), "dht.UpdateSpecificFingerRequest")
 	proto.RegisterType((*UpdateSuccListRequest)(nil), "dht.UpdateSuccListRequest")
+	proto.RegisterType((*UpdateKeysInfoRequest)(nil), "dht.UpdateKeysInfoRequest")
+	proto.RegisterType((*UpdateKeysRequest)(nil), "dht.UpdateKeysRequest")
+	proto.RegisterType((*NodeReply)(nil), "dht.NodeReply")
+	proto.RegisterType((*UpdateReply)(nil), "dht.UpdateReply")
 }
 
 func init() {
@@ -400,28 +490,32 @@ func init() {
 }
 
 var fileDescriptor_26381ed67e202a6e = []byte{
-	// 333 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x53, 0xdd, 0x4a, 0x02, 0x41,
-	0x14, 0x6e, 0x77, 0x43, 0xf4, 0x08, 0x56, 0x83, 0x99, 0x18, 0x81, 0x6d, 0x17, 0x09, 0x81, 0x17,
-	0x76, 0xd3, 0x5d, 0x5d, 0x88, 0x21, 0x4a, 0xca, 0x88, 0x0f, 0x50, 0x33, 0x27, 0x1d, 0x88, 0xdd,
-	0x6d, 0x76, 0x0c, 0x7a, 0xbb, 0x1e, 0x2d, 0x9c, 0x56, 0xf7, 0xb8, 0x3b, 0x5d, 0xce, 0x99, 0xef,
-	0xe7, 0xcc, 0xf7, 0x31, 0x00, 0x5a, 0x45, 0xab, 0x7e, 0xa2, 0x63, 0x13, 0xb3, 0x40, 0xae, 0x4d,
-	0x78, 0x07, 0xb5, 0x97, 0x58, 0x22, 0xc7, 0xe4, 0xe3, 0x9b, 0x35, 0xc0, 0x1f, 0xcf, 0xdb, 0x5e,
-	0xd7, 0xeb, 0xd5, 0xb8, 0x3f, 0x9e, 0xdb, 0xf3, 0xb0, 0xed, 0x77, 0xbd, 0xde, 0x31, 0xf7, 0xc7,
-	0xc3, 0xf0, 0x0a, 0xea, 0xcb, 0x44, 0xbe, 0x9a, 0x1c, 0x3e, 0x9b, 0x58, 0x78, 0x95, 0xfb, 0xb3,
-	0x49, 0xd8, 0x04, 0xf6, 0x8c, 0x66, 0x2b, 0xb7, 0xd8, 0x08, 0xc1, 0xf1, 0x73, 0x83, 0xa9, 0x21,
-	0xd3, 0xb9, 0x46, 0xb9, 0x9b, 0x5e, 0xc3, 0xc9, 0x48, 0x45, 0x92, 0x8c, 0x32, 0x37, 0x6f, 0xef,
-	0x76, 0x03, 0x67, 0x7f, 0x6e, 0x45, 0x10, 0x59, 0x31, 0x07, 0x11, 0xcb, 0x12, 0x68, 0x09, 0x97,
-	0x19, 0x28, 0x41, 0xa1, 0xde, 0x95, 0x18, 0xa9, 0x68, 0x85, 0x7a, 0x07, 0x6f, 0x41, 0x65, 0x3b,
-	0xc8, 0xcc, 0x03, 0x9e, 0x9d, 0x8a, 0xcf, 0xcf, 0x64, 0x83, 0xbd, 0xec, 0x2d, 0x9c, 0xe7, 0xde,
-	0x53, 0x95, 0x9a, 0x7f, 0xfc, 0x07, 0x3f, 0x01, 0xd4, 0xb9, 0x8a, 0x56, 0x0b, 0xd4, 0x5f, 0x4a,
-	0x20, 0x7b, 0x80, 0x3a, 0x09, 0x8a, 0x5d, 0xf4, 0xe5, 0xda, 0xf4, 0xcb, 0xd1, 0x75, 0x1a, 0xf6,
-	0x62, 0xdf, 0x4f, 0x78, 0x44, 0x98, 0xdb, 0x50, 0x0e, 0x99, 0x24, 0x26, 0x07, 0x73, 0x00, 0xd5,
-	0x5d, 0xe0, 0xac, 0x69, 0x6f, 0x0b, 0xf9, 0x3b, 0x38, 0x8f, 0xb4, 0x01, 0x14, 0x98, 0xa6, 0xb1,
-	0x66, 0x2d, 0x0b, 0x2b, 0x35, 0xd3, 0x39, 0x25, 0xf3, 0x7c, 0x5d, 0xc8, 0x13, 0x3a, 0x60, 0xd2,
-	0x67, 0xba, 0x98, 0x53, 0x68, 0xba, 0x2a, 0x63, 0x5d, 0xaa, 0xe1, 0x6a, 0xd3, 0xa9, 0xf6, 0x04,
-	0x8d, 0xc3, 0xa6, 0x58, 0xa7, 0xb0, 0x0b, 0xa9, 0xcf, 0xa5, 0xf0, 0x56, 0xb1, 0x7f, 0xe6, 0xfe,
-	0x37, 0x00, 0x00, 0xff, 0xff, 0x21, 0xc1, 0x74, 0xdf, 0x41, 0x03, 0x00, 0x00,
+	// 387 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x94, 0xc1, 0x6a, 0xfa, 0x40,
+	0x10, 0xc6, 0xff, 0x26, 0x22, 0x3a, 0x82, 0xff, 0x76, 0xb1, 0x56, 0x2c, 0x05, 0x9b, 0x1e, 0x14,
+	0x0a, 0x1e, 0xec, 0xa5, 0xd0, 0x43, 0x7b, 0x10, 0x4b, 0x50, 0xaa, 0xac, 0xf8, 0x00, 0x6d, 0x32,
+	0xea, 0xd2, 0x92, 0xa4, 0x49, 0x2c, 0xf8, 0x6e, 0x7d, 0xb8, 0x92, 0x6d, 0xd6, 0x4c, 0xe2, 0xea,
+	0x4d, 0x67, 0xbf, 0x6f, 0x66, 0x3e, 0xe7, 0x87, 0x00, 0xa1, 0xf0, 0xd6, 0x83, 0x20, 0xf4, 0x63,
+	0x9f, 0x99, 0xee, 0x26, 0xb6, 0x9a, 0xc0, 0x5e, 0x30, 0x7e, 0xf5, 0x5d, 0x5c, 0x6c, 0x1d, 0x87,
+	0xe3, 0xd7, 0x16, 0x23, 0x5a, 0x9d, 0x87, 0xe8, 0xaa, 0xea, 0x0d, 0xfc, 0x1f, 0x0b, 0xcf, 0x25,
+	0x25, 0xd6, 0x00, 0xc3, 0x1e, 0xb5, 0x4b, 0xdd, 0x52, 0xbf, 0xcc, 0x0d, 0x7b, 0x64, 0xdd, 0xc2,
+	0xf9, 0x32, 0x70, 0xdf, 0x62, 0x2c, 0x8a, 0xe6, 0x52, 0x54, 0xe3, 0x86, 0x3d, 0xcf, 0x44, 0x64,
+	0xe4, 0x81, 0x68, 0x09, 0x57, 0xa9, 0x28, 0x40, 0x47, 0xac, 0x84, 0x33, 0x16, 0xde, 0x1a, 0x43,
+	0x25, 0x6f, 0x41, 0x25, 0x29, 0xa4, 0xc3, 0x4d, 0x9e, 0x7e, 0x4b, 0x17, 0x32, 0xd4, 0x42, 0x69,
+	0x5b, 0x73, 0xdf, 0xb6, 0x07, 0x17, 0xd9, 0xec, 0xa9, 0x88, 0xe2, 0x63, 0xf3, 0x1f, 0x95, 0x70,
+	0x82, 0xbb, 0xc8, 0xf6, 0x56, 0xfe, 0x91, 0xc8, 0x8c, 0x41, 0xf9, 0x03, 0x77, 0x51, 0xdb, 0xe8,
+	0x9a, 0xfd, 0x1a, 0x97, 0x9f, 0xad, 0x9e, 0x4a, 0x98, 0x98, 0x95, 0x51, 0x27, 0xbc, 0x83, 0x5a,
+	0xf2, 0x2b, 0x73, 0x0c, 0x3e, 0x77, 0xc5, 0x15, 0x8a, 0x59, 0xac, 0x6b, 0xa8, 0xff, 0x75, 0xdd,
+	0xcb, 0x67, 0x13, 0x29, 0xaf, 0x72, 0x63, 0x36, 0x19, 0xfe, 0x94, 0xa1, 0xce, 0x85, 0xb7, 0x5e,
+	0x60, 0xf8, 0x2d, 0x1c, 0x64, 0x0f, 0x50, 0x27, 0xa7, 0x65, 0x97, 0x03, 0x77, 0x13, 0x0f, 0x0e,
+	0x8f, 0xdd, 0x69, 0xc8, 0x87, 0xfd, 0x1a, 0xd6, 0x3f, 0xe2, 0x4c, 0xce, 0x98, 0x77, 0x92, 0xc3,
+	0x6a, 0x9c, 0x43, 0xa8, 0x2a, 0x44, 0x58, 0x53, 0xbe, 0x16, 0x88, 0xd1, 0x78, 0x9e, 0x28, 0x33,
+	0xe8, 0x60, 0x14, 0xf9, 0x21, 0x6b, 0x49, 0xd9, 0x01, 0x4b, 0x9d, 0x33, 0x52, 0xcf, 0xd6, 0x85,
+	0xec, 0xa6, 0x39, 0x27, 0x8d, 0xa9, 0x73, 0x4e, 0xa1, 0xa9, 0x83, 0x8c, 0x75, 0x69, 0x0f, 0x1d,
+	0x7f, 0xda, 0x6e, 0xcf, 0xd0, 0xc8, 0xb3, 0xc5, 0x3a, 0x85, 0x5d, 0x08, 0x70, 0xa7, 0x93, 0x24,
+	0xdc, 0xe4, 0x92, 0x10, 0x90, 0x4e, 0xcf, 0x56, 0xb8, 0xe6, 0x66, 0x17, 0x18, 0xd6, 0x75, 0x78,
+	0xaf, 0xc8, 0x7f, 0x85, 0xfb, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xcf, 0x4b, 0x6e, 0x91, 0x23,
+	0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -447,6 +541,9 @@ type RingServiceClient interface {
 	UpdateSpecificFinger(ctx context.Context, in *UpdateSpecificFingerRequest, opts ...grpc.CallOption) (*UpdateReply, error)
 	// Update succ list
 	UpdateSuccList(ctx context.Context, in *UpdateSuccListRequest, opts ...grpc.CallOption) (*UpdateReply, error)
+	// Everything connected to key transfer
+	UpdateKeys(ctx context.Context, in *UpdateKeysRequest, opts ...grpc.CallOption) (*UpdateReply, error)
+	UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest, opts ...grpc.CallOption) (*UpdateReply, error)
 }
 
 type ringServiceClient struct {
@@ -520,6 +617,24 @@ func (c *ringServiceClient) UpdateSuccList(ctx context.Context, in *UpdateSuccLi
 	return out, nil
 }
 
+func (c *ringServiceClient) UpdateKeys(ctx context.Context, in *UpdateKeysRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/UpdateKeys", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ringServiceClient) UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := c.cc.Invoke(ctx, "/dht.RingService/UpdateKeysInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RingServiceServer is the server API for RingService service.
 type RingServiceServer interface {
 	// These request return you succ and pred for specific nodes
@@ -533,6 +648,9 @@ type RingServiceServer interface {
 	UpdateSpecificFinger(context.Context, *UpdateSpecificFingerRequest) (*UpdateReply, error)
 	// Update succ list
 	UpdateSuccList(context.Context, *UpdateSuccListRequest) (*UpdateReply, error)
+	// Everything connected to key transfer
+	UpdateKeys(context.Context, *UpdateKeysRequest) (*UpdateReply, error)
+	UpdateKeysInfo(context.Context, *UpdateKeysInfoRequest) (*UpdateReply, error)
 }
 
 // UnimplementedRingServiceServer can be embedded to have forward compatible implementations.
@@ -559,6 +677,12 @@ func (*UnimplementedRingServiceServer) UpdateSpecificFinger(ctx context.Context,
 }
 func (*UnimplementedRingServiceServer) UpdateSuccList(ctx context.Context, req *UpdateSuccListRequest) (*UpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSuccList not implemented")
+}
+func (*UnimplementedRingServiceServer) UpdateKeys(ctx context.Context, req *UpdateKeysRequest) (*UpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateKeys not implemented")
+}
+func (*UnimplementedRingServiceServer) UpdateKeysInfo(ctx context.Context, req *UpdateKeysInfoRequest) (*UpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateKeysInfo not implemented")
 }
 
 func RegisterRingServiceServer(s *grpc.Server, srv RingServiceServer) {
@@ -691,6 +815,42 @@ func _RingService_UpdateSuccList_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RingService_UpdateKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).UpdateKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/UpdateKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).UpdateKeys(ctx, req.(*UpdateKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RingService_UpdateKeysInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateKeysInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RingServiceServer).UpdateKeysInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dht.RingService/UpdateKeysInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RingServiceServer).UpdateKeysInfo(ctx, req.(*UpdateKeysInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _RingService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "dht.RingService",
 	HandlerType: (*RingServiceServer)(nil),
@@ -722,6 +882,14 @@ var _RingService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSuccList",
 			Handler:    _RingService_UpdateSuccList_Handler,
+		},
+		{
+			MethodName: "UpdateKeys",
+			Handler:    _RingService_UpdateKeys_Handler,
+		},
+		{
+			MethodName: "UpdateKeysInfo",
+			Handler:    _RingService_UpdateKeysInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

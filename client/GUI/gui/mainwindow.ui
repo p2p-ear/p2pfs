@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -362,7 +362,7 @@
                    <string>Alt+Right</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="btnUp2">
+                 <widget class="QPushButton" name="btnUpdateDir">
                   <property name="maximumSize">
                    <size>
                     <width>140</width>
@@ -370,7 +370,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Up</string>
+                   <string>Update</string>
                   </property>
                   <property name="shortcut">
                    <string>Alt+Up</string>
@@ -384,7 +384,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Home</string>
+                   <string>Add Dir</string>
                   </property>
                  </widget>
                 </widget>

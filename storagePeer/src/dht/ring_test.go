@@ -20,8 +20,8 @@ func startTestServ(node *RingNode) (chan error, net.Listener) {
 	// create a gRPC server object
 	grpcServer := grpc.NewServer()
 
-	// attach services to handler object
-	RegisterRingServiceServer(grpcServer, node)
+	// Paerform start routine
+	node.Start(grpcServer)
 
 	// Start listening in a separate go routine
 
@@ -38,7 +38,7 @@ func TestOneNode(t *testing.T) {
 
 	var maxNum uint64 = 1000
 
-	loner := NewRingNode("localhost:9000", maxNum)
+	loner := NewRingNode("localhost:9000", maxNum, time.Second)
 	loner.Join("")
 
 	contentID := Hash([]byte("This is a sample string"), maxNum)
@@ -58,12 +58,13 @@ func TestOneNode(t *testing.T) {
 	if succ != loner.self.IP {
 		t.Errorf("Got the wrong value: %s", succ)
 	}
+	loner.Stop()
 }
 
 func TestInInterval(t *testing.T) {
 
 	var maxNum uint64 = 1000
-	loner := NewRingNode("localhost:9000", maxNum)
+	loner := NewRingNode("localhost:9000", maxNum, time.Second)
 
 	var tests = []struct {
 		start, end, id uint64
@@ -92,7 +93,7 @@ func TestInInterval(t *testing.T) {
 func TestFingerIndex(t *testing.T) {
 
 	var maxNum uint64 = 1000
-	loner := NewRingNode("localhost:4000", maxNum) // ID: 415
+	loner := NewRingNode("localhost:4000", maxNum, time.Second) // ID: 415
 
 	var tests = []struct {
 		i         int64
@@ -144,6 +145,18 @@ func findNext(nodes []*RingNode, id uint64) uint64 {
 	return succ
 }
 
+func findPrev(nodes []*RingNode, id uint64) uint64 {
+	pred := nodes[0].self.ID
+
+	for i := 1; i < len(nodes); i++ {
+		if nodes[0].inInterval(pred, id, nodes[i].self.ID, false, false) {
+			pred = nodes[i].self.ID
+		}
+	}
+
+	return pred
+}
+
 func printNode(node *RingNode, i int) {
 	js, err := node.MarshalJSON()
 	if err != nil {
@@ -159,7 +172,7 @@ func printNodes(nodes []*RingNode) {
 	}
 }
 
-func generateRing(num uint64, maxNum uint64, random bool) []*RingNode{
+func generateRing(num uint64, maxNum uint64, deltaT time.Duration, random bool) []*RingNode{
 
 	var nodes = make([]*RingNode, num)
 	var begin int
@@ -172,22 +185,13 @@ func generateRing(num uint64, maxNum uint64, random bool) []*RingNode{
 
 	for i, _ := range nodes{
 
-		nodes[i] = NewRingNode(fmt.Sprintf("localhost:%s", strconv.Itoa(begin+i)), maxNum)
+		nodes[i] = NewRingNode(fmt.Sprintf("localhost:%s", strconv.Itoa(begin+i)), maxNum, deltaT)
 	}
 
 	return nodes
 }
 
-func validateRing(nodes []*RingNode, t *testing.T) bool {
-
-	// Test predecessors
-	for _, node := range nodes {
-		pred := node.predecessor.ID
-		succ := findNext(nodes, pred)
-		if succ != node.self.ID {
-			t.Errorf("On node %s: got predeccessor %d, pred has actual succ %d", node.self.IP, pred, succ)
-		}
-	}
+func validateFingTable(nodes []*RingNode, t *testing.T) bool {
 
 	firstTime := true
 	// Test fingertables
@@ -206,12 +210,13 @@ func validateRing(nodes []*RingNode, t *testing.T) bool {
 	return true
 }
 
-func validateSuccLists(nodes []*RingNode, t *testing.T) {
+func validateMainInfo(nodes []*RingNode, t *testing.T) {
 
 	firstTime := true
 
 	for _, n := range nodes {
 
+		// Test succ
 		succ := n.fingerTable[0].ID
 
 		if findNext(nodes, n.self.ID) != succ {
@@ -222,6 +227,18 @@ func validateSuccLists(nodes []*RingNode, t *testing.T) {
 			}
 		}
 
+		// Test preds
+		pred := n.predecessor.ID
+
+		if findPrev(nodes, n.self.ID) != pred {
+			t.Errorf("Node %d has pred %d but actual is %d", n.self.ID, pred, findPrev(nodes, n.self.ID))
+			if firstTime {
+				printNodes(nodes)
+				firstTime = false
+			}
+		}
+
+		// Test succ list
 		if uint64(n.succList.Len()) > n.succListSize {
 			t.Errorf("SuccList size is %d but must be %d at max", n.succList.Len(), n.succListSize)
 		}
@@ -246,12 +263,15 @@ func validateSuccLists(nodes []*RingNode, t *testing.T) {
 	}
 }
 
-func TestJoin(t *testing.T) {
+///// Joins on different rings
+
+func _TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var start uint64 = 10
-	var maxRingSize uint64 = 50
+	var maxRingSize uint64 = 11
 	var step uint64 = 10
+	var deltaT time.Duration = time.Second
 
 	fmt.Println("Testing construction of different ring topologies...")
 
@@ -259,7 +279,7 @@ func TestJoin(t *testing.T) {
 
 		fmt.Println("Ring size: ", i)
 
-		nodes := generateRing(i, maxNum, false)
+		nodes := generateRing(i, maxNum, deltaT, false)
 		a := make([](chan error), len(nodes))
 		b := make([](net.Listener), len(nodes))
 
@@ -272,15 +292,78 @@ func TestJoin(t *testing.T) {
 		for j:= 1; j < len(nodes); j++ {
 			nodes[j].Join(nodes[j-1].self.IP)
 			time.Sleep(time.Millisecond * 10)
-			validateRing(nodes[:j+1], t)
-			validateSuccLists(nodes[:j+1], t)
+			validateFingTable(nodes[:j+1], t)
+			validateMainInfo(nodes[:j+1], t)
 		}
 
-		for _, conn := range b {
-			err := conn.Close()
-			if err != nil {
-				panic(err)
-			}
+		// Close everything
+		for i, _ := range nodes {
+			killNode(nodes, b, i)
 		}
+	}
+}
+
+///// Nodes' death
+
+func killNode(nodes []*RingNode, listeners []net.Listener, i int) {
+
+	listeners[i].Close()
+	nodes[i].Stop()
+
+}
+
+func TestFailures(t *testing.T) {
+
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second
+
+	var tests = []struct {
+		numNodes      uint64
+		waitTime      time.Duration
+		deleteNum     int
+	}{
+		{10, 2*time.Second, 2}, // Just a delete
+		//{20, 5*time.Second, 3}, // Two in a row
+	}
+
+	fmt.Println("Testing fix routine...")
+
+	for i, tt := range tests {
+		testname := fmt.Sprintf("%d", i)
+		t.Run(testname, func(t *testing.T) {
+			// Start everything
+			nodes := generateRing(tt.numNodes, maxNum, deltaT, false)
+			a := make([](chan error), len(nodes))
+			b := make([](net.Listener), len(nodes))
+
+			for j, el := range nodes {
+				a[j], b[j] = startTestServ(el)
+			}
+
+			// Connect
+			nodes[0].Join("")
+
+			for j:= 1; j < len(nodes); j++ {
+				nodes[j].Join(nodes[j-1].self.IP)
+				time.Sleep(time.Millisecond * 10)
+			}
+
+			validateMainInfo(nodes, t)
+			validateFingTable(nodes, t)
+
+			// Test
+
+			for i := 1; i <= tt.deleteNum; i++ {
+				killNode(nodes, b, len(nodes)-i)
+			}
+
+			time.Sleep(tt.waitTime)
+			validateMainInfo(nodes[:len(nodes)-tt.deleteNum], t)
+
+			// Close everything
+			for i, _ := range nodes[:len(nodes)-tt.deleteNum] {
+				killNode(nodes[:len(nodes)-tt.deleteNum], b, i)
+			}
+		})
 	}
 }

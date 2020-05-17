@@ -3,7 +3,7 @@ package dht
 import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	//"fmt"
+	"fmt"
 )
 
 ////////
@@ -20,14 +20,49 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 	ip := in.IP
 	id := Hash([]byte(ip), n.maxNodes)
 
+	// Check if you actually need to insert him.
 	//fmt.Printf("Curr pred: %d, self: %d, id: %d, IP: %s", n.predecessor.ID, n.self.ID, id, ip)
-	ok := n.inInterval(n.predecessor.ID, n.self.ID, id, true, false)
+	isBetween := n.inInterval(n.predecessor.ID, n.self.ID, id, true, false)
+	var isNotOkay bool = false
 
-	if ok {
+	if isBetween {
 		n.predecessor = finger{ID: id, IP: ip}
+	} else {
+		// This request might be made because our good friend passed away
+		_, err := n.invokeGetSucc(n.predecessor.IP)
+		isNotOkay = err != nil
+		if isNotOkay {
+			n.predecessor = finger{ID: id, IP: ip}
+		}
 	}
 
-	return &UpdateReply{OK: ok}, nil
+	fmt.Printf("%s has a hew predecessor %s\n", n.self.IP, in.GetIP())
+
+	// Send your new predecessor new keys that he is responsible for
+
+	if isBetween {
+
+		// Separate keys
+		sendKeys := make([]string, int(len(n.keys)/2))
+		leftKeys := make([]string, int(len(n.keys)/2))
+
+		for _, key := range n.keys {
+			if n.inInterval(n.predecessor.ID, n.self.ID, Hash([]byte(key), n.maxNodes), false, true) {
+				// This key is to be left here
+				leftKeys = append(leftKeys, key)
+			} else {
+				sendKeys = append(sendKeys, key)
+			}
+		}
+
+		// Do what you need to
+		n.keys = leftKeys
+		ok, err := n.invokeUpdateKeys(n.predecessor.IP, sendKeys)
+		if !ok || err != nil {
+			panic(err)
+		}
+	}
+	return &UpdateReply{OK: (isNotOkay || isBetween)}, nil
 }
 
 func (n *RingNode) invokeUpdatePredecessor(invokeIP string) (bool, error) {

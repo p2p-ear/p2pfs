@@ -1,15 +1,7 @@
 syntax = "proto3";
 package dht;
 
-message NodeReply {
-  string IP = 1;
-  uint64 ID = 2;
-}
-
-message UpdateReply {
-  bool OK = 1;
-}
-
+// Requests
 message GetNodeSuccRequest {
 }
 
@@ -38,6 +30,26 @@ message UpdateSuccListRequest {
   string IP = 1;
 }
 
+message UpdateKeysInfoRequest {
+  uint64 ID = 1;
+  repeated string keys = 2;
+}
+
+message UpdateKeysRequest {
+  repeated string keys = 2;
+}
+
+// Replies
+message NodeReply {
+  string IP = 1;
+  uint64 ID = 2;
+}
+
+message UpdateReply {
+  bool OK = 1;
+}
+
+// Service description
 service RingService {
 
   // These request return you succ and pred for specific nodes
@@ -54,4 +66,8 @@ service RingService {
 
   // Update succ list
   rpc UpdateSuccList(UpdateSuccListRequest) returns (UpdateReply) {}
+
+  // Everything connected to key transfer
+  rpc UpdateKeys(UpdateKeysRequest) returns (UpdateReply) {}
+  rpc UpdateKeysInfo(UpdateKeysInfoRequest) returns (UpdateReply) {}
 }
