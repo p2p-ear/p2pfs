@@ -26,19 +26,20 @@ func (p *Peer) Read(r *ReadRequest, stream PeerService_ReadServer) error {
 
 	f, err := os.Open(r.Name)
 	if os.IsNotExist(err) {
-		stream.Send(&ReadReply{Exists: false})
-		return nil
+		return stream.Send(&ReadReply{Exists: false})
 	}
-
-	stream.Send(&ReadReply{Exists: true})
-
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+	defer f.Close()
 
+	if err = ValidateFile(r.Name, r.Certificate, READACT); err != nil {
 		return err
 	}
 
-	defer f.Close()
+	if err = stream.Send(&ReadReply{Exists: true}); err != nil {
+		return err
+	}
 
 	reader := bufio.NewReader(f)
 	b := make([]byte, r.ChunkSize)
@@ -78,6 +79,10 @@ func (p *Peer) Write(stream PeerService_WriteServer) error {
 		return err
 	}
 
+	if err = ValidateFile(writeInfo.Name, writeInfo.Certificate, WRITACT); err != nil {
+		return err
+	}
+
 	writer := bufio.NewWriter(f)
 
 	n, err := writer.Write(writeInfo.Data)
@@ -114,9 +119,18 @@ func (p *Peer) Write(stream PeerService_WriteServer) error {
 }
 
 func (p *Peer) Delete(ctx context.Context, r *DeleteRequest) (*DeleteReply, error) {
-	err := os.Remove(r.Fname)
+
+	err := ValidateFile(r.Fname, r.Certificate, DELEACT)
+	if err != nil {
+		return &DeleteReply{}, err
+	}
+
+	err = os.Remove(r.Fname)
 	if os.IsNotExist(err) {
 		return &DeleteReply{Exists: false}, nil
+	}
+	if err != nil {
+		return &DeleteReply{}, err
 	}
 
 	return &DeleteReply{Exists: true}, err

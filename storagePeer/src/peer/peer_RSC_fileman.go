@@ -17,7 +17,7 @@ func getShardName(fname string, number int) string {
 }
 
 // UploadFileRSC - like UploadFile but with Reed-Solomon erasure coding
-func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
+func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte, certificate string) error {
 	enc, err := reedsolomon.New(dataRSC, parityRSC)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) 
 	}
 
 	for i, s := range data {
-		err := UploadFile(ringIP, getShardName(fname, i), ringsz, s)
+		err := uploadFile(ringIP, getShardName(fname, i), ringsz, s, certificate)
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) 
 }
 
 // DownloadFileRSC downloads file using Reed Solomon Codes
-func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte) (int, error) {
+func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte, certificate string) (int, error) {
 	enc, _ := reedsolomon.New(dataRSC, parityRSC)
 
 	shards := make([][]byte, dataRSC+parityRSC)
@@ -69,7 +69,7 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 			return 0, fmt.Errorf("Too many corrupt files, can't recover")
 		}
 
-		empty, err := DownloadFile(ringIP, getShardName(fname, shardnum), ringsz, firstShard)
+		empty, err := downloadFile(ringIP, getShardName(fname, shardnum), ringsz, firstShard, certificate)
 		if !os.IsNotExist(err) {
 			shardlen = maxshardlen - empty
 			if (shardnum+1)*shardlen > len(fcontent) {
@@ -95,7 +95,7 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 			shards[shardnum] = make([]byte, shardlen)
 		}
 
-		empty, err := DownloadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, shardnum), ringsz, shards[shardnum])
+		empty, err := downloadFile(ringIP, fmt.Sprintf("%s_rep%d", fname, shardnum), ringsz, shards[shardnum], certificate)
 		if os.IsNotExist(err) {
 			shards[shardnum] = nil
 			nilshards[shardnum] = true
@@ -121,9 +121,9 @@ func DownloadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte
 	return totalEmpty, nil
 }
 
-func DeleteFileRSC(ringIP string, fname string, ringsz uint64) error {
+func DeleteFileRSC(ringIP string, fname string, ringsz uint64, certificate string) error {
 	for i := 0; i < dataRSC+parityRSC; i++ {
-		err := DeleteFile(ringIP, getShardName(fname, i), ringsz)
+		err := deleteFile(ringIP, getShardName(fname, i), ringsz, certificate)
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}

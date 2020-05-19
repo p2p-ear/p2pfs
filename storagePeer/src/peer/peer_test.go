@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"google.golang.org/grpc"
 )
 
@@ -78,6 +79,12 @@ func makeRing(n uint) (string, uint64) {
 	return host, ringsz
 }
 
+// Generate a certificate
+func genCertificate(fname string, fsize int64, act int8) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, &FileClaim{Name: fname, Size: fsize, Act: act})
+	return token.Raw
+}
+
 // TestRW tests read/write capabilities of a peer
 func TestRW(t *testing.T) {
 
@@ -94,13 +101,14 @@ func TestRW(t *testing.T) {
 		t.Error("Creating write stream failed:", err)
 	}
 
-	if err := wstream.Send(&WriteRequest{Name: fName}); err != nil {
-		t.Error("Initializing write stream failed:", err)
-	}
-
 	chunkAmnt := rand.Intn(16) + 16
 	fLength := chunkAmnt * 8
 	fContent := make([]byte, 0)
+	writeCert := genCertificate(fName, int64(fLength), WRITACT)
+
+	if err := wstream.Send(&WriteRequest{Name: fName, Certificate: writeCert}); err != nil {
+		t.Error("Initializing write stream failed:", err)
+	}
 
 	for i := 0; i < chunkAmnt; i++ {
 		nextChunk := randString(8)
@@ -128,7 +136,8 @@ func TestRW(t *testing.T) {
 
 	written := int(writeReply.Written)
 
-	rstream, err := client.Read(context.Background(), &ReadRequest{Name: fName, ChunkSize: 8})
+	readCert := genCertificate(fName, int64(fLength), READACT)
+	rstream, err := client.Read(context.Background(), &ReadRequest{Name: fName, ChunkSize: 8, Certificate: readCert})
 	if err != nil {
 		t.Error("Creating read stream failed:", err)
 	}
@@ -174,7 +183,7 @@ func TestUpload(t *testing.T) {
 	fcontent := randString(4096)
 	fname := "testfile.txt"
 
-	err = UploadFile(ownIP, fname, ringsz, fcontent)
+	err = uploadFile(ownIP, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent)), WRITACT))
 	if err != nil {
 		t.Error("Unable to send file", err)
 	}
@@ -211,7 +220,7 @@ func TestDownload(t *testing.T) {
 	ioutil.WriteFile(fname, fcontent, 0644)
 
 	fcontentRead := make([]byte, len(fcontent))
-	empty, err := DownloadFile(ownIP, fname, ringsz, fcontentRead)
+	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)), READACT))
 	if err != nil {
 		t.Error("Unable to download file", err)
 	}
@@ -239,13 +248,13 @@ func TestUD(t *testing.T) {
 	fcontent := randString(4096)
 	fname := "testfile.txt"
 
-	err = UploadFile(ownIP, fname, ringsz, fcontent)
+	err = uploadFile(ownIP, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent)), WRITACT))
 	if err != nil {
 		t.Error("Unable to send file", err)
 	}
 
 	fcontentRead := make([]byte, len(fcontent))
-	empty, err := DownloadFile(ownIP, fname, ringsz, fcontentRead)
+	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)), READACT))
 	if err != nil {
 		t.Error("Unable to download file", err)
 	}
@@ -260,7 +269,7 @@ func TestUD(t *testing.T) {
 		}
 	}
 
-	if err = DeleteFile(ownIP, fname, ringsz); err != nil {
+	if err = deleteFile(ownIP, fname, ringsz, genCertificate(fname, int64(len(fcontent)), DELEACT)); err != nil {
 		t.Error("Error deleting file", err)
 	}
 }
@@ -304,7 +313,7 @@ func TestRSC(t *testing.T) {
 	fname := "testfile"
 	fcontent := randString(4096)
 
-	err := UploadFileRSC(host, fname, ringsz, fcontent)
+	err := UploadFileRSC(host, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent))/dataRSC, WRITACT))
 	if err != nil {
 		t.Error("UploadRSC error:", err)
 	}
@@ -316,7 +325,7 @@ func TestRSC(t *testing.T) {
 
 	fcontentRead := make([]byte, len(fcontent)*2)
 
-	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead)
+	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)/dataRSC), READACT))
 	if err != nil {
 		t.Error("DownloadRSC error:", err)
 	}
@@ -331,7 +340,7 @@ func TestRSC(t *testing.T) {
 		}
 	}
 
-	err = DeleteFileRSC(host, fname, ringsz)
+	err = DeleteFileRSC(host, fname, ringsz, genCertificate(fname, int64(len(fcontent))/dataRSC, DELEACT))
 	if err != nil {
 		fmt.Print(err.Error())
 		t.Error(err)

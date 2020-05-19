@@ -12,8 +12,8 @@ import (
 
 const chunksz = 8
 
-// SendFile sends file to the target IP
-func SendFile(targetIP string, fname string, fcontent []byte) error {
+// sendFile sends file to the target IP
+func sendFile(targetIP string, fname string, fcontent []byte, certificate string) error {
 
 	conn, cl, err := Connect(targetIP)
 	if err != nil {
@@ -33,8 +33,8 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 	}
 
 	fmt.Printf("Sending filename %s...", fname)
-	// Send filename
-	err = wstream.Send(&WriteRequest{Name: fname})
+	// Send request
+	err = wstream.Send(&WriteRequest{Name: fname, Certificate: certificate})
 
 	for err != nil {
 		fmt.Println(err.Error())
@@ -70,8 +70,8 @@ func SendFile(targetIP string, fname string, fcontent []byte) error {
 	return err
 }
 
-// RecvFile recieves file w/ filename=fname, from node targetIP - returns how much empty space is at the end (negative, if buffer is too small)
-func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
+// recvFile recieves file w/ filename=fname, from node targetIP - returns how much empty space is at the end (negative, if buffer is too small)
+func recvFile(targetIP string, fname string, fcontent []byte, certificate string) (int, error) {
 
 	conn, peer, err := Connect(targetIP)
 	if err != nil {
@@ -79,7 +79,7 @@ func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 	}
 	defer conn.Close()
 
-	rstream, err := peer.Read(context.Background(), &ReadRequest{Name: fname, ChunkSize: chunksz})
+	rstream, err := peer.Read(context.Background(), &ReadRequest{Name: fname, ChunkSize: chunksz, Certificate: certificate})
 	if err != nil {
 		return 0, err
 	}
@@ -126,14 +126,14 @@ func RecvFile(targetIP string, fname string, fcontent []byte) (int, error) {
 	return emptySpace, nil
 }
 
-func RemvFile(targetIP string, fname string) error {
+func remvFile(targetIP string, fname string, certificate string) error {
 	conn, peer, err := Connect(targetIP)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	r, err := peer.Delete(context.Background(), &DeleteRequest{Fname: fname})
+	r, err := peer.Delete(context.Background(), &DeleteRequest{Fname: fname, Certificate: certificate})
 	if err == nil && !r.Exists {
 		err = os.ErrNotExist
 	}

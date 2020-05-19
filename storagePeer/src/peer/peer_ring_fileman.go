@@ -35,8 +35,8 @@ func findSuccessorWithRingIP(ringIP string, id uint64) (string, error) {
 	return ip, nil
 }
 
-// UploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
-func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) error {
+// uploadFile uploads file to the successor of an id. ringIP - ip of someone on the ring
+func uploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte, certificate string) error {
 
 	id := dht.Hash([]byte(fname), ringsz)
 	targetIP, err := findSuccessorWithRingIP(ringIP, id)
@@ -44,11 +44,11 @@ func UploadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) err
 		return err
 	}
 
-	return SendFile(targetIP, fname, fcontent)
+	return sendFile(targetIP, fname, fcontent, certificate)
 }
 
-// DownloadFile downloads file from the corresponding node
-func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (int, error) {
+// downloadFile downloads file from the corresponding node
+func downloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte, certificate string) (int, error) {
 	id := dht.Hash([]byte(fname), ringsz)
 	targetIP, err := findSuccessorWithRingIP(ringIP, id)
 
@@ -56,10 +56,10 @@ func DownloadFile(ringIP string, fname string, ringsz uint64, fcontent []byte) (
 		return 0, err
 	}
 
-	return RecvFile(targetIP, fname, fcontent)
+	return recvFile(targetIP, fname, fcontent, certificate)
 }
 
-func DeleteFile(ringIP string, fname string, ringsz uint64) error {
+func deleteFile(ringIP string, fname string, ringsz uint64, certificate string) error {
 	id := dht.Hash([]byte(fname), ringsz)
 	targetIP, err := findSuccessorWithRingIP(ringIP, id)
 
@@ -67,5 +67,5 @@ func DeleteFile(ringIP string, fname string, ringsz uint64) error {
 		return err
 	}
 
-	return RemvFile(targetIP, fname)
+	return remvFile(targetIP, fname, certificate)
 }
