@@ -59,5 +59,3 @@ mkbin:
 
 clean:
 	rm -rf bin/*
-
-gen_c_interface: c_interface/c_interface.go

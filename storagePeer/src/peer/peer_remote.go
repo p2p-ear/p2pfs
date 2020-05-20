@@ -121,6 +121,10 @@ func (p *Peer) Write(stream PeerService_WriteServer) error {
 func (p *Peer) Delete(ctx context.Context, r *DeleteRequest) (*DeleteReply, error) {
 
 	err := ValidateFile(r.Fname, r.Certificate, DELEACT)
+	if os.IsNotExist(err) {
+		return &DeleteReply{Exists: false}, nil
+	}
+
 	if err != nil {
 		return &DeleteReply{}, err
 	}

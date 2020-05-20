@@ -40,7 +40,7 @@ func sendFile(targetIP string, fname string, fcontent []byte, certificate string
 		fmt.Println(err.Error())
 		fmt.Println("Couldn't send filename")
 		time.Sleep(time.Second * 1)
-		err = wstream.Send(&WriteRequest{Name: fname})
+		err = wstream.Send(&WriteRequest{Name: fname, Certificate: certificate})
 	}
 
 	chunkSize := chunksz
@@ -66,6 +66,10 @@ func sendFile(targetIP string, fname string, fcontent []byte, certificate string
 	}
 
 	reply, err := wstream.CloseAndRecv()
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("Finished writing %d bytes", reply.Written)
 	return err
 }
@@ -85,6 +89,10 @@ func recvFile(targetIP string, fname string, fcontent []byte, certificate string
 	}
 
 	readReply, err := rstream.Recv()
+	if err != nil {
+		return 0, err
+	}
+
 	if !readReply.Exists {
 		return 0, os.ErrNotExist
 	}

@@ -29,13 +29,13 @@ const (
 )
 
 func getBaseName(fname string) (string, error) {
-	pattern, err := regexp.Compile("((_[[:lower:]]_)?(rep[:digit:]+))?")
+	pattern, err := regexp.Compile("((_[[:lower:]])?(_rep[[:digit:]]+))?$")
 	if err != nil {
 		return "", err
 	}
 
 	indices := pattern.FindAllStringIndex(fname, -1)
-	if len(indices) == 0 {
+	if indices == nil {
 		return fname, nil
 	}
 
@@ -45,8 +45,9 @@ func getBaseName(fname string) (string, error) {
 
 // DecodeCertificate decodes the tokenString without validating the signature
 func decodeCertificate(tokenString string) (int64, string, int8, error) {
+	var claims_class jwt.Claims = &FileClaim{}
 	parser := jwt.Parser{SkipClaimsValidation: true}
-	token, _, err := parser.ParseUnverified(tokenString, FileClaim{})
+	token, _, err := parser.ParseUnverified(tokenString, claims_class)
 
 	if err != nil {
 		return -1, "", -1, err
@@ -77,7 +78,7 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 		return err
 	}
 
-	fsize, basename, action_cert, err := decodeCertificate(tokenString)
+	fsize_cert, basename_cert, action_cert, err := decodeCertificate(tokenString)
 	if err != nil {
 		return err
 	}
@@ -85,17 +86,24 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 	if action_cert != action {
 		return fmt.Errorf("Actions in certificate and request don't match: %d != %d", action_cert, action)
 	}
-	fi, err := os.Stat(basename)
+	if basename_cert != basename {
+		return fmt.Errorf("Certificate name doesn't match request name: %s != %s", basename_cert, basename)
+	}
+
+	// No need to check filesize when writing (server does it for us)
+	if action == WRITACT {
+		return nil
+	}
+
+	// Check file size
+	fi, err := os.Stat(shardname)
 	if err != nil {
 		return err
 	}
 
-	if fi.Size() != fsize {
-		return fmt.Errorf("Certificate file size doesn't match: %d != %d", fsize, fi.Size())
-	}
-
-	if fi.Name() != basename {
-		return fmt.Errorf("Certificate name doesn't match request name: %s != %s", basename, fi.Name())
+	fsize := fi.Size()
+	if fsize != fsize_cert {
+		return fmt.Errorf("Certificate file size doesn't match: %d != %d", fsize_cert, fsize)
 	}
 
 	return nil

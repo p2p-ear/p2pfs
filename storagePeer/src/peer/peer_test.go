@@ -80,9 +80,16 @@ func makeRing(n uint) (string, uint64) {
 }
 
 // Generate a certificate
-func genCertificate(fname string, fsize int64, act int8) string {
+func genCertificate(fname string, fsize int64, act int8) (string, error) {
+	key := []byte("qwertyuiopasdfghjklzxcvbnm123456")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, &FileClaim{Name: fname, Size: fsize, Act: act})
-	return token.Raw
+
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 // TestRW tests read/write capabilities of a peer
@@ -104,7 +111,10 @@ func TestRW(t *testing.T) {
 	chunkAmnt := rand.Intn(16) + 16
 	fLength := chunkAmnt * 8
 	fContent := make([]byte, 0)
-	writeCert := genCertificate(fName, int64(fLength), WRITACT)
+	writeCert, err := genCertificate(fName, int64(fLength), WRITACT)
+	if err != nil {
+		t.Error("Error creating write certificate:", err)
+	}
 
 	if err := wstream.Send(&WriteRequest{Name: fName, Certificate: writeCert}); err != nil {
 		t.Error("Initializing write stream failed:", err)
@@ -126,17 +136,20 @@ func TestRW(t *testing.T) {
 	fContent = append(fContent, lastChunk...)
 
 	if err := wstream.Send(&WriteRequest{Data: lastChunk}); err != nil {
-		fmt.Println("Error writing final bytes to stream:", err)
+		t.Error("Error writing final bytes to stream:", err)
 	}
 
 	writeReply, err := wstream.CloseAndRecv()
 	if err != nil {
-		fmt.Println("Error closing write stream:", err)
+		t.Error("Error closing write stream!", err)
 	}
 
 	written := int(writeReply.Written)
 
-	readCert := genCertificate(fName, int64(fLength), READACT)
+	readCert, err := genCertificate(fName, int64(fLength), READACT)
+	if err != nil {
+		t.Error("Error creating read certificate!", err)
+	}
 	rstream, err := client.Read(context.Background(), &ReadRequest{Name: fName, ChunkSize: 8, Certificate: readCert})
 	if err != nil {
 		t.Error("Creating read stream failed:", err)
@@ -182,8 +195,13 @@ func TestUpload(t *testing.T) {
 
 	fcontent := randString(4096)
 	fname := "testfile.txt"
+	shardSize := int64(len(fcontent))
+	wCert, err := genCertificate(fname, shardSize, WRITACT)
+	if err != nil {
+		t.Error("Error creating write certificate!", err)
+	}
 
-	err = uploadFile(ownIP, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent)), WRITACT))
+	err = uploadFile(ownIP, fname, ringsz, fcontent, wCert)
 	if err != nil {
 		t.Error("Unable to send file", err)
 	}
@@ -216,11 +234,16 @@ func TestDownload(t *testing.T) {
 
 	fcontent := randString(4096)
 	fname := "testfile.txt"
+	shardSize := int64(len(fcontent))
+	rCert, err := genCertificate(fname, shardSize, READACT)
+	if err != nil {
+		t.Error("Error creating read certificate!", err)
+	}
 
 	ioutil.WriteFile(fname, fcontent, 0644)
 
 	fcontentRead := make([]byte, len(fcontent))
-	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)), READACT))
+	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, rCert)
 	if err != nil {
 		t.Error("Unable to download file", err)
 	}
@@ -247,14 +270,24 @@ func TestUD(t *testing.T) {
 
 	fcontent := randString(4096)
 	fname := "testfile.txt"
+	shardSize := int64(len(fcontent))
 
-	err = uploadFile(ownIP, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent)), WRITACT))
+	wCert, err := genCertificate(fname, shardSize, WRITACT)
+	if err != nil {
+		t.Error("Error creating write certificate!", err)
+	}
+	err = uploadFile(ownIP, fname, ringsz, fcontent, wCert)
 	if err != nil {
 		t.Error("Unable to send file", err)
 	}
 
 	fcontentRead := make([]byte, len(fcontent))
-	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)), READACT))
+	rCert, err := genCertificate(fname, shardSize, READACT)
+	if err != nil {
+		t.Error("Error creating read certificate!", err)
+	}
+
+	empty, err := downloadFile(ownIP, fname, ringsz, fcontentRead, rCert)
 	if err != nil {
 		t.Error("Unable to download file", err)
 	}
@@ -269,7 +302,12 @@ func TestUD(t *testing.T) {
 		}
 	}
 
-	if err = deleteFile(ownIP, fname, ringsz, genCertificate(fname, int64(len(fcontent)), DELEACT)); err != nil {
+	dCert, err := genCertificate(fname, shardSize, DELEACT)
+	if err != nil {
+		t.Error("Error creating delete certificate!", err)
+	}
+
+	if err = deleteFile(ownIP, fname, ringsz, dCert); err != nil {
 		t.Error("Error deleting file", err)
 	}
 }
@@ -312,8 +350,23 @@ func TestRSC(t *testing.T) {
 
 	fname := "testfile"
 	fcontent := randString(4096)
+	shardSize := int64(len(fcontent)) / dataRSC
+	wCert, err := genCertificate(fname, shardSize, WRITACT)
+	if err != nil {
+		t.Error("Error creating write certificate!", err)
+	}
 
-	err := UploadFileRSC(host, fname, ringsz, fcontent, genCertificate(fname, int64(len(fcontent))/dataRSC, WRITACT))
+	rCert, err := genCertificate(fname, shardSize, READACT)
+	if err != nil {
+		t.Error("Error creating read certificate!", err)
+	}
+
+	dCert, err := genCertificate(fname, shardSize, DELEACT)
+	if err != nil {
+		t.Error("Error creating delete certificate!", err)
+	}
+
+	err = UploadFileRSC(host, fname, ringsz, fcontent, wCert)
 	if err != nil {
 		t.Error("UploadRSC error:", err)
 	}
@@ -325,7 +378,7 @@ func TestRSC(t *testing.T) {
 
 	fcontentRead := make([]byte, len(fcontent)*2)
 
-	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead, genCertificate(fname, int64(len(fcontent)/dataRSC), READACT))
+	empty, err := DownloadFileRSC(host, fname, ringsz, fcontentRead, rCert)
 	if err != nil {
 		t.Error("DownloadRSC error:", err)
 	}
@@ -340,7 +393,7 @@ func TestRSC(t *testing.T) {
 		}
 	}
 
-	err = DeleteFileRSC(host, fname, ringsz, genCertificate(fname, int64(len(fcontent))/dataRSC, DELEACT))
+	err = DeleteFileRSC(host, fname, ringsz, dCert)
 	if err != nil {
 		fmt.Print(err.Error())
 		t.Error(err)
