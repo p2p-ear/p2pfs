@@ -140,7 +140,7 @@ class UserAPI(MethodView):
                 auth_token = auth_header.split(" ")[1]
             except IndexError:
                 responseObject = {
-                    'status': 'fail',
+                    'status': 1,
                     'message': 'Bearer token malformed.'
                 }
                 return make_response(jsonify(responseObject)), 401
@@ -151,26 +151,19 @@ class UserAPI(MethodView):
             if not isinstance(resp, str):
                 user = User.query.filter_by(id=resp).first()
                 responseObject = {
-                    'status': 'success',
+                    'status': 0,
                     'data': {
                         'user_id': user.id,
                         'email': user.email,
                         'admin': user.admin,
-                        'registered_on': user.registered_on
+                        'registered_on': user.registered_on,
+                        'coins': user.coins
                     }
                 }
                 return make_response(jsonify(responseObject)), 200
-            responseObject = {
-                'status': 'fail',
-                'message': resp
-            }
-            return make_response(jsonify(responseObject)), 401
+            return make_response(jsonify({'status': 1, 'message': resp})), 401
         else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'Provide a valid auth token.'
-            }
-            return make_response(jsonify(responseObject)), 401
+            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 401
 
 
 class LogoutAPI(MethodView):
@@ -178,7 +171,7 @@ class LogoutAPI(MethodView):
     Logout Resource
     """
     def post(self):
-        # get auth token
+        # Get auth token
         auth_header = request.headers.get('Authorization')
         if auth_header:
             auth_token = auth_header.split(" ")[1]
@@ -193,29 +186,13 @@ class LogoutAPI(MethodView):
                     # insert the token
                     db.session.add(blacklist_token)
                     db.session.commit()
-                    responseObject = {
-                        'status': 0,
-                        'message': 'Successfully logged out.'
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                    return make_response(jsonify({'status': 0, 'message': 'Successfully logged out.'})), 200
                 except Exception as e:
-                    responseObject = {
-                        'status': 1,
-                        'message': e
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                    return make_response(jsonify({'status': 1, 'message': e})), 200
             else:
-                responseObject = {
-                    'status': 1,
-                    'message': resp
-                }
-                return make_response(jsonify(responseObject)), 401
+                return make_response(jsonify({'status': 1, 'message': resp})), 401
         else:
-            responseObject = {
-                'status': 1,
-                'message': 'Provide a valid auth token.'
-            }
-            return make_response(jsonify(responseObject)), 403
+            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 403
 
 
 class RequestAPI(MethodView):
@@ -514,6 +491,20 @@ class NodeUploadAPI(MethodView):
             return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
 
 
+class NodeDownloadAPI(MethodView):
+    """
+    Node Download Resource
+    """
+    pass
+
+
+class NodeDeleteAPI(MethodView):
+    """
+    Node Delete Resource
+    """
+    pass
+
+
 class AddNodeAPI(MethodView):
     """
     Add Node Resource
@@ -619,6 +610,8 @@ user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 request_view = RequestAPI.as_view('request_api')
 upload_view = NodeUploadAPI.as_view('upload_api')
+download_view = NodeDownloadAPI.as_view('download_api')
+delete_view = NodeDeleteAPI.as_view('delete_api')
 add_node_view = AddNodeAPI.as_view('add_node_api')
 delete_node_view = DeleteNodeAPI.as_view('delete_node_api')
 
@@ -651,6 +644,16 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/upload',
     view_func=upload_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/download',
+    view_func=download_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/delete',
+    view_func=delete_view,
     methods=['POST']
 )
 auth_blueprint.add_url_rule(
