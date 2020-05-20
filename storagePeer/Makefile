@@ -48,11 +48,11 @@ ${RING_TEST}: ${RING_SRC}
 c_interface/c_interface.go: mkbin ${PEER_SRC}
 	cd c_interface
 	go build -o libc_interface.so -buildmode=c-shared c_interface.go
-	mv libc_interface.so ../bin
+	sudo mv libc_interface.so /usr/lib/
 
 c_interface/test.c: mkbin c_interface/c_interface.go
 	cd c_interface
-	gcc test.c -o ../bin/c_test ../bin/libc_interface.so
+	gcc test.c -o ../bin/c_test -lc_interface 
 
 mkbin:
 	mkdir -p bin/
