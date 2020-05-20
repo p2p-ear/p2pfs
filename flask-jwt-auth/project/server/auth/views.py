@@ -20,50 +20,82 @@ class RegisterAPI(MethodView):
     """
 
     def post(self):
-        # get the post data
-        post_data = request.get_json()
-        # check if user already exists
-        user = User.query.filter_by(email=post_data.get('email')).first()
-        if not user:
-            try:
+        try:
+            # Get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+
+            # Check if data is incorrect
+            if not post_data.get('email') or not isinstance(post_data.get('email'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify email or its type is incorrect!'}, 400)
+            if not post_data.get('password') or not isinstance(post_data.get('password'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify password or its type is incorrect!'}, 400)
+            if (post_data.get('body') != dict()):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify body!'}, 400)
+            if len(post_data) != 3:
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+
+            # Check if user already exists
+            user = User.query.filter_by(email=post_data.get('email')).first()
+            if not user:
                 user = User(
                     email=post_data.get('email'),
                     password=post_data.get('password')
                 )
 
-                # insert the user
+                # Insert the user
                 db.session.add(user)
                 db.session.commit()
-                # generate the auth token
+                # Generate the auth token
                 auth_token = user.encode_auth_token(user.id)
                 responseObject = {
-                    'status': 'success',
+                    'status': 0,
                     'message': 'Successfully registered.',
                     'auth_token': auth_token.decode()
                 }
                 return make_response(jsonify(responseObject)), 201
-            except Exception as e:
+            else:
                 responseObject = {
-                    'status': 'fail',
-                    'message': 'Some error occurred. Please try again.'
+                    'status': 1,
+                    'message': 'User already exists. Please Log in.',
                 }
-                return make_response(jsonify(responseObject)), 401
-        else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'User already exists. Please Log in.',
-            }
-            return make_response(jsonify(responseObject)), 202
+                return make_response(jsonify(responseObject)), 202
+        
+        except ValueError as responseObject:
+            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
 
 class LoginAPI(MethodView):
     """
     User Login Resource
     """
     def post(self):
-        # get the post data
-        post_data = request.get_json()
         try:
-            # fetch the user data
+            # Get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+
+            # Check if data is incorrect
+            if not post_data.get('email') or not isinstance(post_data.get('email'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify email or its type is incorrect!'}, 400)
+            if not post_data.get('password') or not isinstance(post_data.get('password'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify password or its type is incorrect!'}, 400)
+            if (post_data.get('body') != {}):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify body!'}, 400)
+            if len(post_data) != 3:
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+        
+            # Fetch the user data
             user = User.query.filter_by(
                 email=post_data.get('email')
             ).first()
@@ -73,32 +105,28 @@ class LoginAPI(MethodView):
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
                     responseObject = {
-                        'status': 'success',
+                        'status': 0,
                         'message': 'Successfully logged in.',
+                        'email': post_data.get('email'),
                         'auth_token': auth_token.decode()
                     }
                     return make_response(jsonify(responseObject)), 200
             elif user and not bcrypt.check_password_hash( # If incorrect password
                 user.password, post_data.get('password')
             ):
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'Incorrect password.'
-                }
-                return make_response(jsonify(responseObject)), 404
+                return make_response(jsonify({'status': 1, 'message': 'Incorrect password.'})), 404
             else:
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'User does not exist.'
-                }
-                return make_response(jsonify(responseObject)), 404
+                return make_response(jsonify({'status': 1, 'message': 'User does not exist.'})), 404
+        
+        except ValueError as responseObject:
+            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
         except Exception as e:
-            #print(e)
-            responseObject = {
-                'status': 'fail',
-                'message': 'Try again'
-            }
-            return make_response(jsonify(responseObject)), 500
+            return make_response(jsonify({'status': 1, 'message': 'Try again'})), 500
+            
 
 class UserAPI(MethodView):
     """
@@ -166,25 +194,25 @@ class LogoutAPI(MethodView):
                     db.session.add(blacklist_token)
                     db.session.commit()
                     responseObject = {
-                        'status': 'success',
+                        'status': 0,
                         'message': 'Successfully logged out.'
                     }
                     return make_response(jsonify(responseObject)), 200
                 except Exception as e:
                     responseObject = {
-                        'status': 'fail',
+                        'status': 1,
                         'message': e
                     }
                     return make_response(jsonify(responseObject)), 200
             else:
                 responseObject = {
-                    'status': 'fail',
+                    'status': 1,
                     'message': resp
                 }
                 return make_response(jsonify(responseObject)), 401
         else:
             responseObject = {
-                'status': 'fail',
+                'status': 1,
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 403
