@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     manager = new QNetworkAccessManager; 
-
+    //connect(this, SIGNAL(finished(int)), this, SLOT(Logout));
     ui->setupUi(this);
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
@@ -223,6 +223,7 @@ void MainWindow::on_actionLogout_triggered() {
         authFile.close();
         ui->actionAuthorize->setEnabled(true);
         ui->actionUser_Options->setDisabled(true);
+        Logout();
         is_authorised = false;
     }
 }
@@ -240,6 +241,7 @@ void MainWindow::on_actionChange_User_triggered() {
         authFile.clear();
         authFile << false << "\n";
         authFile.close();
+        Logout();
         is_authorised = false;
         on_actionAuthorize_triggered();
     }
@@ -523,8 +525,7 @@ int MainWindow::processingAddDir(QJsonObject repBody, int status) {
     return 1;
 }
 
-int MainWindow::processingDelDir(QJsonObject repBody, int status)
-{
+int MainWindow::processingDelDir(QJsonObject repBody, int status) {
 
 }
 
@@ -562,6 +563,36 @@ int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
         return 0;
     }
 
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    Logout();
+}
+
+void MainWindow::Logout() {
+    qDebug() << "Logout";
+    if (is_authorised) {
+        QNetworkRequest req;
+        req.setUrl(QUrl(addressLogout));
+        QString tmp = "Bearer "+JWT;
+        req.setRawHeader("Authorization", tmp.toUtf8());
+        auto reply = manager->post(req, "");
+        JWT.clear();
+        QEventLoop loop;
+        connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+        loop.exec();
+
+        QByteArray responseData = reply->readAll();
+        QJsonDocument doc(QJsonDocument::fromJson(responseData));
+        QJsonObject rep = doc.object();
+        if (rep["status"].toInt() != 0) {//add int value for error processing
+            QMessageBox::warning(this, "Error", rep["message"].toString());
+            return;
+        } else {
+            QMessageBox::information(this, "Success", "Logout successfully");
+            return;
+        }
+    }
 }
 
 void MainWindow::on_btnAddDir_clicked() {

@@ -113,11 +113,14 @@ private slots:
     void on_btnPath2_clicked();
 
     void Process(QNetworkReply*);
+
+    void Logout();
 private:
     //addresses for requests
     const QString addressUpdate = "http://172.104.136.183/auth/update";
     const QString addressRegister = "http://172.104.136.183/auth/register";
     const QString addressRequest = "http://172.104.136.183/auth/request";
+    const QString addressLogout = "http://172.104.136.183/auth/logout";
 
     //processing requests responses
 
@@ -151,5 +154,6 @@ private:
     QNetworkReply* MakeReqRequest(QJsonObject& body, int type);
 
     unsigned long long EvaluateSize(std::vector<fs::path>& args, const std::string& start_path);
+    void closeEvent(QCloseEvent *event);
 };
 #endif // MAINWINDOW_H
