@@ -19,6 +19,8 @@ AuthWindow::AuthWindow(QWidget *parent) :
         ui->checkBox->setCheckState(Qt::CheckState::Checked);
     }
     authConfig.close();
+
+    manager = new QNetworkAccessManager;
 }
 
 AuthWindow::~AuthWindow()
@@ -47,12 +49,22 @@ void AuthWindow::on_btnSignIn_clicked() {
             authConfig << IsRemembered << "\n";
         }
         authConfig.close();
-        QString JWT;
         emit AuthorizedLogin(login, pass, JWT);
         QMessageBox::information(this, "Authoriztion", "Authorization successful");
         this->close();
     } else {
-        QMessageBox::information(this, "Authoriztion", "Authorization failed");
+        QFile f(".auth");
+        f.remove();
+        f.open(QIODevice::ReadWrite);
+        f.close();
+        std::fstream authConfig(".auth");
+
+        authConfig.clear();
+        IsRemembered = false;
+        authConfig << IsRemembered << "\n";
+        authConfig.close();
+
+        ui->checkBox->setCheckState(Qt::CheckState::Unchecked);
     }
 }
 
@@ -60,8 +72,49 @@ void AuthWindow::on_btnSignUp_clicked() {
 
 }
 
+QNetworkReply* AuthWindow::MakeLoginRequest(const QString& login, const QString& pass) {
+    QJsonObject jObj;
+    QJsonObject body;
+    jObj.insert("email", login);
+    jObj.insert("password", pass);
+    jObj.insert("body", body);
+    qDebug() << jObj.keys().size();
+    QJsonDocument jDoc(jObj);
+    QNetworkRequest req;
+    req.setUrl(QUrl(addressLogin));
+    qDebug() << jDoc.toJson();
+    req.setRawHeader("Content-Type","application/json");
+    auto reply = manager->post(req, jDoc.toJson());
+    QEventLoop loop;
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    return reply;
+}
+
+int AuthWindow::ProcessLoginReply(QNetworkReply * reply, const QString& login) {
+    QByteArray responseData = reply->readAll();
+    QJsonDocument doc(QJsonDocument::fromJson(responseData));
+    QJsonObject rep = doc.object();
+    if (rep["status"].toInt() != 0) {//add int value for error processing
+        QMessageBox::warning(this, "Error", rep["message"].toString());
+        return 1;
+    } else if (rep["email"] != login) { //add logout!!!!!!!!!!!
+        qDebug() << login;
+        qDebug() << rep["email"];
+        QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+    } else {
+        if (rep["status"].toInt() == 0) { //authorization success
+            JWT = rep["auth_token"].toString();
+            return 0;
+        }
+    }
+    return 0;
+}
+
+
 int AuthWindow::Auth(const QString &login, const QString &pass) {
-    if ((login == "sanya" && pass == "123") || (login == "daunich" && pass == "123")) {
+    QNetworkReply * reply = MakeLoginRequest(login, pass);
+    if (ProcessLoginReply(reply, login) == 0) {
         return 1;
     } else {
         return 0;

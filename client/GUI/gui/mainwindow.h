@@ -112,6 +112,7 @@ private slots:
 
     void on_btnPath2_clicked();
 
+    void Process(QNetworkReply*);
 private:
     //addresses for requests
     const QString addressUpdate = "http://172.104.136.183/auth/update";
@@ -119,6 +120,7 @@ private:
     const QString addressRequest = "http://172.104.136.183/auth/request";
 
     //processing requests responses
+
     int processingAddCoins(QJsonObject repBody, int status);
     int processingGetJson(QJsonObject repBody, int status);
     int processingGetCoinsAccount(QJsonObject repBody, int status);
