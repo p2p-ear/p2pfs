@@ -6,10 +6,12 @@ void vis1() {
     return;
 }
 void vis2(const std::string& res) {
+    qDebug() << res.c_str();
     return;
 }
 
 void vis3(int a, int b) {
+    qDebug() << a << b;
     return;
 }
 
@@ -180,32 +182,29 @@ void MainWindow::on_btnUpload_clicked() {
     v.Begin1 = vis2;
     v.Begin2 = vis2;
     v.SetField = vis1;
-    QMessageBox* load = new QMessageBox();
-    load->show();
+
+
+
+    //QMessageBox* load = new QMessageBox();
+    //load->show();
     std::string ip = "198.172.0.1:9000";
     unsigned long ringsz = 1000;
-//    for (const auto& item : uploadset) {
-//        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
-//    }
+
     QJsonArray arr;
     for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
-        UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
-        QJsonObject obj;
-        obj.insert(T_NAME, ui->tableWidget_2->item(i, 0)->text());
-        obj.insert(T_ISDIR, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false);
-        obj.insert(T_SIZE, ui->tableWidget_2->item(i, 2)->text());
-        if (ui->tableWidget_2->item(i, 1)->text() == "dir") {
-            obj.insert(T_CHILD, QJsonArray());
-        }
-        arr.append(obj);
+        QString fullpath = ui->tableWidget_2->item(i, 0)->text();
+        QString fname = fullpath.split('/').last();
+        QString pathToLoad = ui->lineMyDisk->text();
+        AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong());
+        //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
     }
     //arr -- array of jsons, pathToLoad -- path on MyDisk
-    QString pathToLoad = ui->linePath->text();
 
-    load->close();
-    delete load;
+
+    //load->close();
+    //delete load;
     uploadset.clear();
-    ui->tableWidget_2->clear();
+    ui->tableWidget_2->setRowCount(0);
     totalSize = 0;
     ui->lineTotal->setText(QString::number(totalSize));
 }
@@ -462,7 +461,7 @@ QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     QJsonObject jObj;
     jObj.insert("email", Login);
     jObj.insert("pass", Password);
-    jObj.insert("JWT", "a");//JWT);
+    jObj.insert("JWT", JWT);
     jObj.insert("type", type);
     jObj.insert("body", body);
     qDebug() << jObj.keys().size();
@@ -526,7 +525,11 @@ int MainWindow::processingAddDir(QJsonObject repBody, int status) {
 }
 
 int MainWindow::processingDelDir(QJsonObject repBody, int status) {
+    return 1;
+}
 
+int MainWindow::processingAddFile(QJsonObject repBody, int status) {
+    return 1;
 }
 
 int MainWindow::GetDirTreeRequest() {
@@ -535,7 +538,7 @@ int MainWindow::GetDirTreeRequest() {
         auto reply = MakeReqRequest(jBody, 3);
         return 1;
     } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
     }
 }
@@ -559,10 +562,25 @@ int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
         }
         return 1;
     } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
     }
 
+}
+
+int MainWindow::AddFileRequest(const QString &path, const QString &filename, bool isDir, unsigned long long size) {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("path", path);
+        jBody.insert("name", filename);
+        jBody.insert("IsDir", isDir);
+        jBody.insert("Size", (int)size);
+        auto reply = MakeReqRequest(jBody, 5);
+        return 1;
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
+        return 0;
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -597,20 +615,20 @@ void MainWindow::Logout() {
 
 void MainWindow::on_btnAddDir_clicked() {
     QString path, dirname;
-    path = ui->lineEdit_3->text();
-    dirname = ui->lineEdit_4->text();
+    //path = ui->lineEdit_3->text();
+    //dirname = ui->lineEdit_4->text();
     AddDirRequest(path, dirname);
 }
 
 void MainWindow::on_btnDelteDir_clicked() {
-    QString path = ui->lineEdit_5->text();
-    if (is_authorised) {
-        QJsonObject jBody;
-        jBody.insert("path", path);
-        MakeReqRequest(jBody, 1);
-    } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-    }
+    //QString path = ui->lineEdit_5->text();
+//    if (is_authorised) {
+//        QJsonObject jBody;
+//        jBody.insert("path", path);
+//        MakeReqRequest(jBody, 1);
+//    } else {
+//        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+//    }
 }
 
 
@@ -651,7 +669,7 @@ void MainWindow::on_btnPath2_clicked() {
 
 void MainWindow::Process(QNetworkReply *reply) {
     QString responce;
-    ui->textBrowser->clear();
+    //ui->textBrowser->clear();
     // Обработка ошибок
 //        if (reply->error()) {
 //            responce += QString("Error %1").arg(reply->errorString())+"\n";
@@ -698,10 +716,13 @@ void MainWindow::Process(QNetworkReply *reply) {
             case 4:
                 processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
                 break;
+            case 5:
+                processingAddFile(rep["body"].toObject(), rep["status"].toInt());
+                break;
         }
     }
 
-    ui->textBrowser->setText(responce);
+    //ui->textBrowser->setText(responce);
     // Delete garbage && Exit
     reply->close();
     reply->deleteLater();

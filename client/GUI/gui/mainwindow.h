@@ -129,6 +129,7 @@ private:
     int processingGetCoinsAccount(QJsonObject repBody, int status);
     int processingAddDir(QJsonObject repBody, int status);
     int processingDelDir(QJsonObject repBody, int status);
+    int processingAddFile(QJsonObject repBody, int status);
 
 
     //making requests
@@ -137,6 +138,8 @@ private:
     int AddCoinsRequest(const int value);
     int DelDirRequest(const QString& filename);
     int GetCoinsAccountRequest();
+    int AddFileRequest(const QString& path, const QString& filename, bool isDir, unsigned long long size);
+
 
     //
     Ui::MainWindow *ui;
