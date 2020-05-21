@@ -154,7 +154,7 @@ private:
     bool is_authorised = false;
 
     QString certificate_token, ip, download_ip, download_certificate_token;
-    int ring_sz_down, ring_sz_up, numshards;
+    unsigned long ring_sz_down, ring_sz_up, numshards;
 
     MyDiskFs FS;
 
