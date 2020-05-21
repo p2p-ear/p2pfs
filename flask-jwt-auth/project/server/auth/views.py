@@ -443,7 +443,8 @@ class RequestAPI(MethodView):
                             responseObject['body'] = {
                                 'certificate_token': certificate.token,
                                 'ip': str(IPA(exist_file.initial_ip)),
-                                'ring_size': ring_size
+                                'ring_size': ring_size,
+                                'num_shards': math.ceil(exist_file.total_shards / self.num_mini_shards)
                             }
                             db.session.add(certificate)
                             
@@ -478,11 +479,14 @@ class NodeActionAPI(MethodView):
 
     def post(self):
         try:
+            '''
             auth_header = request.headers.get('Authorization')
             if auth_header:
                 auth_token = auth_header.split(" ")[1] # throw acception is heades is incorrect
             else:
                 auth_token = ''
+            '''
+            auth_token = request.query_string
             if auth_token:
                 resp = Сertificate.decode_auth_token(auth_token) # return action or string
                 if not isinstance(resp, str):
