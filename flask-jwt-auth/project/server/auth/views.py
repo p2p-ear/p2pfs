@@ -12,6 +12,7 @@ import operator
 from werkzeug.exceptions import BadRequest
 from ipaddress import ip_address as IPA
 import math
+from  sqlalchemy.sql.expression import func
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -285,9 +286,15 @@ class RequestAPI(MethodView):
             certificate = Сertificate(user_id=self.user_id, mini_shard_size=self.mini_shard_size, shards=n_shards, act=1, file_name=name)
             new_file = File(user_id=self.user_id, file_name=name, file_size=item["Size"])
                     
+            random_ip = Node.query.order_by(func.random()).first()
+            if not random_ip:
+                raise ValueError({'status': 1, 'message': 'There is no nodes in the ring!'}, 400)
+            ring_size = Node.query.count()
             if certificate and new_file:
                 responseObject['body'] = {
-                    'certificate_token': certificate.token
+                    'certificate_token': certificate.token,
+                    'ip': str(IPA(random_ip.ip_address)),
+                    'ring_size': ring_size
                 }
                 db.session.add(certificate)
                 db.session.add(new_file)
@@ -435,46 +442,41 @@ class RequestAPI(MethodView):
             return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
 
 
-class NodeUploadAPI(MethodView):
+class NodeActionAPI(MethodView):
     """
-    Node Upload Resource
+    Node Action Resource
     """
 
     def post(self):
-        auth_header = request.headers.get('Authorization')
-        if auth_header:
-            try:
-                auth_token = auth_header.split(" ")[1]
-            except IndexError:
-                responseObject = {
-                    'status': 1,
-                    'message': 'Bearer token malformed.'
-                }
-                return make_response(jsonify(responseObject)), 401
-        else:
-            auth_token = ''
-        if auth_token:
-            certificate = Сertificate.query.filter_by(token=auth_token).first()
-            #if certificate:
-            #    
-            #else:
-            return make_response(jsonify({'status': 1, 'message': resp})), 401
-        else:
-            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 401
+        try:
+            auth_header = request.headers.get('Authorization')
+            if auth_header:
+                auth_token = auth_header.split(" ")[1] # throw acception is heades is incorrect
+            else:
+                auth_token = ''
+            if auth_token:
+                resp = Сertificate.decode_auth_token(auth_token) # return action or string
+                if not isinstance(resp, str):
+                    certificate = Сertificate.query.filter_by(token=auth_token).first()
+                    if certificate:
+                        if (certificate.shards == 0):
+                            # mark the token as blacklisted
+                            blacklist_token = BlacklistToken(token=auth_token)
+                            
+                            # insert the token
+                            db.session.add(blacklist_token)
+                            db.session.commit()
+                            return make_response(jsonify({'status': 0, 'message': 'Successful end of operation.'})), 200
+                        elif (certificate.shards > 0):
+                            certificate.token -= 1
+                            db.session.commit()
+                            return make_response(jsonify({'status': 0, 'message': 'Successful operation.'})), 200
+            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 403
+        except IndexError: # if header is incorrect
+            return make_response(jsonify({'status': 1, 'message': 'Bearer token malformed.'})), 401
 
-
-class NodeDownloadAPI(MethodView):
-    """
-    Node Download Resource
-    """
-    pass
-
-
-class NodeDeleteAPI(MethodView):
-    """
-    Node Delete Resource
-    """
-    pass
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': e})), 200
 
 
 class AddNodeAPI(MethodView):
@@ -581,9 +583,7 @@ login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 request_view = RequestAPI.as_view('request_api')
-upload_view = NodeUploadAPI.as_view('upload_api')
-download_view = NodeDownloadAPI.as_view('download_api')
-delete_view = NodeDeleteAPI.as_view('delete_api')
+action_view = NodeActionAPI.as_view('action_api')
 add_node_view = AddNodeAPI.as_view('add_node_api')
 delete_node_view = DeleteNodeAPI.as_view('delete_node_api')
 
@@ -614,18 +614,8 @@ auth_blueprint.add_url_rule(
     methods=['POST']
 )
 auth_blueprint.add_url_rule(
-    '/auth/upload',
-    view_func=upload_view,
-    methods=['POST']
-)
-auth_blueprint.add_url_rule(
-    '/auth/download',
-    view_func=download_view,
-    methods=['POST']
-)
-auth_blueprint.add_url_rule(
-    '/auth/delete',
-    view_func=delete_view,
+    '/auth/node/action',
+    view_func=action_view,
     methods=['POST']
 )
 auth_blueprint.add_url_rule(

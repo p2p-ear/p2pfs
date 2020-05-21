@@ -198,7 +198,7 @@ class Сertificate(db.Model):
             if is_blacklisted_token:
                 return 'Token blacklisted. Please request again.'
             else:
-                return payload['sub']
+                return payload['act']#payload['sub']
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please request again.'
         except jwt.InvalidTokenError:
