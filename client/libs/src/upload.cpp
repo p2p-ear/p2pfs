@@ -69,7 +69,7 @@ int shardFile(const std::string &filename, std::string Name, visFuncs* vis, unsi
         unsigned long long curr_size = statbuf.st_size - curr_pt < shardSize ? statbuf.st_size - curr_pt : shardSize;
         
         //printf("4\n");
-        std::string shardName = getName(name, i, nSym);
+        std::string shardName = getName(Name, i, nSym);
         //printf("5\n");
 
         GoString fname = {shardName.c_str(), shardName.length()};
