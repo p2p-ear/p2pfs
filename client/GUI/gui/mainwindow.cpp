@@ -538,7 +538,9 @@ int MainWindow::processingDelDir(QJsonObject repBody, int status) {
 int MainWindow::processingAddFile(QJsonObject repBody, int status) {
     if (status == 0) {
         certificate_token = repBody["certificate_token"].toString();
-        QMessageBox::information(this, "yeah", certificate_token);
+        ip = repBody["ip"].toString();
+        ring_sz = repBody["ring_size"].toInt();
+        QMessageBox::information(this, "yeah", certificate_token+"\n"+ip+"\n"+QString::number(ring_sz));
     }
     return 1;
 }
