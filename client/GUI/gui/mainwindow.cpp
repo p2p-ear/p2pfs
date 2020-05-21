@@ -195,8 +195,12 @@ void MainWindow::on_btnUpload_clicked() {
         QString fullpath = ui->tableWidget_2->item(i, 0)->text();
         QString fname = fullpath.split('/').last();
         QString pathToLoad = ui->lineMyDisk->text();
-        AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong());
-        //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+        if(AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong())) {
+            //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+            QMessageBox::information(this, "done", "done");
+        } else {
+            QMessageBox::information(this, "no", "no");
+        }
     }
     //arr -- array of jsons, pathToLoad -- path on MyDisk
 
@@ -532,6 +536,10 @@ int MainWindow::processingDelDir(QJsonObject repBody, int status) {
 }
 
 int MainWindow::processingAddFile(QJsonObject repBody, int status) {
+    if (status == 0) {
+        certificate_token = repBody["certificate_token"].toString();
+        QMessageBox::information(this, "yeah", certificate_token);
+    }
     return 1;
 }
 

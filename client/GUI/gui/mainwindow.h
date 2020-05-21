@@ -149,6 +149,8 @@ private:
     unsigned long long totalSize = 0;
     bool is_authorised = false;
 
+    QString certificate_token;
+
     MyDiskFs FS;
 
     QString Login, Password, JWT;
