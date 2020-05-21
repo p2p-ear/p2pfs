@@ -115,6 +115,8 @@ private slots:
     int Process(QNetworkReply*);
 
     void Logout();
+    void on_btnUpload2_clicked();
+
 private:
     //addresses for requests
     const QString addressUpdate = "http://172.104.136.183/auth/update";
@@ -130,6 +132,7 @@ private:
     int processingAddDir(QJsonObject repBody, int status);
     int processingDelDir(QJsonObject repBody, int status);
     int processingAddFile(QJsonObject repBody, int status);
+    int processingDownloadFile(QJsonObject repBody, int status);
 
 
     //making requests
@@ -139,6 +142,7 @@ private:
     int DelDirRequest(const QString& filename);
     int GetCoinsAccountRequest();
     int AddFileRequest(const QString& path, const QString& filename, bool isDir, unsigned long long size);
+    int DowloadFileRequet(const QString& filename);
 
 
     //
@@ -149,8 +153,8 @@ private:
     unsigned long long totalSize = 0;
     bool is_authorised = false;
 
-    QString certificate_token, ip;
-    int ring_sz;
+    QString certificate_token, ip, download_ip, download_certificate_token;
+    int ring_sz_down, ring_sz_up, numshards;
 
     MyDiskFs FS;
 

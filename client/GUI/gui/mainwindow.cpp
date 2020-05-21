@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     manager = new QNetworkAccessManager; 
     //connect(this, SIGNAL(finished(int)), this, SLOT(Logout));
     ui->setupUi(this);
+    ui->tabWidget->setTabText(0, "Upload");
+    ui->tabWidget->setTabText(1, "Download");
+    ui->tabWidget->setTabText(2, "Account");
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
     ui->actionChange_User->setDisabled(true);
@@ -43,7 +46,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnBack2->setDisabled(true);
     ui->btnForward2->setDisabled(true);
     ui->btnPath->setDisabled(true);
-    ui->btnUpload2->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -187,8 +189,6 @@ void MainWindow::on_btnUpload_clicked() {
 
     //QMessageBox* load = new QMessageBox();
     //load->show();
-    std::string ip = "198.172.0.1:9000";
-    unsigned long ringsz = 1000;
 
     QJsonArray arr;
     for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
@@ -539,8 +539,18 @@ int MainWindow::processingAddFile(QJsonObject repBody, int status) {
     if (status == 0) {
         certificate_token = repBody["certificate_token"].toString();
         ip = repBody["ip"].toString();
-        ring_sz = repBody["ring_size"].toInt();
-        QMessageBox::information(this, "yeah", certificate_token+"\n"+ip+"\n"+QString::number(ring_sz));
+        ring_sz_up = repBody["ring_size"].toInt();
+        QMessageBox::information(this, "yeah", certificate_token+"\n"+ip+"\n"+QString::number(ring_sz_up));
+    }
+    return 1;
+}
+
+int MainWindow::processingDownloadFile(QJsonObject repBody, int status) {
+    if (status == 0) {
+        download_certificate_token = repBody["certificate_token"].toString();
+        download_ip = repBody["ip"].toString();
+        ring_sz_down = repBody["ring_size"].toInt();
+        QMessageBox::information(this, "yeah", download_certificate_token+"\n"+download_ip+"\n"+QString::number(ring_sz_down));
     }
     return 1;
 }
@@ -589,6 +599,22 @@ int MainWindow::AddFileRequest(const QString &path, const QString &filename, boo
         jBody.insert("IsDir", isDir);
         jBody.insert("Size", (int)size);
         auto reply = MakeReqRequest(jBody, 5);
+        if (reply != nullptr) {
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
+        return 0;
+    }
+}
+
+int MainWindow::DowloadFileRequet(const QString &filename) {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("name", filename);
+        auto reply = MakeReqRequest(jBody, 6);
         if (reply != nullptr) {
             return 1;
         } else {
@@ -742,6 +768,9 @@ int MainWindow::Process(QNetworkReply *reply) {
             case 5:
                 processingAddFile(rep["body"].toObject(), rep["status"].toInt());
                 break;
+            case 6:
+                processingDownloadFile(rep["body"].toObject(), rep["status"].toInt());
+            break;
         }
         reply->close();
         reply->deleteLater();
@@ -751,4 +780,28 @@ int MainWindow::Process(QNetworkReply *reply) {
     //ui->textBrowser->setText(responce);
     // Delete garbage && Exit
 
+}
+
+void MainWindow::on_btnUpload2_clicked() {
+    if (fs::exists(ui->lineMyDisk_6->text().toStdString())) {
+        QJsonArray arr;
+        for (int i = 0; i < ui->tableWidget_4->rowCount(); i++) {
+            QString fullpath = ui->tableWidget_4->item(i, 0)->text();
+            if(DowloadFileRequet(fullpath)) {
+                //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+                QMessageBox::information(this, "done", "done");
+            } else {
+                QMessageBox::information(this, "no", "no");
+            }
+        }
+        //arr -- array of jsons, pathToLoad -- path on MyDisk
+
+
+        //load->close();
+        //delete load;
+        downloadset.clear();
+        ui->tableWidget_4->setRowCount(0);
+    } else {
+        QMessageBox::warning(this, "Error", "No such directory");
+    }
 }
