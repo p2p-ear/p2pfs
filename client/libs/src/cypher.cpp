@@ -3,9 +3,17 @@
 #include <cstring>
 
 XORcypher::XORcypher(unsigned int size) : size_(size), secret_(new char[size]) {
-    std::independent_bits_engine<std::default_random_engine, __CHAR_BIT__, char> engine;
+    std::random_device engine;
+    unsigned randval = engine();
+    unsigned mask = 255;
+
     for (unsigned int i = 0; i < size_; i++) {
-        secret_[i] = engine();
+        if (i % sizeof(unsigned) == 0) {
+            randval = engine();
+            mask = 255;
+        }
+        secret_[i] = randval & mask;
+        mask = mask << sizeof(char);
     }
 }
 

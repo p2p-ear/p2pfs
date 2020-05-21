@@ -39,3 +39,26 @@ int RemoveFile(const std::string& filename) {
     }
     return 1;
 }
+
+//powing
+int pow(int bas, int value) {
+    int res = 1;
+    for (int i = 0; i < value; i++) {
+        res *= bas;
+    }
+    return res;
+}
+
+
+//getting name by number of chunk
+std::string getName(const std::string& name, int pos, int nSym) {
+    std::string suff("_");
+    int n = pow(23, nSym-1);
+    for (int i = 0; i < nSym; i++) {
+        //std::cout << "sym no" << i << " :"<<pos/n<<"\n";
+        suff+=('a'+pos / n);
+        pos %= n;
+        n /= 23;
+    }
+    return name+suff;
+}
