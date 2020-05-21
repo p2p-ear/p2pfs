@@ -93,7 +93,7 @@ class File(db.Model):
     file_name = db.Column(db.Text, nullable=False)
 
     def __init__(self, user_id, file_name):
-        self.user_id = token
+        self.user_id = user_id
         self.file_name = file_name
 
 
