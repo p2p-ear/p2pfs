@@ -30,3 +30,9 @@ void XORcypher::operator()(char* shard) {
         shard[i] ^= secret_[i];
     }
 }
+
+void XORcypher::operator()(char* shard, const unsigned int shardsize) {
+    for (unsigned int i = 0; i < shardsize; i++) {
+        shard[i] ^= secret_[i % size_];
+    }
+}
