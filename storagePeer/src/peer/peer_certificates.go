@@ -102,7 +102,7 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 	}
 
 	fsize := fi.Size()
-	if fsize != fsize_cert {
+	if fsize > fsize_cert {
 		return fmt.Errorf("Certificate file size doesn't match: %d != %d", fsize_cert, fsize)
 	}
 
