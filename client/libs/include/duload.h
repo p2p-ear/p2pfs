@@ -1,6 +1,7 @@
 #pragma once
 
 #include "libc_interface.h"
+#include "cypher.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -34,8 +35,8 @@ namespace fs = std::filesystem;
 int pow(int bas, int value);
 std::string getName(const std::string& name, int pos, int nSym);
 int getNumPieces(unsigned long long size, int mode);
-int shardFile(const std::string &filename, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz, std::string JWT);
-int UploadFile(const std::string& filename, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz, std::string JWT);
+int shardFile(const std::string &filename, std::string name, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz, std::string JWT);
+int UploadFile(const std::string& filename, std::string name, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz, std::string JWT);
 std::string ZIPFunc(const fs::path& filename, int method);
 
 //zip funcs
