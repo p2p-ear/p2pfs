@@ -278,17 +278,18 @@ class RequestAPI(MethodView):
         self.user.data = json.dumps(data)
         if (request_type == 5):
             name = path + self.body.get('name')
-            exist_file = File.query.filter_by(file_name=name).first()
+            exist_file = File.query.filter_by(user_id=self.user_id, file_name=name).first()
             if exist_file: # File already exists
                 raise ValueError({'status': 1, 'message': 'File or directory already exists!'}, 400)
 
-            n_shards = (item["Size"] // self.shard_size) * self.num_mini_shards + math.ceil((item["Size"] % self.shard_size) / self.mini_shard_size)
-            certificate = Сertificate(user_id=self.user_id, mini_shard_size=self.mini_shard_size, shards=n_shards, act=1, file_name=name)
-            new_file = File(user_id=self.user_id, file_name=name, file_size=item["Size"])
-                    
             random_ip = Node.query.order_by(func.random()).first()
             if not random_ip:
                 raise ValueError({'status': 1, 'message': 'There is no nodes in the ring!'}, 400)
+
+            n_shards = (item["Size"] // self.shard_size) * self.num_mini_shards + math.ceil((item["Size"] % self.shard_size) / self.mini_shard_size)
+            certificate = Сertificate(user_id=self.user_id, mini_shard_size=self.mini_shard_size, shards=n_shards, act=1, file_name=name)
+            new_file = File(user_id=self.user_id, file_name=name, file_size=item["Size"], n_shards=n_shards, initial_ip=random_ip.ip_address)
+                    
             ring_size = Node.query.count()
             if certificate and new_file:
                 responseObject['body'] = {
@@ -422,6 +423,34 @@ class RequestAPI(MethodView):
                         else: # File
                             item["IsDir"] = False
                         return self.add_item(item, 5)
+                    elif (self.post_data.get('type') == 6): # Download file or real directory
+                        self.get_body()
+                        name = self.body.get('name')
+                        exist_file = File.query.filter_by(user_id=self.user_id, file_name=name).first()
+                        if not exist_file: # File doesn't exist
+                            raise ValueError({'status': 1, 'message': 'File or directory doesn\'t exist!'}, 400)
+
+                        responseObject = {
+                            'status': 0,
+                            'type': 6,
+                            'message': 'You have successfully download new file or directory!',
+                            'email': self.post_data.get('email'),
+                            'body': {}
+                        }
+                        certificate = Сertificate(user_id=self.user_id, mini_shard_size=self.mini_shard_size, shards=exist_file.total_shards, act=0, file_name=exist_file.file_name)
+                        ring_size = Node.query.count()
+                        if certificate:
+                            responseObject['body'] = {
+                                'certificate_token': certificate.token,
+                                'ip': str(IPA(exist_file.initial_ip)),
+                                'ring_size': ring_size
+                            }
+                            db.session.add(certificate)
+                            
+                            self.user.coins += exist_file.file_size
+                                            
+                        db.session.commit()
+                        return make_response(jsonify(responseObject)), 200
                     else:
                         raise ValueError({'status': 1, 'message': 'Wrong request!'}, 400)
                 else:
@@ -457,7 +486,7 @@ class NodeActionAPI(MethodView):
             if auth_token:
                 resp = Сertificate.decode_auth_token(auth_token) # return action or string
                 if not isinstance(resp, str):
-                    certificate = Сertificate.query.filter_by(token=auth_token).first()
+                    certificate = Сertificate.query.filter_by(token=auth_token).first().with_lockmode("update")
                     if certificate:
                         if (certificate.shards == 0):
                             # mark the token as blacklisted

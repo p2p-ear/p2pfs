@@ -91,12 +91,16 @@ class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     file_name = db.Column(db.Text, nullable=False)
-    file_size = db.Column(db.BigInteger, nullable=False, default=0)
+    file_size = db.Column(db.BigInteger, nullable=False)
+    total_shards = db.Column(db.BigInteger, nullable=False)
+    initial_ip = db.Column(db.BigInteger, nullable=False)
 
-    def __init__(self, user_id, file_name, file_size):
+    def __init__(self, user_id, file_name, file_size, n_shards, initial_ip):
         self.user_id = user_id
         self.file_name = file_name
         self.file_size = file_size
+        self.total_shards = n_shards
+        self.initial_ip = initial_ip
 
 
     def __repr__(self):
