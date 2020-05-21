@@ -474,8 +474,11 @@ QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     QEventLoop loop;
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
-    Process(reply);
-    return reply;
+    if (Process(reply)) {
+        return reply;
+    } else {
+        return nullptr;
+    }
 }
 
 void MainWindow::on_btnGetCoins_clicked() {
@@ -576,7 +579,11 @@ int MainWindow::AddFileRequest(const QString &path, const QString &filename, boo
         jBody.insert("IsDir", isDir);
         jBody.insert("Size", (int)size);
         auto reply = MakeReqRequest(jBody, 5);
-        return 1;
+        if (reply != nullptr) {
+            return 1;
+        } else {
+            return 0;
+        }
     } else {
         QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
@@ -667,7 +674,7 @@ void MainWindow::on_btnPath2_clicked() {
     ui->lineMyDisk_6->setText(selectedPath);
 }
 
-void MainWindow::Process(QNetworkReply *reply) {
+int MainWindow::Process(QNetworkReply *reply) {
     QString responce;
     //ui->textBrowser->clear();
     // Обработка ошибок
@@ -695,10 +702,16 @@ void MainWindow::Process(QNetworkReply *reply) {
     QJsonObject rep = doc.object();
     if (rep["status"].toInt() != 0) {//add int value for error processing
         QMessageBox::warning(this, "Error", rep["message"].toString());
+        reply->close();
+        reply->deleteLater();
+        return 0;
     } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
         qDebug() << Login;
         qDebug() << rep["email"];
         QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+        reply->close();
+        reply->deleteLater();
+        return 0;
     } else {
         switch (rep["type"].toInt()) {
             case 0:
@@ -720,10 +733,12 @@ void MainWindow::Process(QNetworkReply *reply) {
                 processingAddFile(rep["body"].toObject(), rep["status"].toInt());
                 break;
         }
+        reply->close();
+        reply->deleteLater();
+        return 1;
     }
 
     //ui->textBrowser->setText(responce);
     // Delete garbage && Exit
-    reply->close();
-    reply->deleteLater();
+
 }

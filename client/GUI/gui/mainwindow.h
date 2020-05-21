@@ -112,7 +112,7 @@ private slots:
 
     void on_btnPath2_clicked();
 
-    void Process(QNetworkReply*);
+    int Process(QNetworkReply*);
 
     void Logout();
 private:
