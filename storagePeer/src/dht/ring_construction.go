@@ -93,7 +93,7 @@ func (n *RingNode) initSuccList() error{
 		return err
 	}
 
-	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}})
+	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}, keys:make([]string,0)})
 
 	for i := uint64(1); i < n.succListSize; i++ {
 
@@ -102,7 +102,7 @@ func (n *RingNode) initSuccList() error{
 			return err
 		}
 
-		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}})
+		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}, keys:make([]string,0)})
 	}
 
 	return nil

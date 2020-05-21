@@ -18,7 +18,7 @@ func (n *RingNode) SaveKey(key string) {
   keys := make([]string, 1)
   keys[0] = key
 
-  ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, keys)
+  ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, n.self.ID, keys)
   if !ok || err != nil {
     panic(err)
   }
@@ -32,7 +32,7 @@ func (n *RingNode) UpdateKeys(ctx context.Context, in *UpdateKeysRequest) (*Upda
 
   n.keys = append(n.keys, in.GetKeys()...)
   // Don't forget to add them to the NewKeys channel
-  
+
   return &UpdateReply{OK: true}, nil
 }
 
@@ -72,6 +72,7 @@ func (n *RingNode) UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest
       val := el.Value.(neighbour)
       if val.node.ID == id {
         val.keys = append(val.keys, in.GetKeys()...)
+        el.Value = val
         ok = true
       }
     }
@@ -79,7 +80,7 @@ func (n *RingNode) UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest
 
   // Decide whether we should propogate theese keys forward
   if ok {
-    ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, in.GetKeys())
+    ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, id, in.GetKeys())
     if !ok || err != nil {
       panic(err)
     }
@@ -88,7 +89,7 @@ func (n *RingNode) UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest
   return &UpdateReply{OK: true}, nil
 }
 
-func (n *RingNode) invokeUpdateKeysInfo(invokeIP string, keys []string) (bool, error) {
+func (n *RingNode) invokeUpdateKeysInfo(invokeIP string,  updateForID uint64, keys []string) (bool, error) {
 
 	conn, err := grpc.Dial(invokeIP, grpc.WithInsecure())
 	if err != nil {
@@ -98,7 +99,7 @@ func (n *RingNode) invokeUpdateKeysInfo(invokeIP string, keys []string) (bool, e
 
 	mes, err := cl.UpdateKeysInfo(
 		context.Background(),
-		&UpdateKeysInfoRequest{Keys: keys, ID: n.self.ID},
+		&UpdateKeysInfoRequest{Keys: keys, ID: updateForID},
 	)
 	if err != nil {
 		return false, err

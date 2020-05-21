@@ -40,6 +40,7 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 
 	// Send your new predecessor new keys that he is responsible for
 
+/*
 	if isBetween {
 
 		// Separate keys
@@ -62,6 +63,7 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 			panic(err)
 		}
 	}
+	*/
 	return &UpdateReply{OK: (isNotOkay || isBetween)}, nil
 }
 
@@ -153,7 +155,7 @@ func (n *RingNode) insertToSuccList(node finger) bool {
 
 		if n.inInterval(n.fingerTable[0].ID, neighb.Value.(neighbour).node.ID, node.ID, false, false) {
 
-			el := n.succList.InsertBefore(neighbour{node: node}, neighb)
+			el := n.succList.InsertBefore(neighbour{node: node, keys:make([]string,0)}, neighb)
 			if el == nil {
 				panic("Couldn't insert a node into succ list!")
 			}
@@ -167,7 +169,7 @@ func (n *RingNode) insertToSuccList(node finger) bool {
 
 	// Insert first element or in the end
 	if uint64(n.succList.Len()) < n.succListSize {
-		n.succList.PushBack(neighbour{node: node})
+		n.succList.PushBack(neighbour{node: node, keys:make([]string,0)})
 		return true
 	}
 

@@ -53,6 +53,7 @@ func (n *RingNode) fixSuccessor() {
       _, err := n.invokeGetPred(val.node.IP)
 
       if err != nil {
+        fmt.Println(err.Error())
         n.succList.Remove(n.succList.Front())
         // And remember his keys
       } else {
@@ -69,7 +70,7 @@ func (n *RingNode) fixSuccessor() {
     }
 
     if (n.fingerTable[0].IP == oldSucc) && (n.succList.Len() == 0) {
-      panic(fmt.Sprintf("%d lost everyone", n.self.ID))
+      panic(fmt.Sprintf("%d lost everyone during fix", n.self.ID))
     }
   } else {
     // Check if pred points to us incase something went wrong (concurrent join)

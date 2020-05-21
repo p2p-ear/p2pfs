@@ -69,7 +69,7 @@ func (n *RingNode) FindSuccessor(id uint64) (string, error) {
 	if pred.IP == n.self.IP {
 		return n.self.IP, nil
 	}
-
+    
 	ans, err := n.invokeGetSucc(pred.IP)
 	return ans.IP, err
 }
