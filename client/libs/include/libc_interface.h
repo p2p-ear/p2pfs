@@ -69,13 +69,11 @@ extern "C" {
 #endif
 
 
-// UploadFile writes to the closest node to hash of fname on the same ring as ringIP
+extern void UploadFileRSC(GoString p0, GoString p1, GoUint64 p2, GoSlice p3, GoString p4);
 
-extern void UploadFile(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
+extern GoInt DownloadFileRSC(GoString p0, GoString p1, GoUint64 p2, GoSlice p3, GoString p4);
 
-// DownloadFile downloads the file from the closest node to hash of fname on the same ring as ringIP
-
-extern GoInt DownloadFile(GoString p0, GoString p1, GoUint64 p2, GoSlice p3);
+extern void DeleteFileRSC(GoString p0, GoString p1, GoUint64 p2, GoString p3);
 
 #ifdef __cplusplus
 }

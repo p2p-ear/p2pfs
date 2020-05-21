@@ -33,7 +33,7 @@ int getNumPieces(unsigned long long size, int mode) {
 
 
 //deviding into chunks
-int shardFile(const std::string &filename, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz) {
+int shardFile(const std::string &filename, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz, std::string JWT) {
     vis->SetField();
     int show = 0, current = 0;
 
@@ -74,6 +74,7 @@ int shardFile(const std::string &filename, visFuncs* vis, unsigned long long sha
     //printf("3\n");
 
     GoString IP = {ip.c_str(), ip.length()};
+    GoString wJWT = {JWT.c_str(), JWT.length()};
 
     
     for (int i = 0; i < num; i++) {
@@ -102,7 +103,7 @@ int shardFile(const std::string &filename, visFuncs* vis, unsigned long long sha
             cap: curr_size
         };
 
-        UploadFile(IP, fname, ringsz, fcontent_clice);
+        UploadFileRSC(IP, fname, ringsz, fcontent_clice, wJWT);
 
         munmap(src, curr_size);
 
@@ -197,7 +198,7 @@ void RollDir(const std::string&) {
     return;
 }
 
-int UploadFile(const std::string& filename, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz) { //zero if fail, else 1
+int UploadFile(const std::string& filename, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz, std::string JWT) { //zero if fail, else 1
     bool isDir = false;
     vis->Begin2(filename);
     fs::path file(filename);
@@ -219,7 +220,7 @@ int UploadFile(const std::string& filename, const std::string& suff, bool remove
     vis->End2(filename);
 
     //chunking
-    int result = shardFile(ZipedFile, vis, shardLength, ip, ringsz);
+    int result = shardFile(ZipedFile, vis, shardLength, ip, ringsz, JWT);
     //std::cout << ZipedFile << "\n";
 
     //removing temp files
