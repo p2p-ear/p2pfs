@@ -6,10 +6,12 @@ void vis1() {
     return;
 }
 void vis2(const std::string& res) {
+    qDebug() << res.c_str();
     return;
 }
 
 void vis3(int a, int b) {
+    qDebug() << a << b;
     return;
 }
 
@@ -18,67 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     manager = new QNetworkAccessManager; 
-    QObject::connect(
-                    manager,
-                    &QNetworkAccessManager::finished,
-                    // Лямбда функция - обработчик HTTP ответа
-                    [=](QNetworkReply *reply) {
-            QString responce;
-            ui->textBrowser->clear();
-            // Обработка ошибок
-    //        if (reply->error()) {
-    //            responce += QString("Error %1").arg(reply->errorString())+"\n";
-    //            reply->deleteLater();
-    //        }
-
-            // Вывод заголовков
-    //        for (auto &i:reply->rawHeaderPairs()) {
-    //            QString str;
-    //            responce += str.sprintf(
-    //                            "%40s: %s",
-    //                            i.first.data(),
-    //                            i.second.data());
-    //        }
-
-            // Вывод стандартного заголовка
-            responce += reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
-
-            // Тело ответа в формате JSON
-            QByteArray responseData = reply->readAll();
-            QJsonDocument doc(QJsonDocument::fromJson(responseData));
-            responce += doc.toJson();
-            QJsonObject rep = doc.object();
-            if (rep["status"].toInt() != 0) {//add int value for error processing
-                QMessageBox::warning(this, "Error", rep["message"].toString());
-            } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
-                qDebug() << Login;
-                qDebug() << rep["email"];
-                QMessageBox::warning(this, "Authoriztion", "Authorization failed");
-            } else {
-                switch (rep["type"].toInt()) {
-                    case 0:
-                        processingAddDir(rep["body"].toObject(), rep["status"].toInt());
-                        break;
-                    case 1:
-                        processingDelDir(rep["body"].toObject(), rep["status"].toInt());
-                        break;
-                    case 2:
-                        processingAddCoins(rep["body"].toObject(), rep["status"].toInt());
-                        break;
-                    case 3:
-                        processingGetJson(rep["body"].toObject(), rep["status"].toInt());
-                        break;
-                    case 4:
-                        processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
-                        break;
-                }
-            }
-
-            ui->textBrowser->setText(responce);
-            // Delete garbage && Exit
-            reply->close();
-            reply->deleteLater();
-        });
+    //connect(this, SIGNAL(finished(int)), this, SLOT(Logout));
     ui->setupUi(this);
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
@@ -240,32 +182,29 @@ void MainWindow::on_btnUpload_clicked() {
     v.Begin1 = vis2;
     v.Begin2 = vis2;
     v.SetField = vis1;
-    QMessageBox* load = new QMessageBox();
-    load->show();
+
+
+
+    //QMessageBox* load = new QMessageBox();
+    //load->show();
     std::string ip = "198.172.0.1:9000";
     unsigned long ringsz = 1000;
-//    for (const auto& item : uploadset) {
-//        int res = UploadFile(item.toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
-//    }
+
     QJsonArray arr;
     for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
-        UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
-        QJsonObject obj;
-        obj.insert(T_NAME, ui->tableWidget_2->item(i, 0)->text());
-        obj.insert(T_ISDIR, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false);
-        obj.insert(T_SIZE, ui->tableWidget_2->item(i, 2)->text());
-        if (ui->tableWidget_2->item(i, 1)->text() == "dir") {
-            obj.insert(T_CHILD, QJsonArray());
-        }
-        arr.append(obj);
+        QString fullpath = ui->tableWidget_2->item(i, 0)->text();
+        QString fname = fullpath.split('/').last();
+        QString pathToLoad = ui->lineMyDisk->text();
+        AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong());
+        //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
     }
     //arr -- array of jsons, pathToLoad -- path on MyDisk
-    QString pathToLoad = ui->linePath->text();
 
-    load->close();
-    delete load;
+
+    //load->close();
+    //delete load;
     uploadset.clear();
-    ui->tableWidget_2->clear();
+    ui->tableWidget_2->setRowCount(0);
     totalSize = 0;
     ui->lineTotal->setText(QString::number(totalSize));
 }
@@ -283,6 +222,7 @@ void MainWindow::on_actionLogout_triggered() {
         authFile.close();
         ui->actionAuthorize->setEnabled(true);
         ui->actionUser_Options->setDisabled(true);
+        Logout();
         is_authorised = false;
     }
 }
@@ -300,6 +240,7 @@ void MainWindow::on_actionChange_User_triggered() {
         authFile.clear();
         authFile << false << "\n";
         authFile.close();
+        Logout();
         is_authorised = false;
         on_actionAuthorize_triggered();
     }
@@ -520,7 +461,7 @@ QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     QJsonObject jObj;
     jObj.insert("email", Login);
     jObj.insert("pass", Password);
-    jObj.insert("JWT", "a");//JWT);
+    jObj.insert("JWT", JWT);
     jObj.insert("type", type);
     jObj.insert("body", body);
     qDebug() << jObj.keys().size();
@@ -530,6 +471,10 @@ QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     qDebug() << jDoc.toJson();
     req.setRawHeader("Content-Type","application/json");
     auto reply = manager->post(req, jDoc.toJson());
+    QEventLoop loop;
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    Process(reply);
     return reply;
 }
 
@@ -579,9 +524,12 @@ int MainWindow::processingAddDir(QJsonObject repBody, int status) {
     return 1;
 }
 
-int MainWindow::processingDelDir(QJsonObject repBody, int status)
-{
+int MainWindow::processingDelDir(QJsonObject repBody, int status) {
+    return 1;
+}
 
+int MainWindow::processingAddFile(QJsonObject repBody, int status) {
+    return 1;
 }
 
 int MainWindow::GetDirTreeRequest() {
@@ -590,7 +538,7 @@ int MainWindow::GetDirTreeRequest() {
         auto reply = MakeReqRequest(jBody, 3);
         return 1;
     } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
     }
 }
@@ -601,57 +549,102 @@ int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
         jBody.insert("path", path);
         jBody.insert("name", dirname);
         MakeReqRequest(jBody, 0);
-//        if (is_authorised) { // update json after adding dir
-//            GetDirTreeRequest();
-//        } else {
-//            QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-//            return 0;
-//        }
-//        //refreshing tab
-//        if (FS.Cd(FS.GetCurrPath())) {
-//            updateTable3(FS.Ls());
-//            on_btmClear2_clicked();
-//        }
+        if (is_authorised) { // update json after adding dir
+            GetDirTreeRequest();
+        } else {
+            QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+            return 0;
+        }
+        //refreshing tab
+        if (FS.Cd(FS.GetCurrPath())) {
+            updateTable3(FS.Ls());
+            on_btmClear2_clicked();
+        }
         return 1;
     } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
     }
 
 }
 
+int MainWindow::AddFileRequest(const QString &path, const QString &filename, bool isDir, unsigned long long size) {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("path", path);
+        jBody.insert("name", filename);
+        jBody.insert("IsDir", isDir);
+        jBody.insert("Size", (int)size);
+        auto reply = MakeReqRequest(jBody, 5);
+        return 1;
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
+        return 0;
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    Logout();
+}
+
+void MainWindow::Logout() {
+    qDebug() << "Logout";
+    if (is_authorised) {
+        QNetworkRequest req;
+        req.setUrl(QUrl(addressLogout));
+        QString tmp = "Bearer "+JWT;
+        req.setRawHeader("Authorization", tmp.toUtf8());
+        auto reply = manager->post(req, "");
+        JWT.clear();
+        QEventLoop loop;
+        connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+        loop.exec();
+
+        QByteArray responseData = reply->readAll();
+        QJsonDocument doc(QJsonDocument::fromJson(responseData));
+        QJsonObject rep = doc.object();
+        if (rep["status"].toInt() != 0) {//add int value for error processing
+            QMessageBox::warning(this, "Error", rep["message"].toString());
+            return;
+        } else {
+            QMessageBox::information(this, "Success", "Logout successfully");
+            return;
+        }
+    }
+}
+
 void MainWindow::on_btnAddDir_clicked() {
     QString path, dirname;
-    path = ui->lineEdit_3->text();
-    dirname = ui->lineEdit_4->text();
+    //path = ui->lineEdit_3->text();
+    //dirname = ui->lineEdit_4->text();
     AddDirRequest(path, dirname);
 }
 
 void MainWindow::on_btnDelteDir_clicked() {
-    QString path = ui->lineEdit_5->text();
-    if (is_authorised) {
-        QJsonObject jBody;
-        jBody.insert("path", path);
-        MakeReqRequest(jBody, 1);
-    } else {
-        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
-    }
+    //QString path = ui->lineEdit_5->text();
+//    if (is_authorised) {
+//        QJsonObject jBody;
+//        jBody.insert("path", path);
+//        MakeReqRequest(jBody, 1);
+//    } else {
+//        QMessageBox::warning(this, "Authentification failed!", "Authentification failed! Try to sign in again");
+//    }
 }
 
 
 
 void MainWindow::on_btnUpdateDir_clicked() {
     GetDirTreeRequest();
-//    if (FS.Cd(FS.GetCurrPath())) { not working(((
-//        updateTable3(FS.Ls());
-//        on_btmClear2_clicked();
-//        ui->linePath_2->setText(FS.GetCurrPath());
-//    } else {
-//        FS.Cd("/");
-//        updateTable3(FS.Ls());
-//        on_btmClear2_clicked();
-//        ui->linePath_2->setText("/");
-//    }
+    if (FS.Cd(FS.GetCurrPath())) {
+        updateTable3(FS.Ls());
+        on_btmClear2_clicked();
+        ui->linePath_2->setText(FS.GetCurrPath());
+    } else {
+        FS.Cd("/");
+        updateTable3(FS.Ls());
+        on_btmClear2_clicked();
+        ui->linePath_2->setText("/");
+    }
 }
 
 void MainWindow::on_btnHome2_clicked() {
@@ -672,4 +665,65 @@ void MainWindow::on_btnHome2_clicked() {
 void MainWindow::on_btnPath2_clicked() {
     QString selectedPath = QFileDialog::getExistingDirectory(this, "Choose path", "");
     ui->lineMyDisk_6->setText(selectedPath);
+}
+
+void MainWindow::Process(QNetworkReply *reply) {
+    QString responce;
+    //ui->textBrowser->clear();
+    // Обработка ошибок
+//        if (reply->error()) {
+//            responce += QString("Error %1").arg(reply->errorString())+"\n";
+//            reply->deleteLater();
+//        }
+
+    // Вывод заголовков
+//        for (auto &i:reply->rawHeaderPairs()) {
+//            QString str;
+//            responce += str.sprintf(
+//                            "%40s: %s",
+//                            i.first.data(),
+//                            i.second.data());
+//        }
+
+    // Вывод стандартного заголовка
+    responce += reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
+
+    // Тело ответа в формате JSON
+    QByteArray responseData = reply->readAll();
+    QJsonDocument doc(QJsonDocument::fromJson(responseData));
+    responce += doc.toJson();
+    QJsonObject rep = doc.object();
+    if (rep["status"].toInt() != 0) {//add int value for error processing
+        QMessageBox::warning(this, "Error", rep["message"].toString());
+    } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
+        qDebug() << Login;
+        qDebug() << rep["email"];
+        QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+    } else {
+        switch (rep["type"].toInt()) {
+            case 0:
+                processingAddDir(rep["body"].toObject(), rep["status"].toInt());
+                break;
+            case 1:
+                processingDelDir(rep["body"].toObject(), rep["status"].toInt());
+                break;
+            case 2:
+                processingAddCoins(rep["body"].toObject(), rep["status"].toInt());
+                break;
+            case 3:
+                processingGetJson(rep["body"].toObject(), rep["status"].toInt());
+                break;
+            case 4:
+                processingGetCoinsAccount(rep["body"].toObject(), rep["status"].toInt());
+                break;
+            case 5:
+                processingAddFile(rep["body"].toObject(), rep["status"].toInt());
+                break;
+        }
+    }
+
+    //ui->textBrowser->setText(responce);
+    // Delete garbage && Exit
+    reply->close();
+    reply->deleteLater();
 }

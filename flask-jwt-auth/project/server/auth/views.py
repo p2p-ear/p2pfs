@@ -20,50 +20,82 @@ class RegisterAPI(MethodView):
     """
 
     def post(self):
-        # get the post data
-        post_data = request.get_json()
-        # check if user already exists
-        user = User.query.filter_by(email=post_data.get('email')).first()
-        if not user:
-            try:
+        try:
+            # Get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+
+            # Check if data is incorrect
+            if not post_data.get('email') or not isinstance(post_data.get('email'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify email or its type is incorrect!'}, 400)
+            if not post_data.get('password') or not isinstance(post_data.get('password'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify password or its type is incorrect!'}, 400)
+            if (post_data.get('body') != dict()):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify body!'}, 400)
+            if len(post_data) != 3:
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+
+            # Check if user already exists
+            user = User.query.filter_by(email=post_data.get('email')).first()
+            if not user:
                 user = User(
                     email=post_data.get('email'),
                     password=post_data.get('password')
                 )
 
-                # insert the user
+                # Insert the user
                 db.session.add(user)
                 db.session.commit()
-                # generate the auth token
+                # Generate the auth token
                 auth_token = user.encode_auth_token(user.id)
                 responseObject = {
-                    'status': 'success',
+                    'status': 0,
                     'message': 'Successfully registered.',
                     'auth_token': auth_token.decode()
                 }
                 return make_response(jsonify(responseObject)), 201
-            except Exception as e:
+            else:
                 responseObject = {
-                    'status': 'fail',
-                    'message': 'Some error occurred. Please try again.'
+                    'status': 1,
+                    'message': 'User already exists. Please Log in.',
                 }
-                return make_response(jsonify(responseObject)), 401
-        else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'User already exists. Please Log in.',
-            }
-            return make_response(jsonify(responseObject)), 202
+                return make_response(jsonify(responseObject)), 202
+        
+        except ValueError as responseObject:
+            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
 
 class LoginAPI(MethodView):
     """
     User Login Resource
     """
     def post(self):
-        # get the post data
-        post_data = request.get_json()
         try:
-            # fetch the user data
+            # Get the post data
+            post_data = request.get_json()
+
+            if not post_data: # Request isn't JSON type
+                raise BadRequest
+
+            # Check if data is incorrect
+            if not post_data.get('email') or not isinstance(post_data.get('email'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify email or its type is incorrect!'}, 400)
+            if not post_data.get('password') or not isinstance(post_data.get('password'), str):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify password or its type is incorrect!'}, 400)
+            if (post_data.get('body') != {}):
+                raise ValueError({'status': 1, 'message': 'You have forgotten to specify body!'}, 400)
+            if len(post_data) != 3:
+                raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
+        
+            # Fetch the user data
             user = User.query.filter_by(
                 email=post_data.get('email')
             ).first()
@@ -73,32 +105,28 @@ class LoginAPI(MethodView):
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
                     responseObject = {
-                        'status': 'success',
+                        'status': 0,
                         'message': 'Successfully logged in.',
+                        'email': post_data.get('email'),
                         'auth_token': auth_token.decode()
                     }
                     return make_response(jsonify(responseObject)), 200
             elif user and not bcrypt.check_password_hash( # If incorrect password
                 user.password, post_data.get('password')
             ):
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'Incorrect password.'
-                }
-                return make_response(jsonify(responseObject)), 404
+                return make_response(jsonify({'status': 1, 'message': 'Incorrect password.'})), 404
             else:
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'User does not exist.'
-                }
-                return make_response(jsonify(responseObject)), 404
+                return make_response(jsonify({'status': 1, 'message': 'User does not exist.'})), 404
+        
+        except ValueError as responseObject:
+            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
         except Exception as e:
-            #print(e)
-            responseObject = {
-                'status': 'fail',
-                'message': 'Try again'
-            }
-            return make_response(jsonify(responseObject)), 500
+            return make_response(jsonify({'status': 1, 'message': 'Try again'})), 500
+            
 
 class UserAPI(MethodView):
     """
@@ -112,7 +140,7 @@ class UserAPI(MethodView):
                 auth_token = auth_header.split(" ")[1]
             except IndexError:
                 responseObject = {
-                    'status': 'fail',
+                    'status': 1,
                     'message': 'Bearer token malformed.'
                 }
                 return make_response(jsonify(responseObject)), 401
@@ -123,26 +151,19 @@ class UserAPI(MethodView):
             if not isinstance(resp, str):
                 user = User.query.filter_by(id=resp).first()
                 responseObject = {
-                    'status': 'success',
+                    'status': 0,
                     'data': {
                         'user_id': user.id,
                         'email': user.email,
                         'admin': user.admin,
-                        'registered_on': user.registered_on
+                        'registered_on': user.registered_on,
+                        'coins': user.coins
                     }
                 }
                 return make_response(jsonify(responseObject)), 200
-            responseObject = {
-                'status': 'fail',
-                'message': resp
-            }
-            return make_response(jsonify(responseObject)), 401
+            return make_response(jsonify({'status': 1, 'message': resp})), 401
         else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'Provide a valid auth token.'
-            }
-            return make_response(jsonify(responseObject)), 401
+            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 401
 
 
 class LogoutAPI(MethodView):
@@ -150,7 +171,7 @@ class LogoutAPI(MethodView):
     Logout Resource
     """
     def post(self):
-        # get auth token
+        # Get auth token
         auth_header = request.headers.get('Authorization')
         if auth_header:
             auth_token = auth_header.split(" ")[1]
@@ -165,29 +186,13 @@ class LogoutAPI(MethodView):
                     # insert the token
                     db.session.add(blacklist_token)
                     db.session.commit()
-                    responseObject = {
-                        'status': 'success',
-                        'message': 'Successfully logged out.'
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                    return make_response(jsonify({'status': 0, 'message': 'Successfully logged out.'})), 200
                 except Exception as e:
-                    responseObject = {
-                        'status': 'fail',
-                        'message': e
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                    return make_response(jsonify({'status': 1, 'message': e})), 200
             else:
-                responseObject = {
-                    'status': 'fail',
-                    'message': resp
-                }
-                return make_response(jsonify(responseObject)), 401
+                return make_response(jsonify({'status': 1, 'message': resp})), 401
         else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'Provide a valid auth token.'
-            }
-            return make_response(jsonify(responseObject)), 403
+            return make_response(jsonify({'status': 1, 'message': 'Provide a valid auth token.'})), 403
 
 
 class RequestAPI(MethodView):
@@ -196,8 +201,7 @@ class RequestAPI(MethodView):
     """
 
     def get_body(self):
-        if (len(self.post_data) > 5):
-            raise ValueError({'status': 1, 'message': 'Too many fields!'}, 400)
+        """Get body from request JSON."""
         self.body = self.post_data.get('body')
         if not self.body: # Empty 'body'
             if not ((self.post_data.get('type') == 3) or (self.post_data.get('type') == 4)):
@@ -218,33 +222,56 @@ class RequestAPI(MethodView):
         return reduce(operator.getitem, items, root)
 
 
-    def set_file_by_path(self, root, items, value):
-        """Set a file in a nested object in root by item sequence."""
+    def set_item_by_path(self, root, items, value, item):
+        """Set a directory or file in a nested object in root by item sequence."""
         if value in self.get_by_path(root, items):
-            raise ValueError({'status': 1, 'message': 'File already exists!'}, 400)
-        self.get_by_path(root, items)[value] = {
-                                        "Name": value,
-                                        "Size": 0,
-                                        "IsDir": False,
-                                        "Flag": False
-                                        }
+            raise ValueError({'status': 1, 'message': 'File or directory already exists!'}, 400)
+        #if self.get_by_path(root, items)["Flag"]:
+        #    raise ValueError({'status': 1, 'message': 'You can\'t add file or directory into real directory!'}, 403)
+        self.get_by_path(root, items)[value] = item
+
     
-
-    def set_directory_by_path(self, root, items, value):
-        """Set a directory in a nested object in root by item sequence."""
-        if value in self.get_by_path(root, items):
-            raise ValueError({'status': 1, 'message': 'Directory already exists!'}, 400)
-        self.get_by_path(root, items)[value] = {
-                                        "Name": value,
-                                        "Size": 0,
-                                        "IsDir": True,
-                                        "Flag": False,
-                                        "Child": {}
-                                        }
-
     def delete_by_path(self, root, items, value):
         """Delete a directory or file in a nested object in root by item sequence."""
         del self.get_by_path(root, items)[value]
+
+
+    def add_item(self, item, request_type):
+        """Add item into directory tree."""
+        if not self.body.get('name'):
+            raise ValueError({'status': 1, 'message': 'You should specify file or directory name!'}, 400)
+        if not self.body.get('path'):
+            raise ValueError({'status': 1, 'message': 'You should specify path!'}, 400)
+        
+        path = self.body.get('path')
+        if (self.body.get('name').find("/") != -1):
+            raise ValueError({'status': 1, 'message': 'You can\'t use "/" symbol in directory name!'}, 400)
+        if (path[0] != '/'):
+            raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
+        data = json.loads(self.user.data)
+        if (path[-1] == '/'):
+            initial_path = path.split('/')[1:-1]
+        else:
+            initial_path = path.split('/')[1:]
+        
+        initial_path.append(self.body.get('name'))
+        abs_path = ["Child"]
+        for i in initial_path[:-1]:
+            abs_path.append(i)
+            abs_path.append("Child")
+        
+        item["Name"] = initial_path[-1]
+        self.set_item_by_path(data, abs_path, initial_path[-1], item)
+        self.user.data = json.dumps(data)
+        db.session.commit()
+        responseObject = {
+            'status': 0,
+            'type': request_type,
+            'message': 'You have successfully added new file or directory!',
+            'email': self.post_data.get('email'),
+            'body': {}
+        }
+        return make_response(jsonify(responseObject)), 200
 
     def post(self):
         try:
@@ -254,46 +281,15 @@ class RequestAPI(MethodView):
             if not self.post_data: # Request isn't JSON type
                 raise BadRequest
             
-            if (self.post_data.get('type') == 0): # Add directory
+            if (self.post_data.get('type') == 0): # Add abstract directory
                 self.get_body()
-                if not self.body.get('name'):
-                    raise ValueError({'status': 1, 'message': 'You should specify name in "Add directory" method!'}, 400)
-                if not self.body.get('path'):
-                    raise ValueError({'status': 1, 'message': 'You should specify path in "Add directory" method!'}, 400)
-                if not (len(self.body) == 2):
-                    raise ValueError({'status': 1, 'message': 'Too many arguments in "Add directory" method!'}, 400)
-                
-                path = self.body.get('path')
-                if (self.body.get('name').find("/") != -1):
-                    raise ValueError({'status': 1, 'message': 'You can\'t use "/" symbol in directory name!'}, 400)
-                abs_path = ["Child"]
-                if (path[0] != '/'):
-                    raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
-                if (len(path) == 1) and (not self.body.get('name')):
-                    raise ValueError({'status': 1, 'message': 'You must specify directory!'}, 400)
-                data = json.loads(self.user.data)
-                if (path[-1] == '/'):
-                    initial_path = path.split('/')[1:-1]
-                else:
-                    initial_path = path.split('/')[1:]
-                
-                initial_path.append(self.body.get('name'))
-                abs_path = ["Child"]
-                for i in initial_path[:-1]:
-                    abs_path.append(i)
-                    abs_path.append("Child")
-                
-                self.set_directory_by_path(data, abs_path, initial_path[-1])
-                self.user.data = json.dumps(data)
-                db.session.commit()
-                responseObject = {
-                    'status': 0,
-                    'type': 0,
-                    'message': 'You have successfully added new directory!',
-                    'email': self.user.email,
-                    'body': {}
-                }
-                return make_response(jsonify(responseObject)), 200
+                item = {
+                    "Size": 0,
+                    "IsDir": True,
+                    "Flag": False,
+                    "Child": {}
+                    }
+                return self.add_item(item, 0)           
             elif (self.post_data.get('type') == 1): # Delete
                 self.get_body()
                 if not (self.body.get('path') and (len(self.body) == 1)):
@@ -371,55 +367,34 @@ class RequestAPI(MethodView):
                     }
                     return make_response(jsonify(responseObject)), 200
                 raise ValueError({'status': 1, 'message': 'Wrong request!'}, 400)
-            elif (self.post_data.get('type') == 5): # Add file
+            elif (self.post_data.get('type') == 5): # Add file or real directory
                 self.get_body()
-                if not self.body.get('name'):
-                    raise ValueError({'status': 1, 'message': 'You should specify name in "Add file" method!'}, 400)
-                if not self.body.get('path'):
-                    raise ValueError({'status': 1, 'message': 'You should specify path in "Add file" method!'}, 400)
-                if not (len(self.body) == 2):
-                    raise ValueError({'status': 1, 'message': 'Too many arguments in "Add file" method!'}, 400)
-                
-                path = self.body.get('path')
-                if (self.body.get('name').find("/") != -1):
-                    raise ValueError({'status': 1, 'message': 'You can\'t use "/" symbol in file name!'}, 400)
-                abs_path = ["Child"]
-                if (path[0] != '/'):
-                    raise ValueError({'status': 1, 'message': 'You must always start your path from "/" symbol!'}, 400)
-                if (len(path) == 1) and (not self.body.get('name')):
-                    raise ValueError({'status': 1, 'message': 'You must specify file!'}, 400)
-                data = json.loads(self.user.data)
-                if (path[-1] == '/'):
-                    initial_path = path.split('/')[1:-1]
-                else:
-                    initial_path = path.split('/')[1:]
-                
-                initial_path.append(self.body.get('name'))
-                abs_path = ["Child"]
-                for i in initial_path[:-1]:
-                    abs_path.append(i)
-                    abs_path.append("Child")
-                
-                self.set_file_by_path(data, abs_path, initial_path[-1])
-                self.user.data = json.dumps(data)
-                db.session.commit()
-                responseObject = {
-                    'status': 0,
-                    'type': 0,
-                    'message': 'You have successfully added new file!',
-                    'email': self.user.email,
-                    'body': {}
-                }
-                return make_response(jsonify(responseObject)), 200
+                if not isinstance(self.body.get('IsDir'), bool):
+                    raise ValueError({'status': 1, 'message': 'You should specify IsDir flag!'}, 400)
+                if not isinstance(self.body.get("Size"), int):
+                    raise ValueError({'status': 1, 'message': 'You should specify Size!'}, 400)
+                item = {
+                    "Size": self.body.get("Size"),
+                    "Flag": True
+                    }
+                if self.body.get('IsDir'): # Real directory
+                    item["IsDir"] = True
+                    item["Child"] = {}
+                else: # File
+                    item["IsDir"] = False
+                return self.add_item(item, 5)
             else:
                 raise ValueError({'status': 1, 'message': 'Wrong request!'}, 400)
 
         except ValueError as responseObject:
-            return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+            if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
+                return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+            else:
+                return make_response(jsonify({'status': 1, 'message': 'Something went wrong'})), 400
 
         except KeyError:
             return make_response(jsonify({'status': 1, 'message': self.body.get('path') +  ': No such file or directory'})), 400
-
+            
         except BadRequest:
             return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
 
@@ -438,7 +413,7 @@ class NodeUploadAPI(MethodView):
                 raise BadRequest
         
             # Get user
-            user = User.query.filter_by(email=post_data.get('email')).first()
+            user = User.query.filter_by(id=post_data.get('sub')).first()
             if not user: # if user exists
                 raise ValueError({'status': 1, 'message': 'User doesn\'t exist.'}, 404)
             if not post_data.get('password'):
@@ -484,6 +459,20 @@ class NodeUploadAPI(MethodView):
 
         except Exception as e:
             return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
+
+class NodeDownloadAPI(MethodView):
+    """
+    Node Download Resource
+    """
+    pass
+
+
+class NodeDeleteAPI(MethodView):
+    """
+    Node Delete Resource
+    """
+    pass
 
 
 class AddNodeAPI(MethodView):
@@ -591,6 +580,8 @@ user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 request_view = RequestAPI.as_view('request_api')
 upload_view = NodeUploadAPI.as_view('upload_api')
+download_view = NodeDownloadAPI.as_view('download_api')
+delete_view = NodeDeleteAPI.as_view('delete_api')
 add_node_view = AddNodeAPI.as_view('add_node_api')
 delete_node_view = DeleteNodeAPI.as_view('delete_node_api')
 
@@ -623,6 +614,16 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/upload',
     view_func=upload_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/download',
+    view_func=download_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/delete',
+    view_func=delete_view,
     methods=['POST']
 )
 auth_blueprint.add_url_rule(

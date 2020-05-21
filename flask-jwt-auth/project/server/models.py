@@ -51,7 +51,7 @@ class User(db.Model):
         """
         try:
             payload = {
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, hours=1),
                 'iat': datetime.datetime.utcnow(),
                 'sub': user_id
             }
@@ -93,7 +93,7 @@ class File(db.Model):
     file_name = db.Column(db.Text, nullable=False)
 
     def __init__(self, user_id, file_name):
-        self.user_id = token
+        self.user_id = user_id
         self.file_name = file_name
 
 
