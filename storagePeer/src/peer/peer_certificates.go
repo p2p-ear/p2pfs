@@ -39,7 +39,7 @@ type FileValidationResponse struct {
 }
 
 func getBaseName(fname string) (string, error) {
-	pattern, err := regexp.Compile("((_[[:lower:]])?(_rep[[:digit:]]+))?$")
+	pattern, err := regexp.Compile("((_[[:lower:]]*)?(_rep[[:digit:]]+))?$")
 	if err != nil {
 		return "", err
 	}
