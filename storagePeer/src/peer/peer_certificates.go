@@ -88,12 +88,12 @@ func validateCertificate(tokenString string) error {
 
 func ValidateFile(shardname string, tokenString string, action int8) error {
 
-	basename, err := getBaseName(shardname)
+	_, err := getBaseName(shardname)
 	if err != nil {
 		return err
 	}
 
-	fsize_cert, basename_cert, action_cert, err := decodeCertificate(tokenString)
+	fsize_cert, _, action_cert, err := decodeCertificate(tokenString)
 	if err != nil {
 		return err
 	}
