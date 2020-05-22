@@ -1,7 +1,7 @@
 #include "../include/duload.h"
 
 void GetNames(const std::string& filename, std::vector<std::string>& shards, unsigned long nshards) {
-    int nSym = ceil(log(nshards)/log(23));
+    int nSym = nshards == 1 ? 1 : ceil(log(nshards)/log(23));
 
     for (unsigned long i = 0; i < nshards; i++) {
         shards.push_back(getName(filename, i, nSym));
@@ -50,8 +50,8 @@ int Merge(std::vector<std::string>& shards, const std::string& filename, const s
     GoString codename = {(filename+"_KEY").c_str(), (filename+"_KEY").length()};
 
     //getting code
-    DownloadFileRSC(IP, codename, ringsz, buff, rJWT);
-    XORcypher decoder(size, (char*)buff.data);
+    //DownloadFileRSC(IP, codename, ringsz, buff, rJWT);
+    //XORcypher decoder(size, (char*)buff.data);
 
     //opening result file
     if ((fdout = open64 ((filename+".tar.gz").c_str(), O_RDWR | O_CREAT | O_TRUNC, mode )) < 0) {
@@ -84,7 +84,7 @@ int Merge(std::vector<std::string>& shards, const std::string& filename, const s
             return 0;
         }
 
-        decoder((char*)buff.data);
+        //decoder((char*)buff.data);
 
         memcpy (dst, buff.data, (size-remainingSpace));
         munmap(dst, (size-remainingSpace));
