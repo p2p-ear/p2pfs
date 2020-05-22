@@ -45,7 +45,7 @@ func (n *RingNode) fixSuccessor() {
 
   if err != nil {
 
-
+    deadKeys := n.succKeys
     // Find the first alive node and give it the ownership of dead nodes keys
     for el := n.succList.Front(); el != nil; el = n.succList.Front() {
 
@@ -53,6 +53,7 @@ func (n *RingNode) fixSuccessor() {
       _, err := n.invokeGetPred(val.node.IP)
 
       if err != nil {
+        deadKeys = append(deadKeys, val.keys...)
         n.succList.Remove(n.succList.Front())
         // And remember his keys
       } else {
@@ -64,6 +65,20 @@ func (n *RingNode) fixSuccessor() {
 
         // Update this dude
         n.invokeUpdatePredecessor(n.fingerTable[0].IP)
+
+        // Send him new keys
+        ok, err := n.invokeUpdateKeys(newSucc.IP, deadKeys)
+        if !ok || err != nil {
+          panic(err)
+        }
+
+        // Get all of his keys as succKeys
+        succKeys, err := n.invokeGetKeys(newSucc.IP)
+        if err != nil {
+          panic(err)
+        }
+        n.succKeys = succKeys
+
         break
       }
     }

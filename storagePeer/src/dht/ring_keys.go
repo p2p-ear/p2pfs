@@ -32,8 +32,13 @@ func (n *RingNode) SaveKey(key string) {
 
 func (n *RingNode) UpdateKeys(ctx context.Context, in *UpdateKeysRequest) (*UpdateReply, error) {
 
+  // Add them to the key list
   n.keys = append(n.keys, in.GetKeys()...)
-  // Don't forget to add them to the NewKeys channel
+
+  // Send them to the NewFilesChannel for higher level software to take care of it
+  for _, k := range in.GetKeys() {
+    n.NewFilesChannel <- k
+  }
 
   // Backpropogate info about new keys
   ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, n.self.ID, in.GetKeys())

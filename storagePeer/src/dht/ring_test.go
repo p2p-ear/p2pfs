@@ -272,7 +272,7 @@ func validateMainInfo(nodes []*RingNode, t *testing.T) {
 	}
 }
 
-func _TestJoin(t *testing.T) {
+func TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var start uint64 = 10
@@ -427,7 +427,7 @@ func checkKeys(keys []string, nodes []*RingNode, t *testing.T) {
 
 		// Test personal key list
 		if !inSlice(nodes[succIdx].keys, key) {
-			t.Errorf("Node %d doesn't have it's key: %s", nodes[succIdx].self.ID, key)
+			t.Errorf("Node %d doesn't have it's key: %s with id %d", nodes[succIdx].self.ID, key, Hash([]byte(key),nodes[0].maxNodes))
 			show = true
 		}
 
@@ -483,6 +483,7 @@ func insertKeys(nodes []*RingNode, numKeys int) []string{
 			panic(err)
 		}
 
+		//fmt.Printf("For key %s %d got succ %d\n", key, keyHash, Hash([]byte(placeIP), nodes[0].maxNodes))
 		nodeIdx := findNodeIdx(nodes, Hash([]byte(placeIP), nodes[0].maxNodes))
 		nodes[nodeIdx].SaveKey(key)
 
@@ -539,6 +540,9 @@ func TestKeyNewNode(t *testing.T) {
 	validateMainInfo(nodes, t)
 	checkKeys(keys, nodes, t)
 
+	// NewFilesChannel
+	fmt.Printf("One of the files we got was: %s\n", <-newNode.NewFilesChannel)
+
 	// Close everything
 	for i, _ := range nodes[:len(nodes)] {
 		killNode(nodes[:len(nodes)], b, i)
@@ -547,4 +551,31 @@ func TestKeyNewNode(t *testing.T) {
 
 func TestNodeDeath(t *testing.T) {
 
+	fmt.Println("Test that dead nodes' keys get distributed...")
+
+	// Construct a ring
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second*2
+	var numNodes uint64 = 20
+	var deleteNum int = 3
+	var waitTime time.Duration = time.Second*6
+
+	nodes, _, b := prepareRing(numNodes, maxNum, deltaT, t)
+	keys := insertKeys(nodes, 100)
+	checkKeys(keys, nodes, t)
+
+	// Kill some nodes
+	for i := 1; i <= deleteNum; i++ {
+		killNode(nodes, b, len(nodes)-i)
+	}
+
+	// Check
+	time.Sleep(waitTime)
+	validateMainInfo(nodes[:len(nodes)-deleteNum], t)
+	checkKeys(keys, nodes[:len(nodes)-deleteNum], t)
+
+	// Close everything
+	for i, _ := range nodes[:len(nodes)-deleteNum] {
+		killNode(nodes[:len(nodes)-deleteNum], b, i)
+	}
 }

@@ -49,9 +49,10 @@ type RingNode struct {
 	succListSize uint64
 
 	// Keys information
-	keys        []string
-	succKeys    []string
-	keysStartSize int
+	keys            []string
+	succKeys        []string
+	keysStartSize   int
+	NewFilesChannel chan string
 
 	// Fix routine information
 	stopSignal  chan struct{}
@@ -80,6 +81,7 @@ func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode 
 		keys: make([]string, keysStartSize),
 		succKeys: make([]string, keysStartSize),
 		keysStartSize: keysStartSize,
+		NewFilesChannel: make(chan string, 100),
 	}
 
 	return &n
