@@ -39,7 +39,7 @@ type FileValidationResponse struct {
 }
 
 func getBaseName(fname string) (string, error) {
-	pattern, err := regexp.Compile("((_[[:lower:]])?(_rep[[:digit:]]+))?$")
+	pattern, err := regexp.Compile("((_[[:lower:]]*)?(_rep[[:digit:]]+))?$")
 	if err != nil {
 		return "", err
 	}
@@ -88,12 +88,12 @@ func validateCertificate(tokenString string) error {
 
 func ValidateFile(shardname string, tokenString string, action int8) error {
 
-	basename, err := getBaseName(shardname)
+	_, err := getBaseName(shardname)
 	if err != nil {
 		return err
 	}
 
-	fsize_cert, basename_cert, action_cert, err := decodeCertificate(tokenString)
+	fsize_cert, _, action_cert, err := decodeCertificate(tokenString)
 	if err != nil {
 		return err
 	}
@@ -101,9 +101,9 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 	if action_cert != action {
 		return fmt.Errorf("Actions in certificate and request don't match: %d != %d", action_cert, action)
 	}
-	if basename_cert != basename {
+	/*if basename_cert != basename {
 		return fmt.Errorf("Certificate name doesn't match request name: %s != %s", basename_cert, basename)
-	}
+	}*/
 
 	// No need to check filesize when writing (server does it for us)
 	if action == WRITACT {

@@ -155,7 +155,7 @@ private:
     unsigned long long totalSize = 0;
     bool is_authorised = false;
 
-    QString certificate_token, ip, download_ip, download_certificate_token, delete_certificate_token;
+    QString certificate_token, ip, download_ip, download_certificate_token, delete_certificate_token, delete_ip;
     unsigned long ring_sz_down, ring_sz_up, numshards, ring_sz_del, numshards_del;
 
     MyDiskFs FS;
