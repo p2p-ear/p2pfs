@@ -15,12 +15,16 @@ import (
 // NewPeer creates new peer
 func NewPeer(ownIP string, listeningIP string, maxNodes uint64, existingIP string, deltaT time.Duration) *Peer {
 
+	fmt.Println("Fucking your wife")
 	p := Peer{ownIP: ownIP, ring: dht.NewRingNode(ownIP, maxNodes, deltaT), Errs: make(chan error, 1)}
 
 	p.start(listeningIP)
 
 	// Join the network. Build finger table and adapt the other ones.
 	p.ring.Join(existingIP)
+
+	fmt.Println("Notifying server...")
+	p.notifyAboutArrival()
 
 	return &p
 }

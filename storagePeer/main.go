@@ -25,7 +25,7 @@ func main() {
 	if *numPtr == 0 {
 		panic("num flag not set")
 	}
-
+	fmt.Println("Starting...")
 	p := peer.NewPeer(*ipPtr, *listenPtr, *numPtr, *entry, time.Duration(*deltaT) * time.Second)
 
 	err := <-p.Errs

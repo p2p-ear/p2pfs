@@ -4,6 +4,8 @@ import (
   "fmt"
   "bytes"
   "net/http"
+  "io/ioutil"
+  "encoding/json"
 )
 
 func (p *Peer) fixRoutine() {
@@ -20,15 +22,18 @@ func (p *Peer) notifyAboutArrival() {
 
   notifyUrl := fmt.Sprintf("%s/auth/node/add", SERVER_IP)
 
-  var jsonStr = []byte(fmt.Sprintf(`{"ip_address":"%s"}`, p.ownIP))
-  req, err := http.NewRequest("POST", notifyUrl, bytes.NewBuffer(jsonStr))
-  req.Header.Set("Content-Type", "application/json")
+  request, err := json.Marshal(map[string]string{
+    "ip_address": p.ownIP,
+  })
 
-  client := &http.Client{}
-  resp, err := client.Do(req)
   if err != nil {
-      panic(err)
+    panic(err)
   }
+
+  resp, err := http.Post(notifyUrl, "application/json", bytes.NewBuffer(request))
+
+  body, _ := ioutil.ReadAll(resp.Body)
+  fmt.Println("response Body:", string(body))
 
   resp.Body.Close()
 }
