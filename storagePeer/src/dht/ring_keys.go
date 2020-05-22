@@ -28,10 +28,18 @@ func (n *RingNode) SaveKey(key string) {
 // RPC calls
 ///////
 
+/////////// Update personal keys
+
 func (n *RingNode) UpdateKeys(ctx context.Context, in *UpdateKeysRequest) (*UpdateReply, error) {
 
   n.keys = append(n.keys, in.GetKeys()...)
   // Don't forget to add them to the NewKeys channel
+
+  // Backpropogate info about new keys
+  ok, err := n.invokeUpdateKeysInfo(n.predecessor.IP, n.self.ID, in.GetKeys())
+  if !ok || err != nil {
+    panic(err)
+  }
 
   return &UpdateReply{OK: true}, nil
 }
@@ -55,6 +63,8 @@ func (n *RingNode) invokeUpdateKeys(invokeIP string, keys []string) (bool, error
 
 	return mes.GetOK(), nil
 }
+
+/////////// Update information about keys of others
 
 func (n *RingNode) UpdateKeysInfo(ctx context.Context, in *UpdateKeysInfoRequest) (*UpdateReply, error) {
 
@@ -107,4 +117,31 @@ func (n *RingNode) invokeUpdateKeysInfo(invokeIP string,  updateForID uint64, ke
 	conn.Close()
 
 	return mes.GetOK(), nil
+}
+
+/////////// Get someones keys
+
+func (n *RingNode) GetKeys(ctx context.Context, in *GetKeysRequest) (*KeyReply, error) {
+
+  return &KeyReply{Keys: n.keys}, nil
+}
+
+func (n *RingNode) invokeGetKeys(invokeIP string) ([]string, error) {
+
+  conn, err := grpc.Dial(invokeIP, grpc.WithInsecure())
+	if err != nil {
+		return make([]string,0), err
+	}
+	cl := NewRingServiceClient(conn)
+
+	mes, err := cl.GetKeys(
+		context.Background(),
+		&GetKeysRequest{},
+	)
+	if err != nil {
+		return make([]string,0), err
+	}
+	conn.Close()
+
+	return mes.GetKeys(), nil
 }

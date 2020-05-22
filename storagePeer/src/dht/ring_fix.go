@@ -53,7 +53,6 @@ func (n *RingNode) fixSuccessor() {
       _, err := n.invokeGetPred(val.node.IP)
 
       if err != nil {
-        fmt.Println(err.Error())
         n.succList.Remove(n.succList.Front())
         // And remember his keys
       } else {

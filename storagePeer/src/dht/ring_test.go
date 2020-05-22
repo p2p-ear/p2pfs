@@ -346,7 +346,7 @@ func prepareRing(numNodes uint64, maxNum uint64, deltaT time.Duration, t *testin
 	return nodes, a, b
 }
 
-func _TestFailures(t *testing.T) {
+func TestFailures(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var deltaT time.Duration = time.Second
@@ -518,5 +518,33 @@ func TestKeyNewNode(t *testing.T) {
 
 	fmt.Println("Check that keys get split with new node...")
 
-	
+	// Construct a ring
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second * 10
+	var numNodes uint64 = 15
+
+	nodes, _, b := prepareRing(numNodes, maxNum, deltaT, t)
+	keys := insertKeys(nodes, 100)
+	checkKeys(keys, nodes, t)
+
+	// Insert new one
+	newNode := NewRingNode("localhost:9000", maxNum, deltaT)
+	_, newB := startTestServ(newNode)
+	newNode.Join(nodes[0].self.IP)
+
+	nodes = append(nodes, newNode)
+	b = append(b, newB)
+
+	// Validate
+	validateMainInfo(nodes, t)
+	checkKeys(keys, nodes, t)
+
+	// Close everything
+	for i, _ := range nodes[:len(nodes)] {
+		killNode(nodes[:len(nodes)], b, i)
+	}
+}
+
+func TestNodeDeath(t *testing.T) {
+
 }
