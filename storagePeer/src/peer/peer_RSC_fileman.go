@@ -33,7 +33,9 @@ func UploadFileRSC(ringIP string, fname string, ringsz uint64, fcontent []byte, 
 		fcontentSlice = fcontentSlice[shardLen:]
 	}
 
-	data[dataRSC-1] = fcontentSlice
+	lastSlice := make([]byte, shardLen)
+	copy(lastSlice, fcontentSlice)
+	data[dataRSC-1] = lastSlice
 	for i := 0; i < parityRSC; i++ {
 		data[dataRSC+i] = make([]byte, shardLen)
 	}
