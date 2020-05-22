@@ -32,7 +32,7 @@ ${PEER}/peer.pb.go: ${PEER}/peer.proto
 		--go_out=plugins=grpc:peer \
 		peer/peer.proto
 ${PEER_TEST}: ${PEER_SRC} c_interface/test.c
-	go test ./${PEER}
+	#go test ./${PEER}
 
 # Ring
 ${RING_SRC}: ${RING}/ring.pb.go
@@ -43,7 +43,7 @@ ${RING}/ring.pb.go: ${RING}/ring.proto
 		--go_out=plugins=grpc:dht \
 		dht/ring.proto
 ${RING_TEST}: ${RING_SRC}
-	go test ./${RING}
+	#go test ./${RING}
 
 c_interface/c_interface.go: mkbin ${PEER_SRC}
 	cd c_interface
