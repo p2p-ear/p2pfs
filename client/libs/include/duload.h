@@ -59,3 +59,5 @@ int LastSlash(const std::string& path);
 int RemoveFile(const std::string& filename);
 
 
+//delete
+int Delete(std::string ip, std::string filename, unsigned long ringsz, std::string JWT, unsigned long nshards);
