@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     manager = new QNetworkAccessManager; 
     //connect(this, SIGNAL(finished(int)), this, SLOT(Logout));
     ui->setupUi(this);
+    ui->tabWidget->setTabText(0, "Upload");
+    ui->tabWidget->setTabText(1, "Download");
+    ui->tabWidget->setTabText(2, "Account");
     ui->actionUsername_some_thing->setDisabled(true);
     ui->actionLogout->setDisabled(true);
     ui->actionChange_User->setDisabled(true);
@@ -43,7 +46,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnBack2->setDisabled(true);
     ui->btnForward2->setDisabled(true);
     ui->btnPath->setDisabled(true);
-    ui->btnUpload2->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -187,16 +189,18 @@ void MainWindow::on_btnUpload_clicked() {
 
     //QMessageBox* load = new QMessageBox();
     //load->show();
-    std::string ip = "198.172.0.1:9000";
-    unsigned long ringsz = 1000;
 
     QJsonArray arr;
     for (int i = 0; i < ui->tableWidget_2->rowCount(); i++) {
         QString fullpath = ui->tableWidget_2->item(i, 0)->text();
         QString fname = fullpath.split('/').last();
         QString pathToLoad = ui->lineMyDisk->text();
-        AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong());
-        //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+        if(AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong())) {
+            UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), (pathToLoad+"/"+fname).toStdString(), "", 0, &v, 1600, 1, ip.toStdString(), ring_sz_up, certificate_token.toStdString());
+            QMessageBox::information(this, "done", "done");
+        } else {
+            QMessageBox::information(this, "no", "no");
+        }
     }
     //arr -- array of jsons, pathToLoad -- path on MyDisk
 
@@ -474,8 +478,11 @@ QNetworkReply* MainWindow::MakeReqRequest(QJsonObject &body, int type) {
     QEventLoop loop;
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
-    Process(reply);
-    return reply;
+    if (Process(reply)) {
+        return reply;
+    } else {
+        return nullptr;
+    }
 }
 
 void MainWindow::on_btnGetCoins_clicked() {
@@ -529,6 +536,25 @@ int MainWindow::processingDelDir(QJsonObject repBody, int status) {
 }
 
 int MainWindow::processingAddFile(QJsonObject repBody, int status) {
+    if (status == 0) {
+        certificate_token = repBody["certificate_token"].toString();
+        ip = repBody["ip"].toString();
+        ring_sz_up = repBody["ring_size"].toInt();
+        QMessageBox::information(this, "yeah", "");
+        qDebug() << certificate_token << ip << ring_sz_up;
+    }
+    return 1;
+}
+
+int MainWindow::processingDownloadFile(QJsonObject repBody, int status) {
+    if (status == 0) {
+        download_certificate_token = repBody["certificate_token"].toString();
+        download_ip = repBody["ip"].toString();
+        ring_sz_down = repBody["ring_size"].toInt();
+        numshards = repBody["num_shards"].toInt();
+        QMessageBox::information(this, "yeah", "");
+        qDebug() << download_certificate_token << download_ip << ring_sz_down << numshards;
+    }
     return 1;
 }
 
@@ -576,7 +602,27 @@ int MainWindow::AddFileRequest(const QString &path, const QString &filename, boo
         jBody.insert("IsDir", isDir);
         jBody.insert("Size", (int)size);
         auto reply = MakeReqRequest(jBody, 5);
-        return 1;
+        if (reply != nullptr) {
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
+        return 0;
+    }
+}
+
+int MainWindow::DowloadFileRequet(const QString &filename) {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("name", filename);
+        auto reply = MakeReqRequest(jBody, 6);
+        if (reply != nullptr) {
+            return 1;
+        } else {
+            return 0;
+        }
     } else {
         QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
         return 0;
@@ -667,7 +713,7 @@ void MainWindow::on_btnPath2_clicked() {
     ui->lineMyDisk_6->setText(selectedPath);
 }
 
-void MainWindow::Process(QNetworkReply *reply) {
+int MainWindow::Process(QNetworkReply *reply) {
     QString responce;
     //ui->textBrowser->clear();
     // Обработка ошибок
@@ -695,10 +741,16 @@ void MainWindow::Process(QNetworkReply *reply) {
     QJsonObject rep = doc.object();
     if (rep["status"].toInt() != 0) {//add int value for error processing
         QMessageBox::warning(this, "Error", rep["message"].toString());
+        reply->close();
+        reply->deleteLater();
+        return 0;
     } else if (rep["email"] != Login) { //add logout!!!!!!!!!!!
         qDebug() << Login;
         qDebug() << rep["email"];
         QMessageBox::warning(this, "Authoriztion", "Authorization failed");
+        reply->close();
+        reply->deleteLater();
+        return 0;
     } else {
         switch (rep["type"].toInt()) {
             case 0:
@@ -719,11 +771,48 @@ void MainWindow::Process(QNetworkReply *reply) {
             case 5:
                 processingAddFile(rep["body"].toObject(), rep["status"].toInt());
                 break;
+            case 6:
+                processingDownloadFile(rep["body"].toObject(), rep["status"].toInt());
+            break;
         }
+        reply->close();
+        reply->deleteLater();
+        return 1;
     }
 
     //ui->textBrowser->setText(responce);
     // Delete garbage && Exit
-    reply->close();
-    reply->deleteLater();
+
+}
+
+void MainWindow::on_btnUpload2_clicked() {
+    if (fs::exists(ui->lineMyDisk_6->text().toStdString()) && fs::is_directory(ui->lineMyDisk_6->text().toStdString())) {
+        struct visFuncs v;
+        v.End1 = vis2;
+        v.End2 = vis2;
+        v.Next = vis3;
+        v.Begin1 = vis2;
+        v.Begin2 = vis2;
+        v.SetField = vis1;
+
+        QJsonArray arr;
+        for (int i = 0; i < ui->tableWidget_4->rowCount(); i++) {
+            QString fullpath = ui->tableWidget_4->item(i, 0)->text();
+            if(DowloadFileRequet(fullpath)) {
+                download(fullpath.toStdString(), ui->lineMyDisk_6->text().toStdString(), &v, 1, download_ip.toStdString(), ring_sz_down, download_certificate_token.toStdString(), numshards, "", 1600*4096);
+                QMessageBox::information(this, "done", "done");
+            } else {
+                QMessageBox::information(this, "no", "no");
+            }
+        }
+        //arr -- array of jsons, pathToLoad -- path on MyDisk
+
+
+        //load->close();
+        //delete load;
+        downloadset.clear();
+        ui->tableWidget_4->setRowCount(0);
+    } else {
+        QMessageBox::warning(this, "Error", "No such directory");
+    }
 }

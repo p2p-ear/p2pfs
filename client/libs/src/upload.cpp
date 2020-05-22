@@ -1,30 +1,6 @@
 #include "../include/duload.h"
 
 
-//powing
-int pow(int bas, int value) {
-    int res = 1;
-    for (int i = 0; i < value; i++) {
-        res *= bas;
-    }
-    return res;
-}
-
-
-//getting name by number of chunk
-std::string getName(const std::string& name, int pos, int nSym) {
-    std::string suff("_");
-    int n = pow(23, nSym-1);
-    for (int i = 0; i < nSym; i++) {
-        //std::cout << "sym no" << i << " :"<<pos/n<<"\n";
-        suff+=('a'+pos / n);
-        pos %= n;
-        n /= 23;
-    }
-    return name+suff;
-}
-
-
 //getting num of chunks by size of file
 int getNumPieces(unsigned long long size, int mode) {
     int res = size % mode;
@@ -33,7 +9,7 @@ int getNumPieces(unsigned long long size, int mode) {
 
 
 //deviding into chunks
-int shardFile(const std::string &filename, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz) {
+int shardFile(const std::string &filename, std::string Name, visFuncs* vis, unsigned long long shardLength, std::string ip, unsigned long ringsz, std::string JWT) {
     vis->SetField();
     int show = 0, current = 0;
 
@@ -42,6 +18,8 @@ int shardFile(const std::string &filename, visFuncs* vis, unsigned long long sha
     int mode = 0x0777;
     int fdin, fdout;
     unsigned long long shardSize = shardLength*PG_SIZE;
+
+    XORcypher encoder(shardSize);
 
 
     //opening the file
@@ -74,13 +52,24 @@ int shardFile(const std::string &filename, visFuncs* vis, unsigned long long sha
     //printf("3\n");
 
     GoString IP = {ip.c_str(), ip.length()};
+    GoString wJWT = {JWT.c_str(), JWT.length()};
+
+    GoSlice code = {
+        data : (char*)encoder.get_secret(),
+        len : shardSize,
+        cap : shardSize
+    };
+    GoString codename = {(Name+"_KEY").c_str(), (Name+"_KEY").length()};
+
+    //sending code
+    UploadFileRSC(IP, codename, ringsz, code, wJWT);
 
     
     for (int i = 0; i < num; i++) {
         unsigned long long curr_size = statbuf.st_size - curr_pt < shardSize ? statbuf.st_size - curr_pt : shardSize;
         
         //printf("4\n");
-        std::string shardName = getName(name, i, nSym);
+        std::string shardName = getName(Name, i, nSym);
         //printf("5\n");
 
         GoString fname = {shardName.c_str(), shardName.length()};
@@ -96,13 +85,15 @@ int shardFile(const std::string &filename, visFuncs* vis, unsigned long long sha
         }
         //printf("9\n");
 
+        encoder(src);
+
         GoSlice fcontent_clice = {
             data: src,
             len: curr_size,
             cap: curr_size
         };
 
-        UploadFile(IP, fname, ringsz, fcontent_clice);
+        UploadFileRSC(IP, fname, ringsz, fcontent_clice, wJWT);
 
         munmap(src, curr_size);
 
@@ -197,7 +188,7 @@ void RollDir(const std::string&) {
     return;
 }
 
-int UploadFile(const std::string& filename, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz) { //zero if fail, else 1
+int UploadFile(const std::string& filename, std::string name, const std::string& suff, bool remove, visFuncs* vis, unsigned long long shardLength, int method, std::string ip, unsigned long ringsz, std::string JWT) { //zero if fail, else 1
     bool isDir = false;
     vis->Begin2(filename);
     fs::path file(filename);
@@ -219,7 +210,7 @@ int UploadFile(const std::string& filename, const std::string& suff, bool remove
     vis->End2(filename);
 
     //chunking
-    int result = shardFile(ZipedFile, vis, shardLength, ip, ringsz);
+    int result = shardFile(ZipedFile, name, vis, shardLength, ip, ringsz, JWT);
     //std::cout << ZipedFile << "\n";
 
     //removing temp files

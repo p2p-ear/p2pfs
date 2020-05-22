@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -257,10 +257,16 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>45</width>
+                 <height>45</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>31</width>
-                 <height>25</height>
+                 <width>45</width>
+                 <height>45</height>
                 </size>
                </property>
                <property name="text">
@@ -270,10 +276,16 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnUpload">
+               <property name="minimumSize">
+                <size>
+                 <width>110</width>
+                 <height>45</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>80</width>
-                 <height>25</height>
+                 <width>110</width>
+                 <height>45</height>
                 </size>
                </property>
                <property name="text">
@@ -543,10 +555,16 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>45</width>
+                 <height>45</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>31</width>
-                 <height>25</height>
+                 <width>45</width>
+                 <height>45</height>
                 </size>
                </property>
                <property name="text">
@@ -556,14 +574,20 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnUpload2">
+               <property name="minimumSize">
+                <size>
+                 <width>110</width>
+                 <height>45</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>80</width>
-                 <height>25</height>
+                 <width>110</width>
+                 <height>45</height>
                 </size>
                </property>
                <property name="text">
-                <string>upload</string>
+                <string>Download</string>
                </property>
               </widget>
              </item>

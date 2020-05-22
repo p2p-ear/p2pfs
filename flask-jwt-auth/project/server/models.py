@@ -91,10 +91,16 @@ class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     file_name = db.Column(db.Text, nullable=False)
+    file_size = db.Column(db.BigInteger, nullable=False)
+    total_shards = db.Column(db.BigInteger, nullable=False)
+    initial_ip = db.Column(db.BigInteger, nullable=False)
 
-    def __init__(self, user_id, file_name):
+    def __init__(self, user_id, file_name, file_size, n_shards, initial_ip):
         self.user_id = user_id
         self.file_name = file_name
+        self.file_size = file_size
+        self.total_shards = n_shards
+        self.initial_ip = initial_ip
 
 
     def __repr__(self):
@@ -152,8 +158,8 @@ class Сertificate(db.Model):
     token = db.Column(db.String(500), unique=True, nullable=False)
     shards = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, user_id, mini_shard_size, shards):
-        self.token = self.encode_certificate_token(user_id, mini_shard_size)
+    def __init__(self, user_id, mini_shard_size, shards, act, file_name):
+        self.token = self.encode_certificate_token(user_id, mini_shard_size, act, file_name).decode()
         self.shards = shards
 
 
@@ -161,7 +167,7 @@ class Сertificate(db.Model):
         return '<id: token: {}'.format(self.token)
 
     @staticmethod
-    def encode_certificate_token(user_id, mini_shard_size):
+    def encode_certificate_token(user_id, mini_shard_size, act, file_name):
         """
         Generates the certificate Token
         :return: string
@@ -171,7 +177,9 @@ class Сertificate(db.Model):
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, seconds=0),
                 'iat': datetime.datetime.utcnow(),
                 'sub': user_id,
-                'size': mini_shard_size
+                'size': mini_shard_size,
+                'act': act,
+                'name': file_name
             }
             return jwt.encode(
                 payload,
@@ -194,7 +202,7 @@ class Сertificate(db.Model):
             if is_blacklisted_token:
                 return 'Token blacklisted. Please request again.'
             else:
-                return payload['sub']
+                return payload['act']#payload['sub']
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please request again.'
         except jwt.InvalidTokenError:

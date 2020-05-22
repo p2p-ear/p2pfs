@@ -1,10 +1,12 @@
 package peer
 
 import (
-	"flag"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -27,6 +29,14 @@ const (
 	WRITACT = 1
 	DELEACT = 2
 )
+
+type FileValidationResponse struct {
+	//Validation status: 0=valid, 1=invalid
+	Valid bool `json:"status"`
+
+	//Validation message
+	Message string `json:message`
+}
 
 func getBaseName(fname string) (string, error) {
 	pattern, err := regexp.Compile("((_[[:lower:]])?(_rep[[:digit:]]+))?$")
@@ -59,22 +69,27 @@ func decodeCertificate(tokenString string) (int64, string, int8, error) {
 }
 
 func validateCertificate(tokenString string) error {
-	if flag.Lookup("test.v") != nil {
-		return nil
-	} else {
-		// TODO: validate certificate
-		return nil
+
+	responseRaw, err := http.Post("http://172.104.136.183/auth/node/action", "text/plain", strings.NewReader(tokenString))
+	if err != nil {
+		return err
 	}
+
+	responseParsed := FileValidationResponse{}
+	jsonDec := json.NewDecoder(responseRaw.Body)
+	jsonDec.Decode(&responseParsed)
+
+	if !responseParsed.Valid {
+		return fmt.Errorf("Certificate invalidated by server, msg=%s", responseParsed.Message)
+	}
+
+	return nil
 }
 
 func ValidateFile(shardname string, tokenString string, action int8) error {
 
 	basename, err := getBaseName(shardname)
 	if err != nil {
-		return err
-	}
-
-	if err := validateCertificate(tokenString); err != nil {
 		return err
 	}
 
@@ -102,8 +117,12 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 	}
 
 	fsize := fi.Size()
-	if fsize != fsize_cert {
+	if fsize > fsize_cert {
 		return fmt.Errorf("Certificate file size doesn't match: %d != %d", fsize_cert, fsize)
+	}
+
+	if err := validateCertificate(tokenString); err != nil {
+		return err
 	}
 
 	return nil

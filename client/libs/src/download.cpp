@@ -1,10 +1,19 @@
 #include "../include/duload.h"
 
-int download(const std::string& filename, const std::string& path, visFuncs* vis, int method) {
+void GetNames(const std::string& filename, std::vector<std::string>& shards, unsigned long nshards) {
+    int nSym = ceil(log(nshards)/log(23));
+
+    for (unsigned long i = 0; i < nshards; i++) {
+        shards.push_back(getName(filename, i, nSym));
+    }
+}
+
+int download(const std::string& filename, const std::string& path, visFuncs* vis, int method, std::string ip, unsigned long ringsz, std::string JWT, unsigned long nshards, std::string suff, unsigned long size) {
     std::vector<std::string> shards;
+    GetNames(filename, shards, nshards);
     std::string zipname = path + "/download_crowd";
     vis->Begin1(filename);
-    int res = Merge(shards, zipname, path, vis);
+    int res = Merge(shards, zipname, path, vis, ip, ringsz, JWT, suff, size);
     vis->End1(filename);
     if (res > 0) {
         zipname += ".tar.gz";
@@ -19,7 +28,7 @@ int download(const std::string& filename, const std::string& path, visFuncs* vis
 }
 
 //merging chunks into file
-int Merge(std::vector<std::string>& shards, const std::string& filename, const std::string& path, visFuncs* vis) {
+int Merge(std::vector<std::string>& shards, const std::string& filename, const std::string& path, visFuncs* vis, std::string ip, unsigned long ringsz, std::string JWT, std::string suff, unsigned long size) {
     off_t curr_pt = 0;
     int current = 0, show = 0;
     int mode = 0666;
@@ -27,32 +36,41 @@ int Merge(std::vector<std::string>& shards, const std::string& filename, const s
     int fdout;
     vis->SetField();
 
+    GoSlice buff = {
+        //Allocate at least 9 more bytes than nescessary
+        data: (GoInt8*) malloc(size*sizeof(GoInt8)),
+        len: size,
+        cap: size
+    };
+
+    GoString rJWT = {JWT.c_str(), JWT.length()};
+    GoString IP = {ip.c_str(), ip.length()};
+
+
+    GoString codename = {(filename+"_KEY").c_str(), (filename+"_KEY").length()};
+
+    //getting code
+    DownloadFileRSC(IP, codename, ringsz, buff, rJWT);
+    XORcypher decoder(size, (char*)buff.data);
+
     //opening result file
     if ((fdout = open64 ((filename+".tar.gz").c_str(), O_RDWR | O_CREAT | O_TRUNC, mode )) < 0) {
             printf ("can't create %s for writing", filename.c_str());
             return 0;
         }
     for (int i = 0; i < shards.size(); i++) {
-        struct stat statbuf;
         int fdin;
-        //opening chunk file
-        if ((fdin = open64 (shards[i].c_str(), O_RDONLY)) < 0) {
-            printf("can't open %s for reading", shards[i].c_str());
-            return 0;
-        }
-        //finding out size of chunk file
-        if (fstat (fdin, &statbuf) < 0) {
-            printf ("fstat error");
-            return 0;
-        }
-        char *src, *dst;
+        
+        GoString fname = {(suff+shards[i]).c_str(), (suff+shards[i]).length()};
+        
+
+        char *dst;
         //mmapping chunk
-        if ((src = (char*)mmap64 (0, statbuf.st_size, PROT_READ, MAP_SHARED, fdin, 0)) == (caddr_t) -1) {
-            printf ("mmap error for input");
-            return 0;
-        }
+
+        GoInt remainingSpace = DownloadFileRSC(IP, fname, ringsz, buff, rJWT);
+
         //making offset in result file
-        if (lseek (fdout, curr_pt + statbuf.st_size - 1, SEEK_SET) == -1) {
+        if (lseek (fdout, curr_pt + (size-remainingSpace) - 1, SEEK_SET) == -1) {
             printf ("lseek error");
             return 0;
         }
@@ -61,21 +79,24 @@ int Merge(std::vector<std::string>& shards, const std::string& filename, const s
             return 0;
         }
         //mmapping result file
-        if ((dst = (char*)mmap64 (0, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, curr_pt)) == (caddr_t) -1) {
+        if ((dst = (char*)mmap64 (0, (size-remainingSpace), PROT_READ | PROT_WRITE, MAP_SHARED, fdout, curr_pt)) == (caddr_t) -1) {
             printf ("mmap error for output");
             return 0;
         }
-        memcpy (dst, src, statbuf.st_size);
-        munmap(src, statbuf.st_size);
-        munmap(dst, statbuf.st_size);
-        curr_pt += statbuf.st_size;
-        close(fdin);
+
+        decoder((char*)buff.data);
+
+        memcpy (dst, buff.data, (size-remainingSpace));
+        munmap(dst, (size-remainingSpace));
+        curr_pt += (size-remainingSpace);
 
         current = (1.*i/shards.size()*100);
         vis->Next(show, current);
         show = current;
 
     }
+
+    //decode
     close(fdout);
     return 1;
 }
