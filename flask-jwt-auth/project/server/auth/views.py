@@ -10,9 +10,10 @@ import json
 from functools import reduce  # forward compatibility for Python 3
 import operator
 from werkzeug.exceptions import BadRequest
-from ipaddress import ip_address as IPA
+#from ipaddress import ip_address as IPA
 import math
 from  sqlalchemy.sql.expression import func
+import secrets
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -203,7 +204,7 @@ class RequestAPI(MethodView):
     num_pages = 1600
     shard_size = num_pages * page_size
     num_mini_shards = 8
-    mini_shard_size = shard_size / num_mini_shards
+    mini_shard_size = shard_size // num_mini_shards
 
 
     def get_body(self):
@@ -294,7 +295,7 @@ class RequestAPI(MethodView):
             if certificate and new_file:
                 responseObject['body'] = {
                     'certificate_token': certificate.token,
-                    'ip': str(IPA(random_ip.ip_address)),
+                    'ip': random_ip.ip_address,#str(IPA(random_ip.ip_address)),
                     'ring_size': ring_size
                 }
                 db.session.add(certificate)
@@ -442,7 +443,7 @@ class RequestAPI(MethodView):
                         if certificate:
                             responseObject['body'] = {
                                 'certificate_token': certificate.token,
-                                'ip': str(IPA(exist_file.initial_ip)),
+                                'ip': exist_file.initial_ip,#str(IPA(exist_file.initial_ip)),
                                 'ring_size': ring_size,
                                 'num_shards': math.ceil(exist_file.total_shards / self.num_mini_shards)
                             }
@@ -531,10 +532,12 @@ class AddNodeAPI(MethodView):
                 raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
             
             # Get node
-            ip_address_int = int(IPA(post_data.get('ip_address')))
-            node = Node.query.filter_by(ip_address=ip_address_int).first()
+            #ip_address_int = int(IPA(post_data.get('ip_address').replace(':', '/')))
+            #node = Node.query.filter_by(ip_address=ip_address_int).first()
+            node = Node.query.filter_by(ip_address=post_data.get('ip_address')).first()
             if not node: # if node doesn't exist
-                new_node = Node(ip_address_int)
+                secret_key = secrets.token_hex(30)
+                new_node = Node(post_data.get('ip_address'), secret_key)
                 
                 if new_node:
                     db.session.add(new_node)
@@ -542,7 +545,8 @@ class AddNodeAPI(MethodView):
 
                     responseObject = {
                         'status': 0,
-                        'message': 'Successfully added node!',
+                        'secret_key': secret_key,
+                        'message': 'Successfully added node!'
                     }
                     return make_response(jsonify(responseObject)), 200
                 else:
@@ -557,7 +561,7 @@ class AddNodeAPI(MethodView):
             if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
                 return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
             else:
-                return make_response(jsonify({'status': 1, 'message': 'Wrong IP format!'})), 400 
+                return make_response(jsonify({'status': 1, 'message': responseObject})), 400 
 
         except Exception as e:
             return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
@@ -582,9 +586,9 @@ class DeleteNodeAPI(MethodView):
                 raise ValueError({'status': 1, 'message': 'Too many arguments!'}, 400)
             
             # Get node
-            ip_address_int = int(IPA(delete_data.get('ip_address')))
-            print(ip_address_int)
-            node = Node.query.filter_by(ip_address=ip_address_int).first()
+            #ip_address_int = int(IPA(delete_data.get('ip_address').replace(':', '/')))
+            #print(ip_address_int)
+            node = Node.query.filter_by(ip_address=delete_data.get('ip_address')).first()
             if not node: # if node doesn't exist
                 raise ValueError({'status': 1, 'message': 'Node doesn\'t exist!'}, 400)
             else:
@@ -601,7 +605,77 @@ class DeleteNodeAPI(MethodView):
             if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
                 return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
             else:
-                return make_response(jsonify({'status': 1, 'message': 'Wrong IP format!'})), 400 
+                return make_response(jsonify({'status': 1, 'message': responseObject})), 400 
+
+        except Exception as e:
+            return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
+
+        except BadRequest:
+            return make_response(jsonify({'status': 1, 'message': 'Request should be JSON type!'})), 400
+
+        
+class FileRebuildAPI(MethodView):
+    """
+    File Rebuild Resource
+    """
+
+    page_size = 4096
+    num_pages = 1600
+    shard_size = num_pages * page_size
+    num_mini_shards = 8
+    mini_shard_size = shard_size // num_mini_shards
+
+    def delete(self):
+        try:
+            # get the delete data
+            delete_data = request.get_json()
+
+            if not delete_data: # Request isn't JSON type
+                raise BadRequest
+        
+            if not delete_data.get('ip_address'):
+                raise ValueError({'status': 1, 'message': 'You must specify IP address!'}, 400)
+            if not delete_data.get('user_id'):
+                raise ValueError({'status': 1, 'message': 'You must specify User Id!'}, 400)
+            if not delete_data.get('secret_key'):
+                raise ValueError({'status': 1, 'message': 'You must specify secret key!'}, 400)
+            
+            # Get node
+            #ip_address_int = int(IPA(delete_data.get('ip_address').replace(':', '/')))
+            #print(ip_address_int)
+            node = Node.query.filter_by(ip_address=delete_data.get('ip_address')).first()
+            if not node: # if node doesn't exist
+                raise ValueError({'status': 1, 'message': 'Node doesn\'t exist!'}, 400)
+            else:
+                if (node.secret != delete_data.get('secret_key')):
+                    raise ValueError({'status': 1, 'message': 'Permission denied!'}, 403)
+                files = File.query.filter_by(user_id=delete_data.get('user_id'))
+                upload = []
+                download = []
+                for File in files:
+                    certificate_upload = Сertificate(user_id=delete_data.get('user_id'), mini_shard_size=self.mini_shard_size, shards=File.total_shards, act=1, file_name=File.file_name)
+                    certificate_download = Сertificate(user_id=delete_data.get('user_id'), mini_shard_size=self.mini_shard_size, shards=File.total_shards, act=0, file_name=File.file_name)
+                    db.session.add(certificate_upload)
+                    db.session.add(certificate_download)
+                    upload.append(certificate_upload.token)
+                    download.append(certificate_download)
+
+                db.session.delete(node)
+                db.session.commit()
+
+                responseObject = {
+                    'status': 0,
+                    'upload': upload,
+                    'download': download,
+                    'message': 'Successfully deleted node!'
+                }
+                return make_response(jsonify(responseObject)), 200
+        
+        except ValueError as responseObject:
+            if (len(responseObject.args) == 2) and (isinstance(responseObject.args[1], int)):
+                return make_response(jsonify(responseObject.args[0])), responseObject.args[1]
+            else:
+                return make_response(jsonify({'status': 1, 'message': responseObject})), 400 
 
         except Exception as e:
             return make_response(jsonify({'status': 1, 'message': 'Some error occurred. Please try again.'})), 401
@@ -619,6 +693,7 @@ request_view = RequestAPI.as_view('request_api')
 action_view = NodeActionAPI.as_view('action_api')
 add_node_view = AddNodeAPI.as_view('add_node_api')
 delete_node_view = DeleteNodeAPI.as_view('delete_node_api')
+rebuild_view = FileRebuildAPI.as_view('rebuild_node_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -659,5 +734,10 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/node/delete',
     view_func=delete_node_view,
+    methods=['DELETE']
+)
+auth_blueprint.add_url_rule(
+    '/auth/node/rebuild',
+    view_func=rebuild_view,
     methods=['DELETE']
 )

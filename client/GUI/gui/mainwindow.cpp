@@ -44,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     //non-func buttons
     ui->btnBack2->setDisabled(true);
-    ui->btnForward2->setDisabled(true);
     ui->btnPath->setDisabled(true);
 }
 
@@ -532,6 +531,13 @@ int MainWindow::processingAddDir(QJsonObject repBody, int status) {
 }
 
 int MainWindow::processingDelDir(QJsonObject repBody, int status) {
+    if (status == 0) {
+        delete_certificate_token = repBody["certificate_token"].toString();
+        delete_ip = repBody["ip"].toString();
+        ring_sz_del = repBody["ring_size"].toInt();
+        QMessageBox::information(this, "yeah", "");
+        qDebug() << certificate_token << ip << ring_sz_up;
+    }
     return 1;
 }
 
@@ -592,6 +598,22 @@ int MainWindow::AddDirRequest(const QString &path, const QString &dirname) {
         return 0;
     }
 
+}
+
+int MainWindow::DelDirRequest(const QString &filename) {
+    if (is_authorised) {
+        QJsonObject jBody;
+        jBody.insert("path", filename);
+        auto reply = MakeReqRequest(jBody, 1);
+        if (reply != nullptr) {
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        QMessageBox::warning(this, "Authentification failed!", "You are now authorized");
+        return 0;
+    }
 }
 
 int MainWindow::AddFileRequest(const QString &path, const QString &filename, bool isDir, unsigned long long size) {
@@ -814,5 +836,24 @@ void MainWindow::on_btnUpload2_clicked() {
         ui->tableWidget_4->setRowCount(0);
     } else {
         QMessageBox::warning(this, "Error", "No such directory");
+    }
+}
+
+void MainWindow::on_btnForward2_clicked() {//delete
+    QString currPath = ui->linePath_2->text();
+    bool bOk;
+    QString toDel = QInputDialog::getText( 0,
+                                         "Make dir",
+                                         "Dirname:",
+                                         QLineEdit::Normal,
+                                         "NewDir",
+                                         &bOk
+                                        );
+    if (!bOk) {
+        return;
+    }
+    QString name = currPath+"/"+toDel;
+    if (DelDirRequest(name)) {
+        Delete(delete_ip.toStdString(), name.toStdString(), ring_sz_del, delete_certificate_token.toStdString(), numshards_del);
     }
 }

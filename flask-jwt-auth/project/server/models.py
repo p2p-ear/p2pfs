@@ -112,10 +112,12 @@ class Node(db.Model):
     __tablename__ = "nodes"
 
     id = db.Column(db.Integer, primary_key=True)
-    ip_address = db.Column(db.BigInteger, nullable=False)
+    ip_address = db.Column(db.String(255), nullable=False)#db.Column(db.BigInteger, nullable=False)
+    secret_key = db.Column(db.String(255), nullable=False)
 
-    def __init__(self, ip_address):
+    def __init__(self, ip_address, secret_key):
         self.ip_address = ip_address
+        self.secret_key = secret_key
     
     def __repr__(self):
         return "File('{}')".format(self.ip_address)
