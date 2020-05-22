@@ -1,10 +1,11 @@
 package dht
 
 import (
+	"container/list"
 	"encoding/json"
 	"math"
-	"container/list"
 	"time"
+
 	"google.golang.org/grpc"
 )
 
@@ -16,7 +17,7 @@ import (
 ////////
 
 // Theese constants specify system requirements
-const FAIL_PROB = 0.1 // probability that one node will fail in time delta T
+const FAIL_PROB = 0.1             // probability that one node will fail in time delta T
 const TOLERABLE_FAIL_PROB = 0.001 // tolerable probability of failure (epsilon)
 
 ////////
@@ -38,14 +39,14 @@ type neighbour struct {
 
 // RingNode is a Chord node
 type RingNode struct {
-	maxNodes    uint64
+	maxNodes uint64
 
 	// Ring information
 	self        finger
 	predecessor finger
 
-	fingerTable []finger
-	succList    *list.List
+	fingerTable  []finger
+	succList     *list.List
 	succListSize uint64
 
 	// Keys information
@@ -55,8 +56,8 @@ type RingNode struct {
 	NewFilesChannel chan string
 
 	// Fix routine information
-	stopSignal  chan struct{}
-	deltaT      time.Duration
+	stopSignal chan struct{}
+	deltaT     time.Duration
 }
 
 // NewRingNode is a RingNode constructor. After constructing an object make sure to enable a gRPC server.
@@ -65,22 +66,22 @@ func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode 
 	id := Hash([]byte(ownIP), maxNodes)
 
 	fingSize := uint64(math.RoundToEven(math.Log2(float64(maxNodes))))
-	succListSize := uint64(math.Log(TOLERABLE_FAIL_PROB) / math.Log(FAIL_PROB)) - 1 // this -1 apears since first successor is in the fingertable, it's convinient
+	succListSize := uint64(math.Log(TOLERABLE_FAIL_PROB)/math.Log(FAIL_PROB)) - 1 // this -1 apears since first successor is in the fingertable, it's convinient
 
 	const keysStartSize = 0
 
 	n := RingNode{
-		self:        finger{IP: ownIP, ID: id, start: id},
-		predecessor: finger{},
-		maxNodes:    maxNodes,
-		fingerTable: make([]finger, fingSize),
-		succList:    list.New(), // at first it's empty
-		succListSize: succListSize,
-		stopSignal: make(chan struct{}),
-		deltaT: deltaT,
-		keys: make([]string, keysStartSize),
-		succKeys: make([]string, keysStartSize),
-		keysStartSize: keysStartSize,
+		self:            finger{IP: ownIP, ID: id, start: id},
+		predecessor:     finger{},
+		maxNodes:        maxNodes,
+		fingerTable:     make([]finger, fingSize),
+		succList:        list.New(), // at first it's empty
+		succListSize:    succListSize,
+		stopSignal:      make(chan struct{}),
+		deltaT:          deltaT,
+		keys:            make([]string, keysStartSize),
+		succKeys:        make([]string, keysStartSize),
+		keysStartSize:   keysStartSize,
 		NewFilesChannel: make(chan string, 100),
 	}
 
@@ -88,7 +89,7 @@ func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode 
 }
 
 // Connect service to the gRPC server and start fix routine
-func (n *RingNode) Start(grpcServer *grpc.Server) (){
+func (n *RingNode) Start(grpcServer *grpc.Server) {
 
 	RegisterRingServiceServer(grpcServer, n)
 
@@ -110,8 +111,8 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 	}
 
 	type PublicNeighbour struct {
-		Node     PublicFinger
-		Keys     []string
+		Node PublicFinger
+		Keys []string
 	}
 
 	type PublicRingNode struct {
@@ -150,8 +151,8 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 		p.Keys[i] = k
 	}
 
-	neighbIdx:=0
-	for el := n.succList.Front(); el !=nil; el = el.Next() {
+	neighbIdx := 0
+	for el := n.succList.Front(); el != nil; el = el.Next() {
 		p.SuccList[neighbIdx].Node = PublicFinger{ID: el.Value.(neighbour).node.ID, IP: el.Value.(neighbour).node.IP}
 		p.SuccList[neighbIdx].Keys = make([]string, len(el.Value.(neighbour).keys))
 		for i, k := range el.Value.(neighbour).keys {
@@ -161,4 +162,8 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(p)
+}
+
+func (n *RingNode) RingInfo() (string, uint64) {
+	return n.self.IP, n.maxNodes
 }

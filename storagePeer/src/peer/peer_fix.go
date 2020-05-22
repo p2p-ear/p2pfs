@@ -9,17 +9,18 @@ import (
 func (p *Peer) fixRoutine() error {
 	const MAX_FILESIZE = 4096 * 1600 / 8
 	filecont := make([]byte, MAX_FILESIZE)
+	selfIP, ringsz := p.ring.RingInfo()
 
 	for {
 		newFile := <-p.ring.NewFilesChannel
 		readCertificate := "miha.day.sertificat.pochitat"
-		empty, err := DownloadFileRSC(p.ring.self.IP, newFile, p.ring.maxnodes, filecont, certificate)
+		empty, err := DownloadFileRSC(selfIP, newFile, ringsz, filecont, readCertificate)
 		if err != nil {
 			return err
 		}
 
 		writeCertificate := "miha.day.sertificat.popisat"
-		err = UploadFileRSC(p.ring.self.IP, newFile, p.ring.maxnodes, filecont[:MAX_FILESIZE-empty], certificate)
+		err = UploadFileRSC(selfIP, newFile, ringsz, filecont[:MAX_FILESIZE-empty], writeCertificate)
 		if err != nil {
 			return err
 		}
