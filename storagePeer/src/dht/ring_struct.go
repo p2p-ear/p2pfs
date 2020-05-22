@@ -97,6 +97,7 @@ func (n *RingNode) Start(grpcServer *grpc.Server) (){
 // Gracefull shutdown
 func (n *RingNode) Stop() {
 	close(n.stopSignal)
+	n.notifyAboutDeath(n.self.IP)
 }
 
 // MarshalJSON serializes node for printing

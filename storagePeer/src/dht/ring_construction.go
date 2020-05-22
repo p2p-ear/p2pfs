@@ -43,6 +43,7 @@ func (n *RingNode) Join(existingIP string) {
 
 	// Launch fix routine
 	go n.fixRoutine(n.deltaT)
+	// Notify server about yourself
 }
 
 ///// Say hello to your closest friends

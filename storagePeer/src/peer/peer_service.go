@@ -59,6 +59,9 @@ func (p *Peer) start(listeningIP string) {
 		p.Errs <- grpcServer.Serve(lis)
 		close(p.Errs)
 	}()
+
+	// Start a fix routine
+	go p.fixRoutine()
 }
 
 // Connect connects to peer with specified IP

@@ -39,7 +39,7 @@ func startTestServ(node *RingNode) (chan error, net.Listener) {
 // Test base situations
 ///////
 
-func TestOneNode(t *testing.T) {
+func _TestOneNode(t *testing.T) {
 
 	var maxNum uint64 = 1000
 
@@ -272,7 +272,7 @@ func validateMainInfo(nodes []*RingNode, t *testing.T) {
 	}
 }
 
-func TestJoin(t *testing.T) {
+func _TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var start uint64 = 10
@@ -346,7 +346,7 @@ func prepareRing(numNodes uint64, maxNum uint64, deltaT time.Duration, t *testin
 	return nodes, a, b
 }
 
-func TestFailures(t *testing.T) {
+func _TestFailures(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var deltaT time.Duration = time.Second
@@ -493,7 +493,7 @@ func insertKeys(nodes []*RingNode, numKeys int) []string{
 	return keys
 }
 
-func TestKeyInsert(t *testing.T) {
+func _TestKeyInsert(t *testing.T) {
 
 	fmt.Println("Testing key list construction...")
 
@@ -515,7 +515,7 @@ func TestKeyInsert(t *testing.T) {
 	}
 }
 
-func TestKeyNewNode(t *testing.T) {
+func _TestKeyNewNode(t *testing.T) {
 
 	fmt.Println("Check that keys get split with new node...")
 
@@ -549,7 +549,7 @@ func TestKeyNewNode(t *testing.T) {
 	}
 }
 
-func TestNodeDeath(t *testing.T) {
+func _TestNodeDeath(t *testing.T) {
 
 	fmt.Println("Test that dead nodes' keys get distributed...")
 

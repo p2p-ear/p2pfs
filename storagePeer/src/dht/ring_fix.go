@@ -45,6 +45,9 @@ func (n *RingNode) fixSuccessor() {
 
   if err != nil {
 
+    // Notify server
+    n.notifyAboutDeath(oldSucc)
+
     deadKeys := n.succKeys
     // Find the first alive node and give it the ownership of dead nodes keys
     for el := n.succList.Front(); el != nil; el = n.succList.Front() {
