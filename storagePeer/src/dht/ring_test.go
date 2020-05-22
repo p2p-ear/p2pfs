@@ -10,6 +10,7 @@ import (
 	"strconv"
 )
 
+
 func startTestServ(node *RingNode) (chan error, net.Listener) {
 
 	lis, err := net.Listen("tcp", node.self.IP)
@@ -34,7 +35,11 @@ func startTestServ(node *RingNode) (chan error, net.Listener) {
 	return errs, lis
 }
 
-func TestOneNode(t *testing.T) {
+////////
+// Test base situations
+///////
+
+func _TestOneNode(t *testing.T) {
 
 	var maxNum uint64 = 1000
 
@@ -191,6 +196,10 @@ func generateRing(num uint64, maxNum uint64, deltaT time.Duration, random bool) 
 	return nodes
 }
 
+////////
+// Test ring construction
+///////
+
 func validateFingTable(nodes []*RingNode, t *testing.T) bool {
 
 	firstTime := true
@@ -263,8 +272,6 @@ func validateMainInfo(nodes []*RingNode, t *testing.T) {
 	}
 }
 
-///// Joins on different rings
-
 func _TestJoin(t *testing.T) {
 
 	var maxNum uint64 = 123456
@@ -303,7 +310,9 @@ func _TestJoin(t *testing.T) {
 	}
 }
 
-///// Nodes' death
+////////
+// Test node death
+///////
 
 func killNode(nodes []*RingNode, listeners []net.Listener, i int) {
 
@@ -312,7 +321,32 @@ func killNode(nodes []*RingNode, listeners []net.Listener, i int) {
 
 }
 
-func TestFailures(t *testing.T) {
+func prepareRing(numNodes uint64, maxNum uint64, deltaT time.Duration, t *testing.T) (nodes []*RingNode, a [](chan error), b [](net.Listener)) {
+
+	// Start everything
+	nodes = generateRing(numNodes, maxNum, deltaT, false)
+	a = make([](chan error), len(nodes))
+	b = make([](net.Listener), len(nodes))
+
+	for j, el := range nodes {
+		a[j], b[j] = startTestServ(el)
+	}
+
+	// Connect
+	nodes[0].Join("")
+
+	for j:= 1; j < len(nodes); j++ {
+		nodes[j].Join(nodes[j-1].self.IP)
+		time.Sleep(time.Millisecond * 10)
+	}
+
+	validateMainInfo(nodes, t)
+	validateFingTable(nodes, t)
+
+	return nodes, a, b
+}
+
+func _TestFailures(t *testing.T) {
 
 	var maxNum uint64 = 123456
 	var deltaT time.Duration = time.Second
@@ -323,7 +357,7 @@ func TestFailures(t *testing.T) {
 		deleteNum     int
 	}{
 		{10, 2*time.Second, 2}, // Just a delete
-		//{20, 5*time.Second, 3}, // Two in a row
+		{20, 5*time.Second, 3}, // Two in a row
 	}
 
 	fmt.Println("Testing fix routine...")
@@ -331,25 +365,8 @@ func TestFailures(t *testing.T) {
 	for i, tt := range tests {
 		testname := fmt.Sprintf("%d", i)
 		t.Run(testname, func(t *testing.T) {
-			// Start everything
-			nodes := generateRing(tt.numNodes, maxNum, deltaT, false)
-			a := make([](chan error), len(nodes))
-			b := make([](net.Listener), len(nodes))
 
-			for j, el := range nodes {
-				a[j], b[j] = startTestServ(el)
-			}
-
-			// Connect
-			nodes[0].Join("")
-
-			for j:= 1; j < len(nodes); j++ {
-				nodes[j].Join(nodes[j-1].self.IP)
-				time.Sleep(time.Millisecond * 10)
-			}
-
-			validateMainInfo(nodes, t)
-			validateFingTable(nodes, t)
+			nodes, _, b := prepareRing(tt.numNodes, maxNum, deltaT, t)
 
 			// Test
 
@@ -365,5 +382,200 @@ func TestFailures(t *testing.T) {
 				killNode(nodes[:len(nodes)-tt.deleteNum], b, i)
 			}
 		})
+	}
+}
+
+////////
+// Test file lists
+///////
+
+func findNodeIdx(nodes []*RingNode, nodeId uint64) (int){
+	for i, node := range nodes {
+		if node.self.ID == nodeId {
+			return i
+		}
+	}
+	panic("Haven't found node for some reason.")
+}
+
+func findSuccNode(nodes []*RingNode, id uint64) (int) {
+	succID := findNext(nodes, id)
+	return findNodeIdx(nodes, succID)
+}
+
+func findPredNode(nodes []*RingNode, id uint64) (int) {
+	predID := findPrev(nodes, id)
+	return findNodeIdx(nodes, predID)
+}
+
+
+func inSlice(slice []string, key string) (bool){
+
+	ans := false
+	for _, k := range slice {
+		ans = ans || (k == key)
+	}
+	return ans
+}
+
+func checkKeys(keys []string, nodes []*RingNode, t *testing.T) {
+
+	show := false
+
+	for _, key := range keys {
+		succIdx := findSuccNode(nodes, Hash([]byte(key), nodes[0].maxNodes))
+
+		// Test personal key list
+		if !inSlice(nodes[succIdx].keys, key) {
+			t.Errorf("Node %d doesn't have it's key: %s with id %d", nodes[succIdx].self.ID, key, Hash([]byte(key),nodes[0].maxNodes))
+			show = true
+		}
+
+		// Test predecessor if it has it in the succKeys
+		predIdx := findPredNode(nodes, nodes[succIdx].self.ID)
+
+		if !inSlice(nodes[predIdx].succKeys, key) {
+			t.Errorf("Node %d doesn't have it's succesor key: %s", nodes[predIdx].self.ID, key)
+			show = true
+		}
+
+		// Test multiple step predecessor if they have the key in succ list
+		for i := uint64(0); i < nodes[predIdx].succListSize; i++ {
+			predIdx = findPredNode(nodes, nodes[predIdx].self.ID)
+
+			var j uint64 = 0
+
+			for el := nodes[predIdx].succList.Front(); el != nil; el = el.Next() {
+
+				if j == i {
+					neighb := el.Value.(neighbour)
+					if !inSlice(neighb.keys, key) {
+						t.Errorf("Node %d doesn't have %d key: %s", nodes[predIdx].self.ID, nodes[succIdx].self.ID, key)
+						show = true
+					}
+					break
+				}
+				j++
+		}}
+	}
+
+	// If something went wrong - for debug
+	if show {
+		printNodes(nodes)
+	}
+}
+
+func insertKeys(nodes []*RingNode, numKeys int) []string{
+
+	// Generate
+	keys := make([]string, numKeys)
+	for i := 0; i < numKeys; i++ {
+		keys[i] = fmt.Sprintf("key%d",i)
+	}
+
+	//Insert
+	for _, key := range keys {
+		keyHash := Hash([]byte(key), nodes[0].maxNodes)
+
+		placeIP, err := nodes[0].FindSuccessor(keyHash)
+		if err != nil {
+			fmt.Println("Failed while making a call...")
+			panic(err)
+		}
+
+		//fmt.Printf("For key %s %d got succ %d\n", key, keyHash, Hash([]byte(placeIP), nodes[0].maxNodes))
+		nodeIdx := findNodeIdx(nodes, Hash([]byte(placeIP), nodes[0].maxNodes))
+		nodes[nodeIdx].SaveKey(key)
+
+		time.Sleep(time.Millisecond * 1)
+	}
+
+	return keys
+}
+
+func _TestKeyInsert(t *testing.T) {
+
+	fmt.Println("Testing key list construction...")
+
+	// Construct a ring
+
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second * 10
+	var numNodes uint64 = 15
+
+	nodes, _, b := prepareRing(numNodes, maxNum, deltaT, t)
+
+	// Insert some keys
+	keys := insertKeys(nodes, 50)
+	checkKeys(keys, nodes, t)
+
+	// Close everything
+	for i, _ := range nodes[:len(nodes)] {
+		killNode(nodes[:len(nodes)], b, i)
+	}
+}
+
+func _TestKeyNewNode(t *testing.T) {
+
+	fmt.Println("Check that keys get split with new node...")
+
+	// Construct a ring
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second * 10
+	var numNodes uint64 = 15
+
+	nodes, _, b := prepareRing(numNodes, maxNum, deltaT, t)
+	keys := insertKeys(nodes, 100)
+	checkKeys(keys, nodes, t)
+
+	// Insert new one
+	newNode := NewRingNode("localhost:9000", maxNum, deltaT)
+	_, newB := startTestServ(newNode)
+	newNode.Join(nodes[0].self.IP)
+
+	nodes = append(nodes, newNode)
+	b = append(b, newB)
+
+	// Validate
+	validateMainInfo(nodes, t)
+	checkKeys(keys, nodes, t)
+
+	// NewFilesChannel
+	fmt.Printf("One of the files we got was: %s\n", <-newNode.NewFilesChannel)
+
+	// Close everything
+	for i, _ := range nodes[:len(nodes)] {
+		killNode(nodes[:len(nodes)], b, i)
+	}
+}
+
+func _TestNodeDeath(t *testing.T) {
+
+	fmt.Println("Test that dead nodes' keys get distributed...")
+
+	// Construct a ring
+	var maxNum uint64 = 123456
+	var deltaT time.Duration = time.Second*2
+	var numNodes uint64 = 20
+	var deleteNum int = 3
+	var waitTime time.Duration = time.Second*6
+
+	nodes, _, b := prepareRing(numNodes, maxNum, deltaT, t)
+	keys := insertKeys(nodes, 100)
+	checkKeys(keys, nodes, t)
+
+	// Kill some nodes
+	for i := 1; i <= deleteNum; i++ {
+		killNode(nodes, b, len(nodes)-i)
+	}
+
+	// Check
+	time.Sleep(waitTime)
+	validateMainInfo(nodes[:len(nodes)-deleteNum], t)
+	checkKeys(keys, nodes[:len(nodes)-deleteNum], t)
+
+	// Close everything
+	for i, _ := range nodes[:len(nodes)-deleteNum] {
+		killNode(nodes[:len(nodes)-deleteNum], b, i)
 	}
 }

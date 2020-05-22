@@ -39,6 +39,9 @@ message UpdateKeysRequest {
   repeated string keys = 2;
 }
 
+message GetKeysRequest {
+}
+
 // Replies
 message NodeReply {
   string IP = 1;
@@ -47,6 +50,10 @@ message NodeReply {
 
 message UpdateReply {
   bool OK = 1;
+}
+
+message KeyReply {
+  repeated string keys = 1;
 }
 
 // Service description
@@ -70,4 +77,5 @@ service RingService {
   // Everything connected to key transfer
   rpc UpdateKeys(UpdateKeysRequest) returns (UpdateReply) {}
   rpc UpdateKeysInfo(UpdateKeysInfoRequest) returns (UpdateReply) {}
+  rpc GetKeys(GetKeysRequest) returns (KeyReply) {}
 }

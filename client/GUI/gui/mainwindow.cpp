@@ -196,7 +196,7 @@ void MainWindow::on_btnUpload_clicked() {
         QString fname = fullpath.split('/').last();
         QString pathToLoad = ui->lineMyDisk->text();
         if(AddFileRequest(pathToLoad, fname, ui->tableWidget_2->item(i, 1)->text() == "dir" ? true : false, ui->tableWidget_2->item(i, 2)->text().toULongLong())) {
-            //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+            UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), (pathToLoad+"/"+fname).toStdString(), "", 0, &v, 1600, 1, ip.toStdString(), ring_sz_up, certificate_token.toStdString());
             QMessageBox::information(this, "done", "done");
         } else {
             QMessageBox::information(this, "no", "no");
@@ -540,7 +540,8 @@ int MainWindow::processingAddFile(QJsonObject repBody, int status) {
         certificate_token = repBody["certificate_token"].toString();
         ip = repBody["ip"].toString();
         ring_sz_up = repBody["ring_size"].toInt();
-        QMessageBox::information(this, "yeah", certificate_token+"\n"+ip+"\n"+QString::number(ring_sz_up));
+        QMessageBox::information(this, "yeah", "");
+        qDebug() << certificate_token << ip << ring_sz_up;
     }
     return 1;
 }
@@ -550,7 +551,9 @@ int MainWindow::processingDownloadFile(QJsonObject repBody, int status) {
         download_certificate_token = repBody["certificate_token"].toString();
         download_ip = repBody["ip"].toString();
         ring_sz_down = repBody["ring_size"].toInt();
-        QMessageBox::information(this, "yeah", download_certificate_token+"\n"+download_ip+"\n"+QString::number(ring_sz_down));
+        numshards = repBody["num_shards"].toInt();
+        QMessageBox::information(this, "yeah", "");
+        qDebug() << download_certificate_token << download_ip << ring_sz_down << numshards;
     }
     return 1;
 }
@@ -783,12 +786,20 @@ int MainWindow::Process(QNetworkReply *reply) {
 }
 
 void MainWindow::on_btnUpload2_clicked() {
-    if (fs::exists(ui->lineMyDisk_6->text().toStdString())) {
+    if (fs::exists(ui->lineMyDisk_6->text().toStdString()) && fs::is_directory(ui->lineMyDisk_6->text().toStdString())) {
+        struct visFuncs v;
+        v.End1 = vis2;
+        v.End2 = vis2;
+        v.Next = vis3;
+        v.Begin1 = vis2;
+        v.Begin2 = vis2;
+        v.SetField = vis1;
+
         QJsonArray arr;
         for (int i = 0; i < ui->tableWidget_4->rowCount(); i++) {
             QString fullpath = ui->tableWidget_4->item(i, 0)->text();
             if(DowloadFileRequet(fullpath)) {
-                //UploadFile(ui->tableWidget_2->item(i, 0)->text().toStdString(), "", 0, &v, 1600, 1, ip, ringsz);
+                download(fullpath.toStdString(), ui->lineMyDisk_6->text().toStdString(), &v, 1, download_ip.toStdString(), ring_sz_down, download_certificate_token.toStdString(), numshards, "", 1600*4096);
                 QMessageBox::information(this, "done", "done");
             } else {
                 QMessageBox::information(this, "no", "no");

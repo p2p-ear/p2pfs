@@ -43,6 +43,7 @@ func (n *RingNode) Join(existingIP string) {
 
 	// Launch fix routine
 	go n.fixRoutine(n.deltaT)
+	// Notify server about yourself
 }
 
 ///// Say hello to your closest friends
@@ -62,6 +63,13 @@ func (n *RingNode) initClosest(existingIP string) {
 
 	n.fingerTable[0] = succ
 	n.fingerTable[0].start = n.self.ID + 1
+
+	// Now get his keys
+	succKeys, err := n.invokeGetKeys(n.fingerTable[0].IP)
+	if err != nil {
+		panic(err)
+	}
+	n.succKeys = succKeys
 
 	// Update others
 	n.insertYourself(n.predecessor.IP, succ.IP)
@@ -93,7 +101,12 @@ func (n *RingNode) initSuccList() error{
 		return err
 	}
 
-	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}})
+	succKeys, err := n.invokeGetKeys(first.IP)
+	if err != nil {
+		return err
+	}
+
+	n.succList.PushBack(neighbour{node:finger{IP: first.IP, ID: first.ID}, keys:succKeys})
 
 	for i := uint64(1); i < n.succListSize; i++ {
 
@@ -102,7 +115,13 @@ func (n *RingNode) initSuccList() error{
 			return err
 		}
 
-		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}})
+		// You have to store their keys
+		succKeys, err = n.invokeGetKeys(node.IP)
+		if err != nil {
+			return err
+		}
+
+		n.succList.PushBack(neighbour{node:finger{IP: node.IP, ID: node.ID}, keys:succKeys})
 	}
 
 	return nil

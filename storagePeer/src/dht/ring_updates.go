@@ -43,8 +43,8 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 	if isBetween {
 
 		// Separate keys
-		sendKeys := make([]string, int(len(n.keys)/2))
-		leftKeys := make([]string, int(len(n.keys)/2))
+		sendKeys := make([]string, 0)
+		leftKeys := make([]string, 0)
 
 		for _, key := range n.keys {
 			if n.inInterval(n.predecessor.ID, n.self.ID, Hash([]byte(key), n.maxNodes), false, true) {
@@ -62,6 +62,7 @@ func (n *RingNode) UpdatePredecessor(ctx context.Context, in *UpdatePredRequest)
 			panic(err)
 		}
 	}
+
 	return &UpdateReply{OK: (isNotOkay || isBetween)}, nil
 }
 
@@ -146,14 +147,14 @@ func (n *RingNode) invokeUpdateSpecificFinger(invokeIP string, fingIndex int64, 
 
 // Insert node into succlist and make sure that it's <= succListSize
 // Returns true if element was inserted
-func (n *RingNode) insertToSuccList(node finger) bool {
+func (n *RingNode) insertToSuccList(newEl neighbour) bool {
 
 	// Finding our place
 	for neighb := n.succList.Front(); neighb != nil; neighb = neighb.Next() {
 
-		if n.inInterval(n.fingerTable[0].ID, neighb.Value.(neighbour).node.ID, node.ID, false, false) {
+		if n.inInterval(n.fingerTable[0].ID, neighb.Value.(neighbour).node.ID, newEl.node.ID, false, false) {
 
-			el := n.succList.InsertBefore(neighbour{node: node}, neighb)
+			el := n.succList.InsertBefore(newEl, neighb)
 			if el == nil {
 				panic("Couldn't insert a node into succ list!")
 			}
@@ -167,7 +168,7 @@ func (n *RingNode) insertToSuccList(node finger) bool {
 
 	// Insert first element or in the end
 	if uint64(n.succList.Len()) < n.succListSize {
-		n.succList.PushBack(neighbour{node: node})
+		n.succList.PushBack(newEl)
 		return true
 	}
 
@@ -183,13 +184,20 @@ func (n *RingNode) UpdateSucc(ctx context.Context, in *UpdateSuccRequest) (*Upda
 	//fmt.Printf("update succ: %d is updated with %d\n", n.self.ID, id)
 
 	oldSuc := n.fingerTable[0]
+	oldSucKeys := n.succKeys
 
+	// Set him and download his files
 	n.fingerTable[0].ID = id; n.fingerTable[0].IP = ip
+	succKeys, err := n.invokeGetKeys(ip)
+	if err != nil {
+		panic(err)
+	}
+	n.succKeys = succKeys
 
 	// Check if it's second node joining
 	if oldSuc.ID != n.self.ID {
 
-		if !n.insertToSuccList(oldSuc) {
+		if !n.insertToSuccList(neighbour{node: oldSuc, keys: oldSucKeys}) {
 			panic("Couldn't insert old suc")
 		}
 
@@ -237,7 +245,12 @@ func (n *RingNode) UpdateSuccList(ctx context.Context, in *UpdateSuccListRequest
 	// Don't add yourself to a succ list!
 	if id != n.self.ID {
 
-		if n.insertToSuccList(finger{IP: ip, ID: id}) {
+		keys, err := n.invokeGetKeys(ip)
+		if err != nil {
+			panic(err)
+		}
+
+		if n.insertToSuccList(neighbour{node: finger{IP: ip, ID: id}, keys: keys}) {
 			// Propogate only changes you made yourself
 			go func() {
 				_, err := n.invokeUpdateSuccList(n.predecessor.IP, finger{IP: ip, ID: id})

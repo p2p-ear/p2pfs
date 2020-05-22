@@ -49,9 +49,10 @@ type RingNode struct {
 	succListSize uint64
 
 	// Keys information
-	keys        []string
-	succKeys    []string
-	keysStartSize int
+	keys            []string
+	succKeys        []string
+	keysStartSize   int
+	NewFilesChannel chan string
 
 	// Fix routine information
 	stopSignal  chan struct{}
@@ -66,7 +67,7 @@ func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode 
 	fingSize := uint64(math.RoundToEven(math.Log2(float64(maxNodes))))
 	succListSize := uint64(math.Log(TOLERABLE_FAIL_PROB) / math.Log(FAIL_PROB)) - 1 // this -1 apears since first successor is in the fingertable, it's convinient
 
-	const keysStartSize = 100
+	const keysStartSize = 0
 
 	n := RingNode{
 		self:        finger{IP: ownIP, ID: id, start: id},
@@ -80,6 +81,7 @@ func NewRingNode(ownIP string, maxNodes uint64, deltaT time.Duration) *RingNode 
 		keys: make([]string, keysStartSize),
 		succKeys: make([]string, keysStartSize),
 		keysStartSize: keysStartSize,
+		NewFilesChannel: make(chan string, 100),
 	}
 
 	return &n
@@ -95,6 +97,7 @@ func (n *RingNode) Start(grpcServer *grpc.Server) (){
 // Gracefull shutdown
 func (n *RingNode) Stop() {
 	close(n.stopSignal)
+	n.notifyAboutDeath(n.self.IP)
 }
 
 // MarshalJSON serializes node for printing
@@ -147,13 +150,14 @@ func (n *RingNode) MarshalJSON() ([]byte, error) {
 		p.Keys[i] = k
 	}
 
-	i:=0
+	neighbIdx:=0
 	for el := n.succList.Front(); el !=nil; el = el.Next() {
-		p.SuccList[i].Node = PublicFinger{ID: el.Value.(neighbour).node.ID, IP: el.Value.(neighbour).node.IP}
+		p.SuccList[neighbIdx].Node = PublicFinger{ID: el.Value.(neighbour).node.ID, IP: el.Value.(neighbour).node.IP}
+		p.SuccList[neighbIdx].Keys = make([]string, len(el.Value.(neighbour).keys))
 		for i, k := range el.Value.(neighbour).keys {
-			p.Keys[i] = k
+			p.SuccList[neighbIdx].Keys[i] = k
 		}
-		i++
+		neighbIdx++
 	}
 
 	return json.Marshal(p)

@@ -3,3 +3,4 @@ __pycache__
 bin/
 build/
 testfile*
+test_file*
