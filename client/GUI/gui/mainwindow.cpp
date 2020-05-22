@@ -44,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     //non-func buttons
     ui->btnBack2->setDisabled(true);
-    ui->btnForward2->setDisabled(true);
     ui->btnPath->setDisabled(true);
 }
 
@@ -815,4 +814,20 @@ void MainWindow::on_btnUpload2_clicked() {
     } else {
         QMessageBox::warning(this, "Error", "No such directory");
     }
+}
+
+void MainWindow::on_btnForward2_clicked() {//delete
+    QString currPath = ui->linePath_2->text();
+    bool bOk;
+    QString toDel = QInputDialog::getText( 0,
+                                         "Make dir",
+                                         "Dirname:",
+                                         QLineEdit::Normal,
+                                         "NewDir",
+                                         &bOk
+                                        );
+    if (!bOk) {
+        return;
+    }
+    QString name = currPath+"/"+toDel;
 }

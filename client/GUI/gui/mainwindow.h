@@ -117,6 +117,8 @@ private slots:
     void Logout();
     void on_btnUpload2_clicked();
 
+    void on_btnForward2_clicked();
+
 private:
     //addresses for requests
     const QString addressUpdate = "http://172.104.136.183/auth/update";
@@ -153,8 +155,8 @@ private:
     unsigned long long totalSize = 0;
     bool is_authorised = false;
 
-    QString certificate_token, ip, download_ip, download_certificate_token;
-    unsigned long ring_sz_down, ring_sz_up, numshards;
+    QString certificate_token, ip, download_ip, download_certificate_token, delete_certificate_token;
+    unsigned long ring_sz_down, ring_sz_up, numshards, ring_sz_del, numshards_del;
 
     MyDiskFs FS;
 
