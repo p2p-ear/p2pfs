@@ -21,7 +21,11 @@ type FileClaim struct {
 	//Action - 0=read; 1=write; 2=delete
 	Act int8 `json:"act"`
 
-	jwt.StandardClaims
+	Subject string `json:"sub,omitempty"`
+}
+
+func (c FileClaim) Valid() error {
+	return nil
 }
 
 const (
