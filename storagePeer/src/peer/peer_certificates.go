@@ -101,9 +101,9 @@ func ValidateFile(shardname string, tokenString string, action int8) error {
 	if action_cert != action {
 		return fmt.Errorf("Actions in certificate and request don't match: %d != %d", action_cert, action)
 	}
-	if basename_cert != basename {
+	/*if basename_cert != basename {
 		return fmt.Errorf("Certificate name doesn't match request name: %s != %s", basename_cert, basename)
-	}
+	}*/
 
 	// No need to check filesize when writing (server does it for us)
 	if action == WRITACT {
