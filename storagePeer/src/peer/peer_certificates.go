@@ -21,7 +21,7 @@ type FileClaim struct {
 	//Action - 0=read; 1=write; 2=delete
 	Act int8 `json:"act"`
 
-	Subject string `json:"sub,omitempty"`
+	Subject int `json:"sub,omitempty"`
 }
 
 func (c FileClaim) Valid() error {
