@@ -1,17 +1,11 @@
 package peer
 
 import (
-<<<<<<< HEAD
   "fmt"
   "bytes"
   "net/http"
   "io/ioutil"
   "encoding/json"
-=======
-	"bytes"
-	"fmt"
-	"net/http"
->>>>>>> 69f9b07e550e31f3f2b7538f0a1ee007fea208e7
 )
 
 func (p *Peer) fixRoutine() error {
@@ -41,7 +35,6 @@ func (p *Peer) notifyAboutArrival() {
 
 	notifyUrl := fmt.Sprintf("%s/auth/node/add", SERVER_IP)
 
-<<<<<<< HEAD
   request, err := json.Marshal(map[string]string{
     "ip_address": p.ownIP,
   })
@@ -56,17 +49,4 @@ func (p *Peer) notifyAboutArrival() {
   fmt.Println("response Body:", string(body))
 
   resp.Body.Close()
-=======
-	var jsonStr = []byte(fmt.Sprintf(`{"ip_address":"%s"}`, p.ownIP))
-	req, err := http.NewRequest("POST", notifyUrl, bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-
-	resp.Body.Close()
->>>>>>> 69f9b07e550e31f3f2b7538f0a1ee007fea208e7
 }
