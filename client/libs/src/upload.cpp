@@ -47,7 +47,7 @@ int shardFile(const std::string &filename, std::string Name, visFuncs* vis, unsi
     std::string name(filename);
     off_t curr_pt = start_pt;
 
-    int nSym = ceil(log(num)/log(23));
+    int nSym = num == 1 ? 1 : ceil(log(num)/log(23));
 
     //printf("3\n");
 
@@ -62,7 +62,7 @@ int shardFile(const std::string &filename, std::string Name, visFuncs* vis, unsi
     GoString codename = {(Name+"_KEY").c_str(), (Name+"_KEY").length()};
 
     //sending code
-    UploadFileRSC(IP, codename, ringsz, code, wJWT);
+    //UploadFileRSC(IP, codename, ringsz, code, wJWT);
 
     
     for (int i = 0; i < num; i++) {
@@ -85,7 +85,7 @@ int shardFile(const std::string &filename, std::string Name, visFuncs* vis, unsi
         }
         //printf("9\n");
 
-        encoder(src);
+        //encoder(src);
 
         GoSlice fcontent_clice = {
             data: src,
